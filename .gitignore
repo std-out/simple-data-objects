@@ -4,7 +4,6 @@
 /.phpunit.result.cache
 composer.lock
 .DS_Store
-/.github/
 /.idea/
 
 # Claude Code local state
