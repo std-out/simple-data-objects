@@ -3,8 +3,8 @@
 [![Tests](https://github.com/std-out/simple-data-objects/actions/workflows/tests.yml/badge.svg)](https://github.com/std-out/simple-data-objects/actions/workflows/tests.yml)
 [![Latest Version on Packagist](https://img.shields.io/packagist/v/std-out/simple-data-objects.svg)](https://packagist.org/packages/std-out/simple-data-objects)
 [![Total Downloads](https://img.shields.io/packagist/dt/std-out/simple-data-objects.svg)](https://packagist.org/packages/std-out/simple-data-objects)
-[![PHP Version](https://img.shields.io/packagist/php-v/std-out/simple-data-objects.svg)](https://packagist.org/packages/std-out/simple-data-objects)
-[![License](https://img.shields.io/packagist/l/std-out/simple-data-objects.svg)](LICENSE)
+[![PHP](https://img.shields.io/badge/PHP-%5E8.4-777BB4?logo=php&logoColor=white)](https://packagist.org/packages/std-out/simple-data-objects)
+[![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
 Lightweight, zero-magic Data Transfer Objects for PHP 8.1+ with attribute-driven hydration. Works standalone or inside Laravel 10–13.
 
