@@ -12,6 +12,7 @@ use ReflectionClass;
 use ReflectionNamedType;
 use ReflectionParameter;
 use ReflectionUnionType;
+use StdOut\SimpleDataObjects\Attributes\Cast;
 use StdOut\SimpleDataObjects\Attributes\DataCollection as DataCollectionAttribute;
 use StdOut\SimpleDataObjects\Attributes\Hidden;
 use StdOut\SimpleDataObjects\Attributes\MapPropertyName;
@@ -27,6 +28,8 @@ abstract class BaseData implements Arrayable, JsonSerializable, Stringable
     private static array $metaCache = [];
 
     private static array $hiddenCache = [];
+
+    private static array $casterCache = [];
 
     public static function from(mixed $data): static
     {
@@ -82,6 +85,7 @@ abstract class BaseData implements Arrayable, JsonSerializable, Stringable
     {
         $hidden = self::getHiddenSet(static::class);
         $ignoreIfNull = array_flip($this->ignoreIfNull());
+        $casters = self::getCasterMap(static::class);
         $result = [];
 
         foreach (get_object_vars($this) as $key => $value) {
@@ -93,7 +97,9 @@ abstract class BaseData implements Arrayable, JsonSerializable, Stringable
                 continue;
             }
 
-            $result[$key] = $this->normalizeValue($value);
+            $result[$key] = isset($casters[$key])
+                ? $casters[$key]->set($value)
+                : $this->normalizeValue($value);
         }
 
         return $result;
@@ -222,6 +228,9 @@ abstract class BaseData implements Arrayable, JsonSerializable, Stringable
 
         [$nestedDataClass, $enumClass] = self::resolveType($parameter);
 
+        $castAttrs = $parameter->getAttributes(Cast::class);
+        $caster = $castAttrs !== [] ? $castAttrs[0]->newInstance()->caster : null;
+
         return [
             'phpName' => $phpName,
             'inputName' => $inputName,
@@ -232,6 +241,7 @@ abstract class BaseData implements Arrayable, JsonSerializable, Stringable
             'enumClass' => $enumClass,
             'dataCollectionClass' => $dataCollectionClass,
             'isHidden' => $parameter->getAttributes(Hidden::class) !== [],
+            'caster' => $caster,
         ];
     }
 
@@ -280,8 +290,29 @@ abstract class BaseData implements Arrayable, JsonSerializable, Stringable
         };
     }
 
+    private static function getCasterMap(string $class): array
+    {
+        if (isset(self::$casterCache[$class])) {
+            return self::$casterCache[$class];
+        }
+
+        $map = [];
+
+        foreach (self::getMetadata($class) as $param) {
+            if ($param['caster'] !== null) {
+                $map[$param['phpName']] = $param['caster'];
+            }
+        }
+
+        return self::$casterCache[$class] = $map;
+    }
+
     private static function castValue(array $param, mixed $value): mixed
     {
+        if ($param['caster'] !== null) {
+            return $param['caster']->get($value);
+        }
+
         if ($param['dataCollectionClass'] !== null) {
             if (is_null($value)) {
                 return $param['allowsNull'] ? null : new TypedDataCollection;
