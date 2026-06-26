@@ -1,0 +1,8 @@
+.git/
+.github/
+.idea/
+Makefile
+README.md
+.gitignore
+.dockerignore
+coverage/

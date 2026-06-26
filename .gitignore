@@ -1,0 +1,14 @@
+/vendor/
+/coverage/
+/.phpunit.cache/
+/.phpunit.result.cache
+composer.lock
+.DS_Store
+/.github/
+/.idea/
+
+# Claude Code local state
+.claude/settings.local.json
+.claude.local.md
+/CLAUDE.local.md
+.agent/**/*.local.*
