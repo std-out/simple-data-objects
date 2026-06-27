@@ -15,6 +15,12 @@ final class Hydrator
         $arguments = [];
 
         foreach ($meta->parameters as $param) {
+            if ($param->flatten && $param->nestedDataClass !== null) {
+                $arguments[] = ValueCaster::cast($param, $data);
+
+                continue;
+            }
+
             if (array_key_exists($param->inputName, $data)) {
                 $arguments[] = ValueCaster::cast($param, $data[$param->inputName]);
 

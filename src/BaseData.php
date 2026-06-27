@@ -7,6 +7,7 @@ namespace StdOut\SimpleDataObjects;
 use BackedEnum;
 use Illuminate\Contracts\Support\Arrayable;
 use Illuminate\Support\Collection;
+use Illuminate\Container\Container;
 use Illuminate\Translation\ArrayLoader;
 use Illuminate\Translation\Translator;
 use Illuminate\Validation\Factory as ValidatorFactory;
@@ -16,6 +17,7 @@ use StdOut\SimpleDataObjects\Contracts\DataObject;
 use StdOut\SimpleDataObjects\Exceptions\DataHydrationException;
 use StdOut\SimpleDataObjects\Support\Hydrator;
 use StdOut\SimpleDataObjects\Support\InputNormalizer;
+use StdOut\SimpleDataObjects\Support\ValueCaster;
 use Stringable;
 
 abstract class BaseData implements Arrayable, DataObject, JsonSerializable, Stringable
@@ -27,6 +29,18 @@ abstract class BaseData implements Arrayable, DataObject, JsonSerializable, Stri
         return new static(...Hydrator::resolveArguments(static::class, $data));
     }
 
+    public static function tryFrom(mixed $data): ?static
+    {
+        try {
+            return static::from($data);
+        } catch (\Throwable) {
+            return null;
+        }
+    }
+
+    /**
+     * @return TypedDataCollection<static>
+     */
     public static function collection(iterable $items): TypedDataCollection
     {
         $class = static::class;
@@ -45,6 +59,21 @@ abstract class BaseData implements Arrayable, DataObject, JsonSerializable, Stri
         }
 
         return static::from($data);
+    }
+
+    public function with(mixed ...$overrides): static
+    {
+        $meta = Hydrator::classMeta(static::class);
+        $current = get_object_vars($this);
+        $args = [];
+
+        foreach ($meta->parameters as $param) {
+            $args[] = array_key_exists($param->phpName, $overrides)
+                ? ValueCaster::cast($param, $overrides[$param->phpName])
+                : $current[$param->phpName];
+        }
+
+        return new static(...$args);
     }
 
     public static function fromValidated(mixed $data): static
@@ -81,8 +110,12 @@ abstract class BaseData implements Arrayable, DataObject, JsonSerializable, Stri
             return self::$validatorFactory;
         }
 
-        if (function_exists('app') && app()->bound('validator')) {
-            return self::$validatorFactory = app('validator');
+        $container = Container::getInstance();
+        if ($container->bound('validator')) {
+            /** @var ValidatorFactory $factory */
+            $factory = $container->make('validator');
+
+            return self::$validatorFactory = $factory;
         }
 
         return self::$validatorFactory = new ValidatorFactory(
@@ -91,6 +124,30 @@ abstract class BaseData implements Arrayable, DataObject, JsonSerializable, Stri
                 'en',
             ),
         );
+    }
+
+    public function equals(self $other): bool
+    {
+        return $this->toArray() === $other->toArray();
+    }
+
+    /** @return array<string, array{0: mixed, 1: mixed}> */
+    public function diff(self $other): array
+    {
+        $a = $this->toArray();
+        $b = $other->toArray();
+        $result = [];
+
+        foreach (array_keys($a + $b) as $key) {
+            $aVal = $a[$key] ?? null;
+            $bVal = $b[$key] ?? null;
+
+            if ($aVal !== $bVal) {
+                $result[$key] = [$aVal, $bVal];
+            }
+        }
+
+        return $result;
     }
 
     public function toArray(): array
@@ -104,6 +161,12 @@ abstract class BaseData implements Arrayable, DataObject, JsonSerializable, Stri
             }
 
             if (is_null($value) && isset($meta->ignoreIfNull[$key])) {
+                continue;
+            }
+
+            if (isset($meta->flattened[$key]) && $value instanceof self) {
+                $result = array_merge($result, $value->toArray());
+
                 continue;
             }
 

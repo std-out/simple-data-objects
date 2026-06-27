@@ -88,4 +88,32 @@ class CollectionTest extends TestCase
 
         $this->assertSame(['Alice', 'Bob'], $names);
     }
+
+    public function test_of_factory_creates_collection_from_arrays(): void
+    {
+        $collection = TypedDataCollection::of(UserData::class, [
+            ['name' => 'Alice', 'email' => 'alice@example.com'],
+            ['name' => 'Bob', 'email' => 'bob@example.com'],
+        ]);
+
+        $this->assertInstanceOf(TypedDataCollection::class, $collection);
+        $this->assertCount(2, $collection);
+        $this->assertInstanceOf(UserData::class, $collection->first());
+    }
+
+    public function test_of_factory_passes_through_existing_instances(): void
+    {
+        $user = UserData::from(['name' => 'Alice', 'email' => 'alice@example.com']);
+        $collection = TypedDataCollection::of(UserData::class, [$user]);
+
+        $this->assertSame($user, $collection->first());
+    }
+
+    public function test_of_factory_with_empty_items(): void
+    {
+        $collection = TypedDataCollection::of(UserData::class);
+
+        $this->assertInstanceOf(TypedDataCollection::class, $collection);
+        $this->assertCount(0, $collection);
+    }
 }

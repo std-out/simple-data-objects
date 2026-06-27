@@ -23,6 +23,9 @@ final class ClassMeta
     /** @var array<string, array<mixed>> */
     public readonly array $validationRules;
 
+    /** @var array<string, true> */
+    public readonly array $flattened;
+
     /** @param list<ParameterMeta> $parameters */
     public function __construct(array $parameters)
     {
@@ -30,6 +33,7 @@ final class ClassMeta
         $ignoreIfNull = [];
         $casters = [];
         $validationRules = [];
+        $flattened = [];
 
         foreach ($parameters as $meta) {
             if ($meta->isHidden) {
@@ -47,6 +51,10 @@ final class ClassMeta
             if ($meta->rules !== []) {
                 $validationRules[$meta->inputName] = $meta->rules;
             }
+
+            if ($meta->flatten) {
+                $flattened[$meta->phpName] = true;
+            }
         }
 
         $this->parameters = $parameters;
@@ -54,5 +62,6 @@ final class ClassMeta
         $this->ignoreIfNull = $ignoreIfNull;
         $this->casters = $casters;
         $this->validationRules = $validationRules;
+        $this->flattened = $flattened;
     }
 }

@@ -8,6 +8,7 @@ use ReflectionClass;
 use ReflectionParameter;
 use StdOut\SimpleDataObjects\Attributes\Cast;
 use StdOut\SimpleDataObjects\Attributes\DataCollection as DataCollectionAttribute;
+use StdOut\SimpleDataObjects\Attributes\Flatten;
 use StdOut\SimpleDataObjects\Attributes\Hidden;
 use StdOut\SimpleDataObjects\Attributes\IgnoreIfNull;
 use StdOut\SimpleDataObjects\Attributes\MapPropertyName;
@@ -77,6 +78,7 @@ final class ClassMetaFactory
             dataCollectionClass: $dataCollectionClass,
             isHidden: $parameter->getAttributes(Hidden::class) !== [],
             ignoreIfNull: $parameter->getAttributes(IgnoreIfNull::class) !== [],
+            flatten: $parameter->getAttributes(Flatten::class) !== [],
             rules: $rulesAttrs !== [] ? $rulesAttrs[0]->newInstance()->rules : [],
             caster: $castAttrs !== [] ? $castAttrs[0]->newInstance()->caster : null,
         );
