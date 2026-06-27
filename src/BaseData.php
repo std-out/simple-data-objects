@@ -5,9 +5,9 @@ declare(strict_types=1);
 namespace StdOut\SimpleDataObjects;
 
 use BackedEnum;
+use Illuminate\Container\Container;
 use Illuminate\Contracts\Support\Arrayable;
 use Illuminate\Support\Collection;
-use Illuminate\Container\Container;
 use Illuminate\Translation\ArrayLoader;
 use Illuminate\Translation\Translator;
 use Illuminate\Validation\Factory as ValidatorFactory;

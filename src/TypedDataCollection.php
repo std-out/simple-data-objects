@@ -15,7 +15,6 @@ final class TypedDataCollection extends Collection
 {
     /**
      * @param  class-string<T>  $dataClass
-     *
      * @return static<T>
      */
     public static function of(string $dataClass, iterable $items = []): static
@@ -28,7 +27,6 @@ final class TypedDataCollection extends Collection
     /**
      * @param  callable(T, int): bool|null  $callback
      * @param  T|null  $default
-     *
      * @return T|null
      */
     public function first(?callable $callback = null, mixed $default = null): mixed
@@ -39,12 +37,10 @@ final class TypedDataCollection extends Collection
     /**
      * @param  callable(T, int): bool|null  $callback
      * @param  T|null  $default
-     *
      * @return T|null
      */
     public function last(?callable $callback = null, mixed $default = null): mixed
     {
         return parent::last($callback, $default);
     }
-
 }
