@@ -19,6 +19,7 @@ final class ParameterMeta
         public readonly ?string $dataCollectionClass,
         public readonly bool $isHidden,
         public readonly bool $ignoreIfNull,
+        public readonly array $rules,
         public readonly ?CastsValue $caster,
     ) {}
 }

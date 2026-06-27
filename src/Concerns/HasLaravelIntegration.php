@@ -18,7 +18,7 @@ trait HasLaravelIntegration
     {
         $data = method_exists($request, 'validated') ? $request->validated() : $request->all();
 
-        return static::from($data);
+        return static::fromValidated($data);
     }
 
     public static function fromModel(Model $model): static

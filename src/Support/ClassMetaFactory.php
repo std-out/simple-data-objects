@@ -11,6 +11,7 @@ use StdOut\SimpleDataObjects\Attributes\DataCollection as DataCollectionAttribut
 use StdOut\SimpleDataObjects\Attributes\Hidden;
 use StdOut\SimpleDataObjects\Attributes\IgnoreIfNull;
 use StdOut\SimpleDataObjects\Attributes\MapPropertyName;
+use StdOut\SimpleDataObjects\Attributes\Rules;
 use StdOut\SimpleDataObjects\Attributes\TransformKeys;
 use StdOut\SimpleDataObjects\Exceptions\DataHydrationException;
 
@@ -63,6 +64,7 @@ final class ClassMetaFactory
         [$nestedDataClass, $enumClass] = TypeResolver::resolve($parameter);
 
         $castAttrs = $parameter->getAttributes(Cast::class);
+        $rulesAttrs = $parameter->getAttributes(Rules::class);
 
         return new ParameterMeta(
             phpName: $phpName,
@@ -75,6 +77,7 @@ final class ClassMetaFactory
             dataCollectionClass: $dataCollectionClass,
             isHidden: $parameter->getAttributes(Hidden::class) !== [],
             ignoreIfNull: $parameter->getAttributes(IgnoreIfNull::class) !== [],
+            rules: $rulesAttrs !== [] ? $rulesAttrs[0]->newInstance()->rules : [],
             caster: $castAttrs !== [] ? $castAttrs[0]->newInstance()->caster : null,
         );
     }

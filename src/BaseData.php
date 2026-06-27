@@ -7,14 +7,21 @@ namespace StdOut\SimpleDataObjects;
 use BackedEnum;
 use Illuminate\Contracts\Support\Arrayable;
 use Illuminate\Support\Collection;
+use Illuminate\Translation\ArrayLoader;
+use Illuminate\Translation\Translator;
+use Illuminate\Validation\Factory as ValidatorFactory;
+use Illuminate\Validation\ValidationException;
 use JsonSerializable;
 use StdOut\SimpleDataObjects\Contracts\DataObject;
 use StdOut\SimpleDataObjects\Exceptions\DataHydrationException;
 use StdOut\SimpleDataObjects\Support\Hydrator;
+use StdOut\SimpleDataObjects\Support\InputNormalizer;
 use Stringable;
 
 abstract class BaseData implements Arrayable, DataObject, JsonSerializable, Stringable
 {
+    private static ?ValidatorFactory $validatorFactory = null;
+
     public static function from(mixed $data): static
     {
         return new static(...Hydrator::resolveArguments(static::class, $data));
@@ -38,6 +45,52 @@ abstract class BaseData implements Arrayable, DataObject, JsonSerializable, Stri
         }
 
         return static::from($data);
+    }
+
+    public static function fromValidated(mixed $data): static
+    {
+        static::validate($data);
+
+        return static::from($data);
+    }
+
+    /** @throws ValidationException */
+    public static function validate(mixed $data): void
+    {
+        $meta = Hydrator::classMeta(static::class);
+
+        if ($meta->validationRules === []) {
+            return;
+        }
+
+        $array = is_array($data) ? $data : InputNormalizer::normalize(static::class, $data);
+
+        static::validatorFactory()
+            ->make($array, $meta->validationRules)
+            ->validate();
+    }
+
+    public static function setValidatorFactory(ValidatorFactory $factory): void
+    {
+        self::$validatorFactory = $factory;
+    }
+
+    private static function validatorFactory(): ValidatorFactory
+    {
+        if (self::$validatorFactory !== null) {
+            return self::$validatorFactory;
+        }
+
+        if (function_exists('app') && app()->bound('validator')) {
+            return self::$validatorFactory = app('validator');
+        }
+
+        return self::$validatorFactory = new ValidatorFactory(
+            new Translator(
+                new ArrayLoader,
+                'en',
+            ),
+        );
     }
 
     public function toArray(): array

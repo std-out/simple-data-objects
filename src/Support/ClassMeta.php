@@ -20,12 +20,16 @@ final class ClassMeta
     /** @var array<string, CastsValue> */
     public readonly array $casters;
 
+    /** @var array<string, array<mixed>> */
+    public readonly array $validationRules;
+
     /** @param list<ParameterMeta> $parameters */
     public function __construct(array $parameters)
     {
         $hidden = [];
         $ignoreIfNull = [];
         $casters = [];
+        $validationRules = [];
 
         foreach ($parameters as $meta) {
             if ($meta->isHidden) {
@@ -39,11 +43,16 @@ final class ClassMeta
             if ($meta->caster !== null) {
                 $casters[$meta->phpName] = $meta->caster;
             }
+
+            if ($meta->rules !== []) {
+                $validationRules[$meta->inputName] = $meta->rules;
+            }
         }
 
         $this->parameters = $parameters;
         $this->hidden = $hidden;
         $this->ignoreIfNull = $ignoreIfNull;
         $this->casters = $casters;
+        $this->validationRules = $validationRules;
     }
 }
