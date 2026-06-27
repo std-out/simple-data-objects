@@ -15,13 +15,18 @@ Lightweight, attribute-driven Data Transfer Objects for PHP 8.4+. Works standalo
 
 - **Hydrate from anything** — array, `stdClass`, `Arrayable`, `JsonSerializable`, JSON string
 - **Nested DTOs** — deeply nested objects hydrated automatically
+- **Flat embedding** — `#[Flatten]` inlines nested DTO fields into the parent `toArray()`
 - **Enum support** — `BackedEnum` cast by value, `UnitEnum` passed through
-- **Typed collections** — `#[DataCollection(UserData::class)]` produces a typed `TypedDataCollection`
+- **Typed collections** — `#[DataCollection(UserData::class)]` produces a `TypedDataCollection<UserData>`
 - **Cast system** — `#[Cast(...)]` for dates, booleans, JSON, integers, floats, strings, enums with fallback, encryption
+- **Validation** — `#[Rules([...])]` with Laravel's full rule system; `validate()` and `fromValidated()`
+- **Immutable copies** — `with(field: $value)` returns a new instance with overrides applied
+- **Safe factory** — `tryFrom()` returns `null` instead of throwing on invalid input
+- **Comparison** — `equals()` and `diff()` between two DTOs
 - **Key mapping** — `#[MapPropertyName]` per property, or `#[TransformKeys]` at class level
 - **Hidden fields** — `#[Hidden]` excludes a property from `toArray()` / JSON output
-- **Null omission** — `#[IgnoreIfNull]` skips a null field from serialization output
-- **Reflection cache** — metadata built once per class, all derived sets computed at cache time
+- **Null omission** — `#[IgnoreIfNull]` skips null fields from serialization output
+- **Zero-reflection cache** — `MetadataRegistry::setStoragePath()` serializes metadata to PHP files; opcache picks them up automatically
 - **Laravel integration** — optional trait adds `fromRequest()`, `fromModel()`, `toResponse()`
 
 ---
@@ -33,6 +38,7 @@ Lightweight, attribute-driven Data Transfer Objects for PHP 8.4+. Works standalo
 | PHP | ^8.4 |
 | `illuminate/contracts` | ^10.0 \| ^11.0 \| ^12.0 \| ^13.0 |
 | `illuminate/support` | ^10.0 \| ^11.0 \| ^12.0 \| ^13.0 |
+| `illuminate/validation` | ^10.0 \| ^11.0 \| ^12.0 \| ^13.0 |
 
 ---
 
@@ -81,6 +87,18 @@ UserData::from(collect(['name' => 'Alice', 'email' => 'alice@example.com']));
 
 ```php
 UserData::fromJson('{"name":"Alice","email":"alice@example.com"}');
+```
+
+### Safe factory — `tryFrom()`
+
+Returns `null` instead of throwing when input is invalid or missing required fields:
+
+```php
+$user = UserData::tryFrom($request->all()); // ?UserData
+
+if ($user === null) {
+    // handle missing / invalid data
+}
 ```
 
 ### Nested DTOs
@@ -146,17 +164,17 @@ $team = TeamData::from([
     ],
 ]);
 
-$team->members->count(); // 2
-$team->members->first(); // UserData instance
+$team->members->first(); // UserData  — IDE knows the type
+$team->members->last();  // UserData
 ```
 
-Static factory:
+Static factory from a DTO class:
 
 ```php
-$collection = UserData::collection([
-    ['name' => 'Alice', 'email' => 'alice@example.com'],
-    ['name' => 'Bob',   'email' => 'bob@example.com'],
-]);
+$collection = UserData::collection([...]);
+
+// or using the generic factory directly
+$collection = TypedDataCollection::of(UserData::class, [...]);
 ```
 
 ---
@@ -170,6 +188,41 @@ $user->toJson();         // JSON string
 $user->only('name');     // ['name' => 'Alice']
 $user->except('phone');  // ['name' => 'Alice', 'email' => 'alice@example.com']
 json_encode($user);      // works via JsonSerializable
+```
+
+---
+
+## Immutable Copies — `with()`
+
+Creates a new instance with the specified fields overridden. The original is never mutated. Casts are applied to overridden values just like in `from()`.
+
+```php
+$original = UserData::from(['name' => 'Alice', 'email' => 'alice@example.com']);
+
+$updated = $original->with(email: 'alice@new.com');
+
+$original->email; // 'alice@example.com'
+$updated->email;  // 'alice@new.com'
+
+// Chain as needed
+$result = $user
+    ->with(name: 'Bob')
+    ->with(email: 'bob@example.com');
+```
+
+---
+
+## Comparison — `equals()` and `diff()`
+
+```php
+$a = UserData::from(['name' => 'Alice', 'email' => 'alice@example.com']);
+$b = $a->with(name: 'Bob');
+
+$a->equals($b); // false
+
+$a->diff($b);
+// ['name' => ['Alice', 'Bob']]
+// each entry is [this_value, other_value]
 ```
 
 ---
@@ -212,6 +265,45 @@ ArticleData::from(['title' => 'Hello'])->toArray();
 // ['title' => 'Hello']  — 'subtitle' omitted because null
 ```
 
+### `#[Flatten]` — inline nested DTO fields
+
+Embeds a nested DTO's fields directly into the parent's `toArray()` output (and reads them from the same flat input).
+
+```php
+use StdOut\SimpleDataObjects\Attributes\Flatten;
+
+class AddressData extends BaseData
+{
+    public function __construct(
+        public readonly string  $street,
+        public readonly string  $city,
+        public readonly ?string $zip = null,
+    ) {}
+}
+
+class PersonData extends BaseData
+{
+    public function __construct(
+        public readonly string  $name,
+        #[Flatten]
+        public readonly AddressData $address,
+    ) {}
+}
+
+// Hydrate from a flat array
+$person = PersonData::from([
+    'name'   => 'Alice',
+    'street' => '123 Main St',
+    'city'   => 'Kyiv',
+]);
+
+$person->address->city; // 'Kyiv'
+
+// Serializes back to the same flat structure
+$person->toArray();
+// ['name' => 'Alice', 'street' => '123 Main St', 'city' => 'Kyiv']
+```
+
 ### `#[MapPropertyName]` — remap a single input key
 
 ```php
@@ -251,6 +343,73 @@ Available strategies: `TransformKeys::SNAKE_CASE`, `TransformKeys::CAMEL_CASE`.
 
 ---
 
+## Validation
+
+Apply `#[Rules([...])]` on any constructor parameter. Rules accept anything Laravel's Validator understands — strings, `Rule` objects, closures.
+
+```php
+use Illuminate\Validation\Rules\Password;
+use StdOut\SimpleDataObjects\Attributes\Rules;
+
+class RegisterData extends BaseData
+{
+    public function __construct(
+        #[Rules(['required', 'string', 'max:100'])]
+        public readonly string $name,
+
+        #[Rules(['required', 'email:rfc,dns'])]
+        public readonly string $email,
+
+        #[Rules(['required', new Password->min(8)->letters()->numbers()])]
+        public readonly string $password,
+
+        #[Rules(['nullable', 'string', 'min:6'])]
+        public readonly ?string $username = null,
+    ) {}
+}
+```
+
+### `validate()` — only validate, no hydration
+
+```php
+use Illuminate\Validation\ValidationException;
+
+try {
+    RegisterData::validate($request->all());
+} catch (ValidationException $e) {
+    $e->errors(); // ['email' => ['The email field must be a valid email address.']]
+}
+```
+
+### `fromValidated()` — validate then hydrate
+
+Throws `ValidationException` on failure; returns a hydrated instance on success.
+
+```php
+$data = RegisterData::fromValidated($request->all());
+```
+
+### `from()` — hydrate without validation
+
+Use when input is already trusted (internal code, seeded data, test fixtures).
+
+```php
+$data = RegisterData::from($trustedArray);
+```
+
+> In Laravel, `fromRequest()` from `HasLaravelIntegration` calls `fromValidated()` automatically.
+
+### Standalone usage
+
+Without a Laravel container the library bootstraps a minimal validator internally — no extra setup needed.
+
+```php
+// works in any PHP project, no Laravel required
+RegisterData::validate(['email' => 'bad']);
+```
+
+---
+
 ## Cast System
 
 Apply any cast with `#[Cast(new SomeCast(...))]` on a constructor parameter.
@@ -271,46 +430,38 @@ Apply any cast with `#[Cast(new SomeCast(...))]` on a constructor parameter.
 | `JsonCast` | `'{"k":"v"}'` → `['k' => 'v']` | `['k' => 'v']` → `'{"k":"v"}'` |
 | `EncryptedCast('key')` | base64 → plaintext | plaintext → AES-256-CBC + base64 |
 
-### Examples
+### Example
 
 ```php
 use StdOut\SimpleDataObjects\Attributes\Cast;
-use StdOut\SimpleDataObjects\Casts\BooleanCast;
-use StdOut\SimpleDataObjects\Casts\DateTimeCast;
-use StdOut\SimpleDataObjects\Casts\DateTimeImmutableCast;
-use StdOut\SimpleDataObjects\Casts\EncryptedCast;
-use StdOut\SimpleDataObjects\Casts\EnumCast;
-use StdOut\SimpleDataObjects\Casts\FloatCast;
-use StdOut\SimpleDataObjects\Casts\IntegerCast;
-use StdOut\SimpleDataObjects\Casts\JsonCast;
-use StdOut\SimpleDataObjects\Casts\TrimCast;
+use StdOut\SimpleDataObjects\Casts\{
+    BooleanCast, DateTimeCast, DateTimeImmutableCast,
+    EncryptedCast, EnumCast, FloatCast, IntegerCast, JsonCast, TrimCast,
+};
 
 class ProductData extends BaseData
 {
     public function __construct(
         #[Cast(new TrimCast(TrimCast::LOWERCASE))]
-        public readonly string           $sku,
+        public readonly string             $sku,
 
         #[Cast(new IntegerCast)]
-        public readonly int              $quantity,
+        public readonly int                $quantity,
 
         #[Cast(new FloatCast(2))]
-        public readonly float            $price,
+        public readonly float              $price,
 
         #[Cast(new BooleanCast)]
-        public readonly bool             $available,
+        public readonly bool               $available,
 
         #[Cast(new JsonCast)]
-        public readonly array            $meta,
+        public readonly array              $meta,
 
         #[Cast(new DateTimeCast('Y-m-d'))]
-        public readonly DateTime         $createdAt,
-
-        #[Cast(new DateTimeImmutableCast(DateTimeInterface::ATOM))]
-        public readonly ?DateTimeImmutable $publishedAt = null,
+        public readonly DateTime           $createdAt,
 
         #[Cast(new EnumCast(Status::class, Status::Inactive))]
-        public readonly Status           $status = Status::Inactive,
+        public readonly Status             $status = Status::Inactive,
     ) {}
 }
 ```
@@ -324,8 +475,6 @@ use StdOut\SimpleDataObjects\Contracts\CastsValue;
 
 final class MoneyCast implements CastsValue
 {
-    public function __construct(private readonly string $currency = 'USD') {}
-
     public function get(mixed $value): ?int
     {
         return $value === null ? null : (int) round((float) $value * 100);
@@ -337,9 +486,29 @@ final class MoneyCast implements CastsValue
     }
 }
 
-// Usage
-#[Cast(new MoneyCast('EUR'))]
-public readonly int $price,
+#[Cast(new MoneyCast)]
+public readonly int $priceInCents,
+```
+
+---
+
+## Zero-Reflection Cache
+
+By default metadata is built once per PHP process and kept in memory. For traditional PHP-FPM (new process per request) you can persist it to PHP files that opcache compiles and reuses:
+
+```php
+// bootstrap / AppServiceProvider
+use StdOut\SimpleDataObjects\Support\MetadataRegistry;
+
+MetadataRegistry::setStoragePath(storage_path('framework/data-objects'));
+```
+
+The first time each DTO class is accessed, a cache file is written. On every subsequent request opcache serves the pre-compiled result — no reflection at all.
+
+Clear the cache after deployment:
+
+```php
+MetadataRegistry::clearCache();
 ```
 
 ---
@@ -348,7 +517,7 @@ public readonly int $price,
 
 Add the `HasLaravelIntegration` trait to unlock `fromRequest()`, `fromModel()`, and `toResponse()`.
 
-> **Requires:** `illuminate/http` and `illuminate/database` (available if using full Laravel).
+> **Requires:** `illuminate/http` and `illuminate/database`.
 
 ```php
 use StdOut\SimpleDataObjects\BaseData;
@@ -364,7 +533,10 @@ abstract class AppData extends BaseData
 class CreateUserData extends AppData
 {
     public function __construct(
+        #[Rules(['required', 'string'])]
         public readonly string $name,
+
+        #[Rules(['required', 'email'])]
         public readonly string $email,
     ) {}
 }
@@ -372,8 +544,10 @@ class CreateUserData extends AppData
 // In a controller
 public function store(Request $request): JsonResponse
 {
-    $data = CreateUserData::fromRequest($request); // uses $request->validated() if available
-    return $data->toResponse($request);            // JsonResponse
+    // validates via #[Rules], hydrates, or throws ValidationException
+    $data = CreateUserData::fromRequest($request);
+
+    return $data->toResponse($request); // JsonResponse
 }
 
 // From an Eloquent model
