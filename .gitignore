@@ -11,3 +11,5 @@ composer.lock
 .claude.local.md
 /CLAUDE.local.md
 .agent/**/*.local.*
+
+node_modules
