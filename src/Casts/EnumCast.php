@@ -15,6 +15,11 @@ final class EnumCast implements CastsValue
         private readonly ?UnitEnum $default = null,
     ) {}
 
+    public static function __set_state(array $state): self
+    {
+        return new self($state['enumClass'], $state['default']);
+    }
+
     public function get(mixed $value): ?UnitEnum
     {
         if ($value === null) {

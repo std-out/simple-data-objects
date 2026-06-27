@@ -18,7 +18,7 @@ final class MetadataRegistry
 
     public static function setStoragePath(string $path): void
     {
-        self::$storagePath = rtrim($path, '/');
+        self::$storagePath = $path !== '' ? rtrim($path, '/') : null;
     }
 
     public static function clearCache(): void
@@ -60,23 +60,49 @@ final class MetadataRegistry
 
     private static function cacheFile(string $class): string
     {
-        return self::$storagePath.'/'.strtr($class, '\\', '_').'.php';
+        // sha256 of class name: no traversal risk, no length issues, deterministic
+        return self::$storagePath.'/'.hash('sha256', $class).'.php';
     }
 
     private static function persist(string $file, ClassMeta $meta): void
     {
+        if (! self::isExportable($meta)) {
+            return;
+        }
+
         $dir = dirname($file);
 
         if (! is_dir($dir)) {
             mkdir($dir, 0755, true);
         }
 
-        $payload = base64_encode(serialize($meta));
+        $export = var_export($meta, true);
 
-        file_put_contents(
-            $file,
-            "<?php return unserialize(base64_decode('{$payload}'));",
-            LOCK_EX,
-        );
+        // Write to a temp file then rename — atomic on POSIX systems
+        $tmp = $file.'.tmp.'.getmypid();
+        file_put_contents($tmp, "<?php\n\nreturn {$export};\n");
+        rename($tmp, $file);
+    }
+
+    /**
+     * Only classes whose entire metadata graph supports var_export() can be
+     * persisted. Casters must implement __set_state(); rule objects (e.g.
+     * Illuminate Rule instances) are not exportable — only string rules are.
+     */
+    private static function isExportable(ClassMeta $meta): bool
+    {
+        foreach ($meta->parameters as $param) {
+            if ($param->caster !== null && ! method_exists($param->caster, '__set_state')) {
+                return false;
+            }
+
+            foreach ($param->rules as $rule) {
+                if (! is_string($rule)) {
+                    return false;
+                }
+            }
+        }
+
+        return true;
     }
 }

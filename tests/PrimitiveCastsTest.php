@@ -185,7 +185,7 @@ class PrimitiveCastsTest extends TestCase
         $this->assertSame('{"color":"red"}', $product->toArray()['meta']);
     }
 
-    // EncryptedCast
+    // EncryptedCast — XSalsa20-Poly1305 via libsodium (authenticated AEAD)
 
     public function test_encrypted_cast_round_trip(): void
     {
@@ -216,7 +216,35 @@ class PrimitiveCastsTest extends TestCase
     {
         $this->expectException(InvalidArgumentException::class);
 
-        (new EncryptedCast('my-key'))->get('not!!valid!!base64!!');
+        (new EncryptedCast('my-key'))->get('not!!valid!!base64!!####');
+    }
+
+    public function test_encrypted_cast_tampered_ciphertext_throws(): void
+    {
+        $cast = new EncryptedCast('my-key');
+        $encrypted = $cast->set('secret');
+
+        $decoded = sodium_base642bin($encrypted, SODIUM_BASE64_VARIANT_URLSAFE_NO_PADDING);
+        $tampered = substr($decoded, 0, -1).chr(ord(substr($decoded, -1)) ^ 0xFF);
+        $tamperedB64 = sodium_bin2base64($tampered, SODIUM_BASE64_VARIANT_URLSAFE_NO_PADDING);
+
+        $this->expectException(\RuntimeException::class);
+        $cast->get($tamperedB64);
+    }
+
+    public function test_encrypted_cast_different_keys_cannot_decrypt(): void
+    {
+        $encrypted = (new EncryptedCast('key-A'))->set('secret');
+
+        $this->expectException(\RuntimeException::class);
+        (new EncryptedCast('key-B'))->get($encrypted);
+    }
+
+    public function test_encrypted_cast_output_is_url_safe_base64(): void
+    {
+        $encrypted = (new EncryptedCast('my-key'))->set('hello');
+
+        $this->assertMatchesRegularExpression('/^[A-Za-z0-9_-]+$/', $encrypted);
     }
 
     public function test_encrypted_cast_hydrates_and_decrypts_via_dto(): void

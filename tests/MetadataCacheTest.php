@@ -41,14 +41,15 @@ class MetadataCacheTest extends TestCase
         $this->assertNotEmpty($files);
     }
 
-    public function test_cache_file_contains_class_name_segment(): void
+    public function test_cache_file_is_named_by_class_hash(): void
     {
         MetadataRegistry::setStoragePath($this->cacheDir);
 
         UserData::from(['name' => 'Alice', 'email' => 'alice@example.com']);
 
         $files = glob($this->cacheDir.'/*.php');
-        $this->assertStringContainsString('UserData', basename($files[0]));
+        $expected = hash('sha256', UserData::class).'.php';
+        $this->assertSame($expected, basename($files[0]));
     }
 
     public function test_cached_meta_produces_correct_instance(): void

@@ -13,6 +13,11 @@ final class JsonCast implements CastsValue
         private readonly int $encodeFlags = 0,
     ) {}
 
+    public static function __set_state(array $state): self
+    {
+        return new self($state['assoc'], $state['encodeFlags']);
+    }
+
     public function get(mixed $value): mixed
     {
         if ($value === null) {
@@ -23,7 +28,7 @@ final class JsonCast implements CastsValue
             return $value;
         }
 
-        return json_decode((string) $value, $this->assoc, 512, JSON_THROW_ON_ERROR);
+        return json_decode((string) $value, $this->assoc, 64, JSON_THROW_ON_ERROR);
     }
 
     public function set(mixed $value): ?string

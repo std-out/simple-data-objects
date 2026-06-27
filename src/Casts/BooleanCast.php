@@ -10,6 +10,11 @@ final class BooleanCast implements CastsValue
 {
     private const array TRUTHY = ['true', '1', 'yes', 'on'];
 
+    public static function __set_state(array $state): self
+    {
+        return new self;
+    }
+
     public function get(mixed $value): ?bool
     {
         if ($value === null) {

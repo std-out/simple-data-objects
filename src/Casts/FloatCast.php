@@ -12,6 +12,11 @@ final class FloatCast implements CastsValue
         private readonly int $decimals = -1,
     ) {}
 
+    public static function __set_state(array $state): self
+    {
+        return new self($state['decimals']);
+    }
+
     public function get(mixed $value): ?float
     {
         if ($value === null) {

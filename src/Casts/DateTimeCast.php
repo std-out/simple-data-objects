@@ -13,11 +13,20 @@ use StdOut\SimpleDataObjects\Contracts\CastsValue;
 
 final class DateTimeCast implements CastsValue
 {
+    private readonly ?string $timezone;
+
     public function __construct(
         private readonly string $outputFormat = DateTimeInterface::ATOM,
         private readonly ?string $inputFormat = null,
-        private readonly DateTimeZone|string|null $timezone = null,
-    ) {}
+        DateTimeZone|string|null $timezone = null,
+    ) {
+        $this->timezone = $timezone instanceof DateTimeZone ? $timezone->getName() : $timezone;
+    }
+
+    public static function __set_state(array $state): self
+    {
+        return new self($state['outputFormat'], $state['inputFormat'], $state['timezone']);
+    }
 
     public function get(mixed $value): ?DateTime
     {
@@ -63,12 +72,6 @@ final class DateTimeCast implements CastsValue
 
     private function resolveTimezone(): ?DateTimeZone
     {
-        if ($this->timezone === null) {
-            return null;
-        }
-
-        return $this->timezone instanceof DateTimeZone
-            ? $this->timezone
-            : new DateTimeZone($this->timezone);
+        return $this->timezone !== null ? new DateTimeZone($this->timezone) : null;
     }
 }

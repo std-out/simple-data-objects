@@ -44,15 +44,18 @@ abstract class BaseData implements Arrayable, DataObject, JsonSerializable, Stri
     public static function collection(iterable $items): TypedDataCollection
     {
         $class = static::class;
+        $result = [];
 
-        return new TypedDataCollection(
-            collect($items)->map(fn (mixed $item) => $item instanceof $class ? $item : $class::from($item)),
-        );
+        foreach ($items as $item) {
+            $result[] = $item instanceof $class ? $item : $class::from($item);
+        }
+
+        return new TypedDataCollection($result);
     }
 
     public static function fromJson(string $json): static
     {
-        $data = json_decode($json, true);
+        $data = json_decode($json, true, 32);
 
         if (! is_array($data)) {
             throw DataHydrationException::invalidJson(static::class);

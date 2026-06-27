@@ -23,4 +23,23 @@ final class ParameterMeta
         public readonly array $rules,
         public readonly ?CastsValue $caster,
     ) {}
+
+    public static function __set_state(array $state): self
+    {
+        return new self(
+            phpName: $state['phpName'],
+            inputName: $state['inputName'],
+            allowsNull: $state['allowsNull'],
+            hasDefault: $state['hasDefault'],
+            defaultValue: $state['defaultValue'],
+            nestedDataClass: $state['nestedDataClass'],
+            enumClass: $state['enumClass'],
+            dataCollectionClass: $state['dataCollectionClass'],
+            isHidden: $state['isHidden'],
+            ignoreIfNull: $state['ignoreIfNull'],
+            flatten: $state['flatten'],
+            rules: $state['rules'],
+            caster: $state['caster'],
+        );
+    }
 }

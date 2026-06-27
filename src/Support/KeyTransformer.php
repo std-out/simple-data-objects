@@ -13,7 +13,7 @@ final class KeyTransformer
         return match ($strategy) {
             TransformKeys::SNAKE_CASE => strtolower((string) preg_replace('/(?<!^)[A-Z]/', '_$0', $phpName)),
             TransformKeys::CAMEL_CASE => lcfirst(str_replace('_', '', ucwords($phpName, '_'))),
-            default => $phpName,
+            default => throw new \InvalidArgumentException("Unknown key transform strategy: \"{$strategy}\"."),
         };
     }
 }

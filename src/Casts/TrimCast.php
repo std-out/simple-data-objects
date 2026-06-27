@@ -16,6 +16,11 @@ final class TrimCast implements CastsValue
         private readonly ?string $transform = null,
     ) {}
 
+    public static function __set_state(array $state): self
+    {
+        return new self($state['transform']);
+    }
+
     public function get(mixed $value): ?string
     {
         if ($value === null) {

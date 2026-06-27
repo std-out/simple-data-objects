@@ -53,6 +53,8 @@ final class ClassMetaFactory
 
         $dataCollectionClass = null;
         $collectionAttrs = $parameter->getAttributes(DataCollectionAttribute::class);
+        $castAttrs = $parameter->getAttributes(Cast::class);
+        $flattenAttrs = $parameter->getAttributes(Flatten::class);
 
         if ($collectionAttrs !== []) {
             $dataCollectionClass = $collectionAttrs[0]->newInstance()->dataClass;
@@ -60,11 +62,34 @@ final class ClassMetaFactory
             if (! class_exists($dataCollectionClass)) {
                 throw DataHydrationException::classNotFound($dataCollectionClass);
             }
+
+            if ($castAttrs !== []) {
+                throw new \InvalidArgumentException(
+                    "Parameter \"{$phpName}\": #[DataCollection] and #[Cast] cannot be combined.",
+                );
+            }
+
+            if ($flattenAttrs !== []) {
+                throw new \InvalidArgumentException(
+                    "Parameter \"{$phpName}\": #[DataCollection] and #[Flatten] cannot be combined.",
+                );
+            }
+        }
+
+        if ($flattenAttrs !== [] && $castAttrs !== []) {
+            throw new \InvalidArgumentException(
+                "Parameter \"{$phpName}\": #[Flatten] and #[Cast] cannot be combined.",
+            );
         }
 
         [$nestedDataClass, $enumClass] = TypeResolver::resolve($parameter);
 
-        $castAttrs = $parameter->getAttributes(Cast::class);
+        if ($flattenAttrs !== [] && $nestedDataClass === null) {
+            throw new \InvalidArgumentException(
+                "Parameter \"{$phpName}\": #[Flatten] requires a nested BaseData type.",
+            );
+        }
+
         $rulesAttrs = $parameter->getAttributes(Rules::class);
 
         return new ParameterMeta(
