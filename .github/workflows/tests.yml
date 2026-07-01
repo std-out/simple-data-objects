@@ -77,11 +77,13 @@ jobs:
 
       - name: Update coverage badge
         if: github.ref == 'refs/heads/main'
-        uses: schneegans/dynamic-badges-action@v1.7.0
-        with:
-          auth: ${{ secrets.GIST_SECRET }}
-          gistID: 1a6bdbea77d160eeaf4524b8e165d3ac
-          filename: coverage.json
-          label: coverage
-          message: ${{ env.COVERAGE_PCT }}%
-          color: ${{ env.COVERAGE_PCT == '100' && 'brightgreen' || 'green' }}
+        env:
+          GIST_SECRET: ${{ secrets.GIST_SECRET }}
+        run: |
+          CONTENT=$(printf '{"schemaVersion":1,"label":"coverage","message":"%s%%","color":"brightgreen"}' "$COVERAGE_PCT")
+          curl -sf -X PATCH \
+            -H "Authorization: token $GIST_SECRET" \
+            -H "Content-Type: application/json" \
+            -H "User-Agent: GitHub-Actions" \
+            -d "{\"files\":{\"coverage.json\":{\"content\":$(echo "$CONTENT" | jq -Rs .)}}}" \
+            "https://api.github.com/gists/1a6bdbea77d160eeaf4524b8e165d3ac"
