@@ -81,9 +81,14 @@ abstract class BaseData implements Arrayable, DataObject, JsonSerializable, Stri
 
     public static function fromValidated(mixed $data): static
     {
-        static::validate($data);
+        $array = is_array($data) ? $data : InputNormalizer::normalize(static::class, $data);
+        $meta = Hydrator::classMeta(static::class);
 
-        return static::from($data);
+        if ($meta->validationRules !== []) {
+            static::validatorFactory()->make($array, $meta->validationRules)->validate();
+        }
+
+        return static::from($array);
     }
 
     /** @throws ValidationException */
@@ -156,25 +161,28 @@ abstract class BaseData implements Arrayable, DataObject, JsonSerializable, Stri
     public function toArray(): array
     {
         $meta = Hydrator::classMeta(static::class);
+        $vars = get_object_vars($this);
         $result = [];
 
-        foreach (get_object_vars($this) as $key => $value) {
-            if (isset($meta->hidden[$key])) {
+        foreach ($meta->parameters as $param) {
+            if ($param->isHidden) {
                 continue;
             }
 
-            if (is_null($value) && isset($meta->ignoreIfNull[$key])) {
+            $value = $vars[$param->phpName] ?? null;
+
+            if ($value === null && $param->ignoreIfNull) {
                 continue;
             }
 
-            if (isset($meta->flattened[$key]) && $value instanceof self) {
+            if ($param->flatten && $value instanceof self) {
                 $result = array_merge($result, $value->toArray());
 
                 continue;
             }
 
-            $result[$key] = isset($meta->casters[$key])
-                ? $meta->casters[$key]->set($value)
+            $result[$param->inputName] = $param->caster !== null
+                ? $param->caster->set($value)
                 : $this->normalizeValue($value);
         }
 
@@ -183,7 +191,7 @@ abstract class BaseData implements Arrayable, DataObject, JsonSerializable, Stri
 
     public function toJson(int $flags = 0): string
     {
-        return json_encode($this->toArray(), $flags) ?: '{}';
+        return json_encode($this->toArray(), $flags | JSON_THROW_ON_ERROR);
     }
 
     public function only(string ...$keys): array
@@ -206,7 +214,7 @@ abstract class BaseData implements Arrayable, DataObject, JsonSerializable, Stri
         return $this->toJson();
     }
 
-    protected function normalizeValue(mixed $value): mixed
+    private function normalizeValue(mixed $value): mixed
     {
         if ($value instanceof self) {
             return $value->toArray();

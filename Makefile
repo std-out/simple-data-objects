@@ -1,10 +1,13 @@
-.PHONY: build test lint lint-check shell
+.PHONY: build test coverage lint lint-check shell
 
 build:
 	docker compose build
 
 test:
-	docker compose run --rm app vendor/bin/phpunit --colors=always
+	docker compose run --rm app vendor/bin/phpunit --no-coverage --colors=always
+
+coverage:
+	docker compose run --rm app sh -c "mkdir -p build && vendor/bin/phpunit --coverage-text --coverage-clover=build/coverage.xml && composer coverage:check"
 
 lint:
 	docker compose run --rm app vendor/bin/pint

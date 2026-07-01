@@ -7,6 +7,8 @@ namespace StdOut\SimpleDataObjects\Tests;
 use JsonSerializable;
 use PHPUnit\Framework\TestCase;
 use StdOut\SimpleDataObjects\Exceptions\DataHydrationException;
+use StdOut\SimpleDataObjects\Tests\Fixtures\MultiUnionData;
+use StdOut\SimpleDataObjects\Tests\Fixtures\NullableData;
 use StdOut\SimpleDataObjects\Tests\Fixtures\OrderData;
 use StdOut\SimpleDataObjects\Tests\Fixtures\ProfileData;
 use StdOut\SimpleDataObjects\Tests\Fixtures\Status;
@@ -156,5 +158,38 @@ class HydrationTest extends TestCase
         $order = OrderData::from(['id' => 1, 'status' => Status::Inactive]);
 
         $this->assertSame(Status::Inactive, $order->status);
+    }
+
+    public function test_from_json_serializable_returning_object(): void
+    {
+        $serializable = new class implements JsonSerializable
+        {
+            public function jsonSerialize(): mixed
+            {
+                return (object) ['name' => 'Alice', 'email' => 'alice@example.com'];
+            }
+        };
+
+        $user = UserData::from($serializable);
+
+        $this->assertSame('Alice', $user->name);
+        $this->assertSame('alice@example.com', $user->email);
+    }
+
+    public function test_nullable_property_without_default_resolves_to_null_when_absent(): void
+    {
+        // NullableData has ?string $optional (no default) — tests Hydrator allowsNull path
+        $data = NullableData::from(['required' => 'hello']);
+
+        $this->assertSame('hello', $data->required);
+        $this->assertNull($data->optional);
+    }
+
+    public function test_union_type_resolves_enum_from_reflection_union_type(): void
+    {
+        // Status|string creates a ReflectionUnionType, covering TypeResolver union type body
+        $data = MultiUnionData::from(['status' => 'active']);
+
+        $this->assertSame(Status::Active, $data->status);
     }
 }

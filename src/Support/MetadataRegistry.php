@@ -80,8 +80,14 @@ final class MetadataRegistry
 
         // Write to a temp file then rename — atomic on POSIX systems
         $tmp = $file.'.tmp.'.getmypid();
-        file_put_contents($tmp, "<?php\n\nreturn {$export};\n");
-        rename($tmp, $file);
+
+        if (file_put_contents($tmp, "<?php\n\nreturn {$export};\n") === false) {
+            return;
+        }
+
+        if (! rename($tmp, $file)) {
+            @unlink($tmp);
+        }
     }
 
     /**

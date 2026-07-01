@@ -4,69 +4,40 @@ declare(strict_types=1);
 
 namespace StdOut\SimpleDataObjects\Support;
 
-use StdOut\SimpleDataObjects\Contracts\CastsValue;
+use StdOut\SimpleDataObjects\Contracts\DataPipe;
 
 final class ClassMeta
 {
     /** @var list<ParameterMeta> */
     public readonly array $parameters;
 
-    /** @var array<string, true> */
-    public readonly array $hidden;
-
-    /** @var array<string, true> */
-    public readonly array $ignoreIfNull;
-
-    /** @var array<string, CastsValue> */
-    public readonly array $casters;
-
     /** @var array<string, array<mixed>> */
     public readonly array $validationRules;
 
-    /** @var array<string, true> */
-    public readonly array $flattened;
+    /** @var list<class-string<DataPipe>> */
+    public readonly array $pipes;
 
-    /** @param list<ParameterMeta> $parameters */
-    public function __construct(array $parameters)
+    /**
+     * @param  list<ParameterMeta>  $parameters
+     * @param  list<class-string<DataPipe>>  $pipes
+     */
+    public function __construct(array $parameters, array $pipes = [])
     {
-        $hidden = [];
-        $ignoreIfNull = [];
-        $casters = [];
         $validationRules = [];
-        $flattened = [];
 
         foreach ($parameters as $meta) {
-            if ($meta->isHidden) {
-                $hidden[$meta->phpName] = true;
-            }
-
-            if ($meta->ignoreIfNull) {
-                $ignoreIfNull[$meta->phpName] = true;
-            }
-
-            if ($meta->caster !== null) {
-                $casters[$meta->phpName] = $meta->caster;
-            }
-
             if ($meta->rules !== []) {
                 $validationRules[$meta->inputName] = $meta->rules;
-            }
-
-            if ($meta->flatten) {
-                $flattened[$meta->phpName] = true;
             }
         }
 
         $this->parameters = $parameters;
-        $this->hidden = $hidden;
-        $this->ignoreIfNull = $ignoreIfNull;
-        $this->casters = $casters;
         $this->validationRules = $validationRules;
-        $this->flattened = $flattened;
+        $this->pipes = $pipes;
     }
 
     public static function __set_state(array $state): self
     {
-        return new self($state['parameters']);
+        return new self($state['parameters'], $state['pipes'] ?? []);
     }
 }

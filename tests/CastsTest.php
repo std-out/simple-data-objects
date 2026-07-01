@@ -6,6 +6,7 @@ namespace StdOut\SimpleDataObjects\Tests;
 
 use DateTime;
 use DateTimeImmutable;
+use DateTimeZone;
 use InvalidArgumentException;
 use PHPUnit\Framework\TestCase;
 use StdOut\SimpleDataObjects\Casts\DateTimeCast;
@@ -141,5 +142,76 @@ class CastsTest extends TestCase
         $dt = $cast->get('2024-06-01 12:00:00');
 
         $this->assertSame('Europe/Kyiv', $dt->getTimezone()->getName());
+    }
+
+    public function test_datetime_cast_accepts_datetimezone_object_in_constructor(): void
+    {
+        $cast = new DateTimeCast('Y-m-d', null, new DateTimeZone('Europe/Kyiv'));
+        $dt = $cast->get('2024-06-01');
+
+        $this->assertSame('Europe/Kyiv', $dt->getTimezone()->getName());
+    }
+
+    public function test_datetime_cast_converts_datetime_immutable_to_mutable(): void
+    {
+        $immutable = new DateTimeImmutable('2024-06-01');
+        $cast = new DateTimeCast('Y-m-d');
+        $result = $cast->get($immutable);
+
+        $this->assertInstanceOf(DateTime::class, $result);
+        $this->assertSame('2024-06-01', $result->format('Y-m-d'));
+    }
+
+    public function test_datetime_cast_set_with_string_value(): void
+    {
+        $cast = new DateTimeCast('Y-m-d');
+        $result = $cast->set('2024-06-01');
+
+        $this->assertSame('2024-06-01', $result);
+    }
+
+    public function test_datetime_immutable_cast_get_null_returns_null(): void
+    {
+        $this->assertNull((new DateTimeImmutableCast)->get(null));
+    }
+
+    public function test_datetime_immutable_cast_passes_through_immutable_instance(): void
+    {
+        $dt = new DateTimeImmutable('2024-06-01');
+        $result = (new DateTimeImmutableCast)->get($dt);
+
+        $this->assertSame($dt, $result);
+    }
+
+    public function test_datetime_immutable_cast_with_custom_input_format(): void
+    {
+        $cast = new DateTimeImmutableCast('Y-m-d', 'd/m/Y');
+        $dt = $cast->get('15/06/2024');
+
+        $this->assertInstanceOf(DateTimeImmutable::class, $dt);
+        $this->assertSame('2024-06-15', $dt->format('Y-m-d'));
+    }
+
+    public function test_datetime_immutable_cast_invalid_input_format_throws(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+
+        (new DateTimeImmutableCast('Y-m-d', 'd/m/Y'))->get('not-a-date');
+    }
+
+    public function test_datetime_immutable_cast_accepts_datetimezone_object(): void
+    {
+        $cast = new DateTimeImmutableCast('Y-m-d', null, new DateTimeZone('UTC'));
+        $dt = $cast->get('2024-06-01');
+
+        $this->assertSame('UTC', $dt->getTimezone()->getName());
+    }
+
+    public function test_datetime_immutable_cast_set_with_string_value(): void
+    {
+        $cast = new DateTimeImmutableCast('Y-m-d');
+        $result = $cast->set('2024-06-01');
+
+        $this->assertSame('2024-06-01', $result);
     }
 }

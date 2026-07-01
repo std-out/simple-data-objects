@@ -11,6 +11,10 @@ final class ValueCaster
 {
     public static function cast(ParameterMeta $meta, mixed $value): mixed
     {
+        if ($meta->pipes !== []) {
+            $value = PipelineRunner::runOnValue($value, $meta->phpName, $meta->pipes);
+        }
+
         if ($meta->caster !== null) {
             return $meta->caster->get($value);
         }
@@ -24,7 +28,7 @@ final class ValueCaster
         }
 
         if ($meta->nestedDataClass !== null && $value !== null) {
-            return $meta->nestedDataClass::from($value);
+            return $value instanceof $meta->nestedDataClass ? $value : $meta->nestedDataClass::from($value);
         }
 
         if ($meta->enumClass !== null && $value !== null && ! ($value instanceof UnitEnum)) {

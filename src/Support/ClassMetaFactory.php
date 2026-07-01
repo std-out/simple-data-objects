@@ -12,18 +12,16 @@ use StdOut\SimpleDataObjects\Attributes\Flatten;
 use StdOut\SimpleDataObjects\Attributes\Hidden;
 use StdOut\SimpleDataObjects\Attributes\IgnoreIfNull;
 use StdOut\SimpleDataObjects\Attributes\MapPropertyName;
+use StdOut\SimpleDataObjects\Attributes\Pipe;
 use StdOut\SimpleDataObjects\Attributes\Rules;
 use StdOut\SimpleDataObjects\Attributes\TransformKeys;
 use StdOut\SimpleDataObjects\Exceptions\DataHydrationException;
 
 final class ClassMetaFactory
 {
-    /** @var array<string, ReflectionClass<object>> */
-    private static array $reflectionCache = [];
-
     public static function build(string $class): ClassMeta
     {
-        $reflection = self::reflect($class);
+        $reflection = new ReflectionClass($class);
         $constructor = $reflection->getConstructor();
 
         if ($constructor === null) {
@@ -33,10 +31,16 @@ final class ClassMetaFactory
         $transformAttrs = $reflection->getAttributes(TransformKeys::class);
         $strategy = $transformAttrs !== [] ? $transformAttrs[0]->newInstance()->strategy : null;
 
-        return new ClassMeta(array_map(
-            static fn (ReflectionParameter $p): ParameterMeta => self::buildParam($p, $strategy),
-            $constructor->getParameters(),
-        ));
+        $pipeAttrs = $reflection->getAttributes(Pipe::class);
+        $pipes = $pipeAttrs !== [] ? $pipeAttrs[0]->newInstance()->pipes : [];
+
+        return new ClassMeta(
+            array_map(
+                static fn (ReflectionParameter $p): ParameterMeta => self::buildParam($p, $strategy),
+                $constructor->getParameters(),
+            ),
+            $pipes,
+        );
     }
 
     private static function buildParam(ReflectionParameter $parameter, ?string $strategy): ParameterMeta
@@ -91,6 +95,8 @@ final class ClassMetaFactory
         }
 
         $rulesAttrs = $parameter->getAttributes(Rules::class);
+        $pipeAttrs = $parameter->getAttributes(Pipe::class);
+        $paramPipes = $pipeAttrs !== [] ? $pipeAttrs[0]->newInstance()->pipes : [];
 
         return new ParameterMeta(
             phpName: $phpName,
@@ -106,11 +112,7 @@ final class ClassMetaFactory
             flatten: $parameter->getAttributes(Flatten::class) !== [],
             rules: $rulesAttrs !== [] ? $rulesAttrs[0]->newInstance()->rules : [],
             caster: $castAttrs !== [] ? $castAttrs[0]->newInstance()->caster : null,
+            pipes: $paramPipes,
         );
-    }
-
-    private static function reflect(string $class): ReflectionClass
-    {
-        return self::$reflectionCache[$class] ??= new ReflectionClass($class);
     }
 }

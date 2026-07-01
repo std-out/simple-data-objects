@@ -19,9 +19,13 @@ final class TypedDataCollection extends Collection
      */
     public static function of(string $dataClass, iterable $items = []): static
     {
-        return new self(
-            collect($items)->map(fn (mixed $item) => $item instanceof $dataClass ? $item : $dataClass::from($item)),
-        );
+        $result = [];
+
+        foreach ($items as $item) {
+            $result[] = $item instanceof $dataClass ? $item : $dataClass::from($item);
+        }
+
+        return new self($result);
     }
 
     /**

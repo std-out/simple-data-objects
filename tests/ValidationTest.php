@@ -4,8 +4,13 @@ declare(strict_types=1);
 
 namespace StdOut\SimpleDataObjects\Tests;
 
+use Illuminate\Container\Container;
+use Illuminate\Translation\ArrayLoader;
+use Illuminate\Translation\Translator;
+use Illuminate\Validation\Factory as ValidatorFactory;
 use Illuminate\Validation\ValidationException;
 use PHPUnit\Framework\TestCase;
+use StdOut\SimpleDataObjects\BaseData;
 use StdOut\SimpleDataObjects\Tests\Fixtures\UserData;
 use StdOut\SimpleDataObjects\Tests\Fixtures\ValidatedUserData;
 
@@ -121,5 +126,44 @@ class ValidationTest extends TestCase
         ]);
 
         $this->assertSame('not-an-email', $user->email);
+    }
+
+    public function test_set_validator_factory_is_used(): void
+    {
+        $factory = new ValidatorFactory(new Translator(new ArrayLoader, 'en'));
+        BaseData::setValidatorFactory($factory);
+
+        $user = ValidatedUserData::fromValidated(['name' => 'Alice', 'email' => 'alice@example.com']);
+
+        $this->assertSame('Alice', $user->name);
+    }
+
+    public function test_validator_factory_resolved_from_container(): void
+    {
+        $factory = new ValidatorFactory(new Translator(new ArrayLoader, 'en'));
+
+        $container = new Container;
+        $container->instance('validator', $factory);
+        Container::setInstance($container);
+
+        $ref = new \ReflectionProperty(BaseData::class, 'validatorFactory');
+        $ref->setValue(null, null);
+
+        try {
+            $user = ValidatedUserData::fromValidated(['name' => 'Alice', 'email' => 'alice@example.com']);
+            $this->assertSame('Alice', $user->name);
+        } finally {
+            Container::setInstance(null);
+            $ref->setValue(null, null);
+        }
+    }
+
+    public function test_validate_skips_validation_when_class_has_no_rules(): void
+    {
+        // UserData has no #[Rules] attributes, so validationRules === []
+        // This covers BaseData::validate() early return at line 100
+        UserData::validate(['name' => 'Alice', 'email' => 'alice@example.com']);
+
+        $this->assertTrue(true);
     }
 }

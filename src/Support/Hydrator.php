@@ -10,8 +10,12 @@ final class Hydrator
 {
     public static function resolveArguments(string $class, mixed $input): array
     {
-        $data = InputNormalizer::normalize($class, $input);
         $meta = MetadataRegistry::get($class);
+        $data = InputNormalizer::normalize($class, $input);
+
+        if ($meta->pipes !== []) {
+            $data = PipelineRunner::run($data, $class, $meta->pipes);
+        }
         $arguments = [];
 
         foreach ($meta->parameters as $param) {

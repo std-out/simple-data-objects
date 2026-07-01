@@ -116,4 +116,25 @@ class CollectionTest extends TestCase
         $this->assertInstanceOf(TypedDataCollection::class, $collection);
         $this->assertCount(0, $collection);
     }
+
+    public function test_null_value_for_non_nullable_collection_returns_empty_collection(): void
+    {
+        $team = TeamData::from(['name' => 'Dev', 'members' => null]);
+
+        $this->assertInstanceOf(TypedDataCollection::class, $team->members);
+        $this->assertCount(0, $team->members);
+    }
+
+    public function test_typed_data_collection_last(): void
+    {
+        $collection = UserData::collection([
+            ['name' => 'Alice', 'email' => 'alice@example.com'],
+            ['name' => 'Bob', 'email' => 'bob@example.com'],
+        ]);
+
+        $last = $collection->last();
+
+        $this->assertInstanceOf(UserData::class, $last);
+        $this->assertSame('Bob', $last->name);
+    }
 }

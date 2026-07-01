@@ -43,8 +43,9 @@
     "scripts": {
         "lint": "vendor/bin/pint",
         "lint:check": "vendor/bin/pint --test",
-        "test": "vendor/bin/phpunit",
-        "test:coverage": "vendor/bin/phpunit --coverage-text"
+        "test": "vendor/bin/phpunit --no-coverage",
+        "test:coverage": "vendor/bin/phpunit --coverage-text --coverage-clover=build/coverage.xml",
+        "coverage:check": "php bin/check-coverage.php build/coverage.xml 100"
     },
     "minimum-stability": "stable",
     "prefer-stable": true

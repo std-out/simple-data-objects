@@ -9,12 +9,15 @@ use JsonException;
 use PHPUnit\Framework\TestCase;
 use StdOut\SimpleDataObjects\Casts\BooleanCast;
 use StdOut\SimpleDataObjects\Casts\EncryptedCast;
+use StdOut\SimpleDataObjects\Casts\EnumCast;
 use StdOut\SimpleDataObjects\Casts\FloatCast;
 use StdOut\SimpleDataObjects\Casts\IntegerCast;
 use StdOut\SimpleDataObjects\Casts\JsonCast;
 use StdOut\SimpleDataObjects\Casts\TrimCast;
+use StdOut\SimpleDataObjects\Tests\Fixtures\Priority;
 use StdOut\SimpleDataObjects\Tests\Fixtures\ProductData;
 use StdOut\SimpleDataObjects\Tests\Fixtures\SecretData;
+use StdOut\SimpleDataObjects\Tests\Fixtures\Status;
 
 class PrimitiveCastsTest extends TestCase
 {
@@ -219,6 +222,16 @@ class PrimitiveCastsTest extends TestCase
         (new EncryptedCast('my-key'))->get('not!!valid!!base64!!####');
     }
 
+    public function test_encrypted_cast_too_short_value_throws(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('too short');
+
+        // 10 bytes < SODIUM_CRYPTO_SECRETBOX_NONCEBYTES (24)
+        $short = sodium_bin2base64(str_repeat('x', 10), SODIUM_BASE64_VARIANT_URLSAFE_NO_PADDING);
+        (new EncryptedCast('my-key'))->get($short);
+    }
+
     public function test_encrypted_cast_tampered_ciphertext_throws(): void
     {
         $cast = new EncryptedCast('my-key');
@@ -264,5 +277,47 @@ class PrimitiveCastsTest extends TestCase
 
         $this->assertNotSame('my-api-token', $array['token']);
         $this->assertSame('my-api-token', (new EncryptedCast('test-encryption-key'))->get($array['token']));
+    }
+
+    // EnumCast::set() missing paths
+
+    public function test_enum_cast_set_returns_null_for_null(): void
+    {
+        $cast = new EnumCast(Status::class, Status::Inactive);
+
+        $this->assertNull($cast->set(null));
+    }
+
+    public function test_enum_cast_set_returns_name_for_pure_unit_enum(): void
+    {
+        $cast = new EnumCast(Priority::class);
+
+        $this->assertSame('High', $cast->set(Priority::High));
+    }
+
+    public function test_enum_cast_set_passes_through_non_enum_value(): void
+    {
+        $cast = new EnumCast(Status::class);
+
+        $this->assertSame('raw_value', $cast->set('raw_value'));
+    }
+
+    public function test_enum_cast_get_returns_default_for_pure_unit_enum_string_value(): void
+    {
+        $cast = new EnumCast(Priority::class, Priority::Low);
+
+        $this->assertSame(Priority::Low, $cast->get('anything'));
+    }
+
+    public function test_boolean_cast_set_returns_null_for_null(): void
+    {
+        $this->assertNull((new BooleanCast)->set(null));
+    }
+
+    public function test_float_cast_set_delegates_to_get(): void
+    {
+        $cast = new FloatCast(2);
+
+        $this->assertSame(3.14, $cast->set(3.14159));
     }
 }

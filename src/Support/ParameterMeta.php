@@ -5,9 +5,15 @@ declare(strict_types=1);
 namespace StdOut\SimpleDataObjects\Support;
 
 use StdOut\SimpleDataObjects\Contracts\CastsValue;
+use StdOut\SimpleDataObjects\Contracts\ValuePipe;
 
 final class ParameterMeta
 {
+    /**
+     * @param  class-string|null  $nestedDataClass
+     * @param  class-string|null  $enumClass
+     * @param  class-string|null  $dataCollectionClass
+     */
     public function __construct(
         public readonly string $phpName,
         public readonly string $inputName,
@@ -22,6 +28,8 @@ final class ParameterMeta
         public readonly bool $flatten,
         public readonly array $rules,
         public readonly ?CastsValue $caster,
+        /** @var list<class-string<ValuePipe>> */
+        public readonly array $pipes = [],
     ) {}
 
     public static function __set_state(array $state): self
@@ -40,6 +48,7 @@ final class ParameterMeta
             flatten: $state['flatten'],
             rules: $state['rules'],
             caster: $state['caster'],
+            pipes: $state['pipes'] ?? [],
         );
     }
 }

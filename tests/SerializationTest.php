@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 namespace StdOut\SimpleDataObjects\Tests;
 
+use Illuminate\Contracts\Support\Arrayable;
 use PHPUnit\Framework\TestCase;
 use StdOut\SimpleDataObjects\Tests\Fixtures\AuthData;
+use StdOut\SimpleDataObjects\Tests\Fixtures\MixedPayloadData;
 use StdOut\SimpleDataObjects\Tests\Fixtures\NullableIgnoredData;
 use StdOut\SimpleDataObjects\Tests\Fixtures\OrderData;
 use StdOut\SimpleDataObjects\Tests\Fixtures\ProfileData;
@@ -126,5 +128,21 @@ class SerializationTest extends TestCase
         $this->assertArrayNotHasKey('phone', $result);
         $this->assertArrayHasKey('name', $result);
         $this->assertArrayHasKey('email', $result);
+    }
+
+    public function test_arrayable_value_serialized_via_to_array(): void
+    {
+        $arrayable = new class implements Arrayable
+        {
+            public function toArray(): array
+            {
+                return ['x' => 1, 'y' => 2];
+            }
+        };
+
+        $data = MixedPayloadData::from(['label' => 'point', 'payload' => $arrayable]);
+        $array = $data->toArray();
+
+        $this->assertSame(['x' => 1, 'y' => 2], $array['payload']);
     }
 }

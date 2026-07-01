@@ -13,5 +13,9 @@ final class TransformKeys
 
     public const string CAMEL_CASE = 'camel_case';
 
+    public const string STUDLY_CASE = 'studly_case';
+
+    public const string KEBAB_CASE = 'kebab_case';
+
     public function __construct(public readonly string $strategy) {}
 }

@@ -1,6 +1,8 @@
 services:
   app:
     build: .
+    environment:
+      COMPOSER_ROOT_VERSION: dev-main
     volumes:
       - ./src:/app/src
       - ./tests:/app/tests
