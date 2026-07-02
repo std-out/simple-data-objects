@@ -12,6 +12,8 @@ use StdOut\SimpleDataObjects\TypedDataCollection;
 public readonly TypedDataCollection $items,
 ```
 
+The target class is validated when metadata is built: it must exist **and** be a data object (extend `BaseData`), otherwise a `DataHydrationException` is thrown immediately instead of failing later at runtime.
+
 ## Example
 
 ```php
@@ -55,5 +57,5 @@ Cannot combine with `#[Cast]` or `#[Flatten]` on the same parameter.
 
 ## See Also
 
-- [Collections feature →](/features/collections)
-- [`TypedDataCollection` generics →](/features/collections#typeddatacollection)
+- [Collections feature →](../features/collections.md)
+- [`TypedDataCollection` generics →](../features/collections.md#typeddatacollection)

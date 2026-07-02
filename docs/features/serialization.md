@@ -42,7 +42,7 @@ $profile->toArray();
 
 ## Hidden Fields
 
-Use [`#[Hidden]`](/attributes/hidden) to exclude a property from all output:
+Use [`#[Hidden]`](../attributes/hidden.md) to exclude a property from all output:
 
 ```php
 class AuthData extends BaseData
@@ -59,7 +59,7 @@ AuthData::from([...])->toArray(); // ['username' => 'alice']
 
 ## Omitting Null Values
 
-Use [`#[IgnoreIfNull]`](/attributes/ignore-if-null) to skip a property when its value is `null`:
+Use [`#[IgnoreIfNull]`](../attributes/ignore-if-null.md) to skip a property when its value is `null`:
 
 ```php
 class ArticleData extends BaseData
@@ -86,4 +86,4 @@ Casts transform values in both directions. On `toArray()`, the `set()` method of
 | `JsonCast` | `['key' => 'val']` | `'{"key":"val"}'` |
 | `EncryptedCast('key')` | plaintext string | AES ciphertext |
 
-See [Casts →](/casts/) for the full reference.
+See [Casts →](../casts/index.md) for the full reference.

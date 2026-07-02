@@ -78,7 +78,7 @@ Nested DTOs can be nested further — any depth is supported.
 
 ## Enums
 
-`BackedEnum` values are cast from their backing scalar automatically. `UnitEnum` is passed through as-is when the raw value matches a case name.
+`BackedEnum` values are cast from their backing scalar automatically. Pure (non-backed) `UnitEnum` values are matched by **case name**:
 
 ```php
 enum Status: string
@@ -87,18 +87,37 @@ enum Status: string
     case Inactive = 'inactive';
 }
 
+enum Priority // no backing type
+{
+    case Low;
+    case High;
+}
+
 class OrderData extends BaseData
 {
     public function __construct(
-        public readonly Status $status,
+        public readonly Status $status,      // from 'active'
+        public readonly Priority $priority,  // from 'High' (case name)
     ) {}
 }
 
-$order = OrderData::from(['status' => 'active']);
-$order->status; // Status::Active
+$order = OrderData::from(['status' => 'active', 'priority' => 'High']);
+$order->status;   // Status::Active
+$order->priority; // Priority::High
 ```
 
-For more control (fallback value, `tryFrom` behaviour), use [`EnumCast`](/casts/enum).
+Already-instantiated enum values pass through unchanged.
+
+### Invalid Enum Values
+
+A value that matches no case throws a `DataHydrationException` with the field name for a **required** parameter, and resolves to `null` for a **nullable** one:
+
+```php
+OrderData::from(['status' => 'bogus', 'priority' => 'High']);
+// throws DataHydrationException: Invalid value 'bogus' for field 'status'; expected a case of Status.
+```
+
+For a fallback value instead of an exception, use [`EnumCast`](../casts/enum.md).
 
 ## Optional Fields
 

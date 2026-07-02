@@ -48,7 +48,7 @@ $event->toArray()['isPublic']; // true
 
 ## Built-in Casts
 
-See [Built-in Casts →](/casts/) for the full list.
+See [Built-in Casts →](../casts/index.md) for the full list.
 
 ## Custom Casts
 
@@ -71,4 +71,4 @@ final class UpperCaseCast implements CastsValue
 }
 ```
 
-See [Custom Casts →](/casts/custom).
+See [Custom Casts →](../casts/custom.md).

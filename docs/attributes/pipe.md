@@ -69,5 +69,5 @@ Pass multiple pipe classes — they execute **left to right**:
 
 ## See Also
 
-- [DataPipe feature guide →](/features/pipes)
-- [Custom Casts →](/casts/custom) — if you need two-directional transformation (hydration + serialization)
+- [DataPipe feature guide →](../features/pipes.md)
+- [Custom Casts →](../casts/custom.md) — if you need two-directional transformation (hydration + serialization)

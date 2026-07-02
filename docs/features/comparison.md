@@ -21,6 +21,15 @@ $a === $b;      // false — different objects
 $a->equals($b); // true  — same data
 ```
 
+Objects of **different classes are never equal**, even if their `toArray()` output happens to match:
+
+```php
+$user  = UserData::from(['name' => 'Alice']);
+$admin = AdminData::from(['name' => 'Alice']);
+
+$user->equals($admin); // false — different classes
+```
+
 ## diff()
 
 Returns an array of fields that differ between two DTOs. Each entry is `[this_value, other_value]`:

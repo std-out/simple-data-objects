@@ -8,6 +8,8 @@ PHP's `sodium` extension (bundled with PHP 7.2+ by default).
 
 ## Usage
 
+Attribute arguments only allow **constant expressions** — calling `env()` or `config()` inside an attribute is a compile error. Pass the *name* of an environment variable instead; the key is resolved from the environment when the cast is instantiated:
+
 ```php
 use StdOut\SimpleDataObjects\Attributes\Cast;
 use StdOut\SimpleDataObjects\Casts\EncryptedCast;
@@ -17,14 +19,16 @@ class UserData extends BaseData
     public function __construct(
         public readonly string $name,
 
-        #[Cast(new EncryptedCast(key: env('SECRET_KEY')))]
+        #[Cast(new EncryptedCast(env: 'DATA_ENCRYPTION_KEY'))]
         public readonly string $taxId,
 
-        #[Cast(new EncryptedCast(key: env('SECRET_KEY')))]
+        #[Cast(new EncryptedCast(env: 'DATA_ENCRYPTION_KEY'))]
         public readonly ?string $creditCard = null,
     ) {}
 }
 ```
+
+A literal key is also accepted (`new EncryptedCast(key: '...')`) — useful in tests, but **avoid it in application code**: the key would live in your source tree. Exactly one of `key` / `env` must be provided; a missing or empty environment variable throws a `RuntimeException` immediately rather than silently encrypting with an empty key.
 
 ### Hydration (decrypt)
 
@@ -54,6 +58,14 @@ Every `set()` call produces a **different ciphertext** because a random 24-byte 
 | Key derivation | BLAKE2b (`sodium_crypto_generichash`) from the provided key string |
 | Nonce | 24 random bytes prepended to each ciphertext |
 | Encoding | Base64 URL-safe, no padding (SODIUM_BASE64_VARIANT_URLSAFE_NO_PADDING) |
+
+## Key Handling
+
+The cast is designed so key material never leaves process memory:
+
+- **Never written to the metadata file cache.** `EncryptedCast` deliberately does not implement `__set_state()`, so classes using it are excluded from [file-based metadata persistence](../features/cache.md) — only the in-memory cache applies. Exporting the cast would write the key to disk in plaintext.
+- **Not serializable.** `serialize()` on the cast throws a `LogicException`.
+- **Redacted in debug output.** `var_dump()` / `print_r()` show `[redacted]` instead of the derived key, and the constructor parameter is marked `#[\SensitiveParameter]`, so the raw key does not appear in stack traces.
 
 ## Tamper Detection
 

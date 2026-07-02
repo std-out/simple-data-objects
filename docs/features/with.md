@@ -58,6 +58,15 @@ $updated = $event->with(startsAt: $dt);
 $updated->startsAt === $dt; // true
 ```
 
+## Unknown Properties Throw
+
+A typo in an override name is reported instead of being silently ignored:
+
+```php
+$user->with(emial: 'bob@example.com');
+// throws InvalidArgumentException: Unknown property [emial] for App\Data\UserData::with().
+```
+
 ## Pattern: Copy-on-Write
 
 `with()` is ideal for "update state" patterns without mutable setters:

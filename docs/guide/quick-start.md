@@ -131,7 +131,7 @@ $updated->email; // 'newemail@example.com'
 
 ## What's Next?
 
-- [Hydration →](/features/hydration) — all input formats, enums, nested DTOs
-- [Cast System →](/casts/) — built-in and custom casts
-- [Validation →](/features/validation) — full Laravel rule support
-- [Laravel Integration →](/features/laravel) — `fromRequest()`, `fromModel()`, `toResponse()`
+- [Hydration →](../features/hydration.md) — all input formats, enums, nested DTOs
+- [Cast System →](../casts/index.md) — built-in and custom casts
+- [Validation →](../features/validation.md) — full Laravel rule support
+- [Laravel Integration →](../features/laravel.md) — `fromRequest()`, `fromModel()`, `toResponse()`

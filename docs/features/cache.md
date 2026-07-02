@@ -44,7 +44,7 @@ This means:
 
 ### File Naming
 
-Cache files are named `sha256(classname).php`. There is no path traversal risk regardless of class naming.
+Cache files are named `sha256(classname).meta.php`. There is no path traversal risk regardless of class naming, and the distinct `.meta.php` suffix guarantees cache clearing can never touch foreign files.
 
 ## Clearing the Cache
 
@@ -52,11 +52,13 @@ Cache files are named `sha256(classname).php`. There is no path traversal risk r
 MetadataRegistry::clearCache();
 ```
 
-Clears both in-memory and on-disk cache. Run this after deploying new DTO classes or after modifying attributes.
+Clears both in-memory and on-disk cache. Run this after deploying new DTO classes or after modifying attributes. Only files matching `*.meta.php` are deleted — even if the storage path accidentally points at a shared directory, other `.php` files are safe.
 
 ## Limitations
 
 Classes whose metadata includes non-exportable objects (Laravel `Rule` instances, closures) fall back to in-memory cache only. String rules are always cacheable.
+
+Classes using [`EncryptedCast`](../casts/encrypted.md) also fall back to in-memory cache only — by design: persisting the cast would write its key material to disk in plaintext.
 
 ```php
 // ✅ Cacheable
@@ -88,4 +90,8 @@ final class MoneyCast implements CastsValue
 
 ::: warning Note on visibility
 Properties used in `__set_state()` must be **public** or accessible via the state array. PHP mangles private property names in `var_export()` output. Declare reconstruction-relevant properties as `public readonly`.
+:::
+
+::: danger Casts holding secrets
+`var_export()` dumps **every** property of the cast — including private ones — into the cache file. If your custom cast holds a secret (API key, encryption key, token), do **not** implement `__set_state()`: the class will simply be skipped by the file cache and keep working via the in-memory cache.
 :::

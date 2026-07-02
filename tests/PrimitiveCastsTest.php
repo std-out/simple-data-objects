@@ -279,6 +279,42 @@ class PrimitiveCastsTest extends TestCase
         $this->assertSame('my-api-token', (new EncryptedCast('test-encryption-key'))->get($array['token']));
     }
 
+    public function test_encrypted_cast_resolves_key_from_environment(): void
+    {
+        $_ENV['SDO_TEST_ENC_KEY'] = 'env-key';
+
+        try {
+            $encrypted = (new EncryptedCast(env: 'SDO_TEST_ENC_KEY'))->set('secret');
+
+            // Same key material as passing the literal key directly
+            $this->assertSame('secret', (new EncryptedCast('env-key'))->get($encrypted));
+        } finally {
+            unset($_ENV['SDO_TEST_ENC_KEY']);
+        }
+    }
+
+    public function test_encrypted_cast_missing_env_variable_throws(): void
+    {
+        $this->expectException(\RuntimeException::class);
+        $this->expectExceptionMessage("Environment variable 'SDO_TEST_MISSING_KEY'");
+
+        new EncryptedCast(env: 'SDO_TEST_MISSING_KEY');
+    }
+
+    public function test_encrypted_cast_requires_exactly_one_key_source(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+
+        new EncryptedCast;
+    }
+
+    public function test_encrypted_cast_rejects_both_key_and_env(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+
+        new EncryptedCast(key: 'a', env: 'B');
+    }
+
     // EnumCast::set() missing paths
 
     public function test_enum_cast_set_returns_null_for_null(): void

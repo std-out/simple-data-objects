@@ -53,4 +53,4 @@ $payment->toArray();
 
 ## Class-level Remapping
 
-For systematic key transformation (snake_case ↔ camelCase), use [`#[TransformKeys]`](/attributes/transform-keys) on the class instead of mapping each property individually.
+For systematic key transformation (snake_case ↔ camelCase), use [`#[TransformKeys]`](./transform-keys.md) on the class instead of mapping each property individually.

@@ -25,8 +25,29 @@ final class EncryptedCast implements CastsValue
 {
     private readonly string $secretKey;
 
-    public function __construct(#[\SensitiveParameter] string $key)
-    {
+    /**
+     * Attribute arguments only allow constant expressions — env() or config()
+     * calls are a compile error there. Pass the NAME of an environment
+     * variable via $env to keep the key itself out of source code:
+     *
+     *     #[Cast(new EncryptedCast(env: 'DATA_ENCRYPTION_KEY'))]
+     */
+    public function __construct(
+        #[\SensitiveParameter] ?string $key = null,
+        ?string $env = null,
+    ) {
+        if (($key === null) === ($env === null)) {
+            throw new InvalidArgumentException('Provide exactly one of $key or $env.');
+        }
+
+        if ($env !== null) {
+            $key = $_ENV[$env] ?? getenv($env);
+
+            if (! is_string($key) || $key === '') {
+                throw new RuntimeException("Environment variable '{$env}' is not set or empty.");
+            }
+        }
+
         // BLAKE2b: a secure, fast KDF — no brute-force shortcut unlike raw sha256
         $this->secretKey = sodium_crypto_generichash($key, '', SODIUM_CRYPTO_SECRETBOX_KEYBYTES);
     }

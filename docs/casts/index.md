@@ -8,15 +8,15 @@ Casts implement `CastsValue` with two methods:
 
 | Cast | Hydration result | Serialization output |
 |---|---|---|
-| [`DateTimeCast`](/casts/date-time) | `DateTime` | formatted string |
-| [`DateTimeImmutableCast`](/casts/date-time) | `DateTimeImmutable` | formatted string |
-| [`EnumCast`](/casts/enum) | `BackedEnum` instance | backing value |
-| [`BooleanCast`](/casts/boolean) | `bool` | `bool` |
-| [`IntegerCast`](/casts/numeric) | `int` | `int` |
-| [`FloatCast`](/casts/numeric) | `float` | `float` |
-| [`TrimCast`](/casts/trim) | trimmed `string` | trimmed `string` |
-| [`JsonCast`](/casts/json) | `array` | JSON `string` |
-| [`EncryptedCast`](/casts/encrypted) | plaintext `string` | encrypted ciphertext |
+| [`DateTimeCast`](./date-time.md) | `DateTime` | formatted string |
+| [`DateTimeImmutableCast`](./date-time.md) | `DateTimeImmutable` | formatted string |
+| [`EnumCast`](./enum.md) | `BackedEnum` instance | backing value |
+| [`BooleanCast`](./boolean.md) | `bool` | `bool` |
+| [`IntegerCast`](./numeric.md) | `int` | `int` |
+| [`FloatCast`](./numeric.md) | `float` | `float` |
+| [`TrimCast`](./trim.md) | trimmed `string` | trimmed `string` |
+| [`JsonCast`](./json.md) | `array` | JSON `string` |
+| [`EncryptedCast`](./encrypted.md) | plaintext `string` | encrypted ciphertext |
 
 ## Applying Casts
 
@@ -43,4 +43,4 @@ interface CastsValue
 }
 ```
 
-See [Custom Casts →](/casts/custom) for implementing your own.
+See [Custom Casts →](./custom.md) for implementing your own.
