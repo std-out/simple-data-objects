@@ -180,7 +180,7 @@ class HydrationTest extends TestCase
 
     public function test_nullable_property_without_default_resolves_to_null_when_absent(): void
     {
-        // NullableData has ?string $optional (no default) — tests Hydrator allowsNull path
+        // NullableData has ?string $optional (no default) — tests the allowsNull hydration path
         $data = NullableData::from(['required' => 'hello']);
 
         $this->assertSame('hello', $data->required);

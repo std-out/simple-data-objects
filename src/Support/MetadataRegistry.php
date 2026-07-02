@@ -30,6 +30,8 @@ final class MetadataRegistry
     public static function clearCache(): void
     {
         self::$cache = [];
+        HydratorCompiler::flush();
+        SerializerCompiler::flush();
 
         if (self::$storagePath === null || ! is_dir(self::$storagePath)) {
             return;
@@ -40,10 +42,17 @@ final class MetadataRegistry
         }
     }
 
+    public static function isPersisted(string $class): bool
+    {
+        return self::$storagePath !== null && is_file(self::cacheFile($class));
+    }
+
     /** @internal for testing only */
     public static function flush(): void
     {
         self::$cache = [];
+        HydratorCompiler::flush();
+        SerializerCompiler::flush();
     }
 
     private static function load(string $class): ClassMeta
@@ -55,11 +64,24 @@ final class MetadataRegistry
         $file = self::cacheFile($class);
 
         if (is_file($file)) {
-            return require $file;
+            $cached = require $file;
+
+            // v2 format: [meta, hydrator, serializer] — restore the compiled
+            // closures too, so warmed processes skip eval entirely (opcache
+            // serves the whole file precompiled).
+            if (is_array($cached)) {
+                [$meta, $hydrator, $serializer] = $cached;
+                HydratorCompiler::$hydrators[$class] = $hydrator;
+                SerializerCompiler::$serializers[$class] = \Closure::bind($serializer, null, $class);
+
+                return $meta;
+            }
+
+            return $cached;
         }
 
         $meta = ClassMetaFactory::build($class);
-        self::persist($file, $meta);
+        self::persist($class, $file, $meta);
 
         return $meta;
     }
@@ -70,7 +92,7 @@ final class MetadataRegistry
         return self::$storagePath.'/'.hash('sha256', $class).self::FILE_SUFFIX;
     }
 
-    private static function persist(string $file, ClassMeta $meta): void
+    private static function persist(string $class, string $file, ClassMeta $meta): void
     {
         if (! self::isExportable($meta)) {
             return;
@@ -84,11 +106,23 @@ final class MetadataRegistry
         }
 
         $export = var_export($meta, true);
+        $hydrator = HydratorCompiler::generate($class, $meta);
+        $serializer = SerializerCompiler::generate($class, $meta);
+
+        $code = "<?php\n\n"
+            ."\$meta = {$export};\n"
+            ."\$p = \$meta->parameters;\n"
+            ."\$pipes = \$meta->pipes;\n\n"
+            ."return [\n"
+            ."    \$meta,\n"
+            ."    {$hydrator},\n"
+            ."    {$serializer},\n"
+            ."];\n";
 
         // Write to a temp file then rename — atomic on POSIX systems
         $tmp = $file.'.tmp.'.getmypid();
 
-        if (file_put_contents($tmp, "<?php\n\nreturn {$export};\n") === false) {
+        if (file_put_contents($tmp, $code) === false) {
             return;
         }
 

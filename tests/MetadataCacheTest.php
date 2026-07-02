@@ -7,8 +7,10 @@ namespace StdOut\SimpleDataObjects\Tests;
 use PHPUnit\Framework\TestCase;
 use StdOut\SimpleDataObjects\Casts\EncryptedCast;
 use StdOut\SimpleDataObjects\Support\ClassMeta;
+use StdOut\SimpleDataObjects\Support\HydratorCompiler;
 use StdOut\SimpleDataObjects\Support\MetadataRegistry;
 use StdOut\SimpleDataObjects\Support\ParameterMeta;
+use StdOut\SimpleDataObjects\Support\SerializerCompiler;
 use StdOut\SimpleDataObjects\Tests\Fixtures\EventData;
 use StdOut\SimpleDataObjects\Tests\Fixtures\NonExportableData;
 use StdOut\SimpleDataObjects\Tests\Fixtures\PaymentData;
@@ -276,6 +278,52 @@ class MetadataCacheTest extends TestCase
 
         unlink($fakePath);
         MetadataRegistry::setStoragePath('');
+    }
+
+    public function test_cache_file_restores_compiled_closures(): void
+    {
+        MetadataRegistry::setStoragePath($this->cacheDir);
+
+        UserData::from(['name' => 'Alice', 'email' => 'alice@example.com']);
+        MetadataRegistry::flush();
+
+        $this->assertArrayNotHasKey(UserData::class, HydratorCompiler::$hydrators);
+
+        MetadataRegistry::get(UserData::class);
+
+        $this->assertArrayHasKey(UserData::class, HydratorCompiler::$hydrators);
+        $this->assertArrayHasKey(UserData::class, SerializerCompiler::$serializers);
+
+        $user = UserData::from(['name' => 'Bob', 'email' => 'bob@example.com']);
+        $this->assertSame(['name' => 'Bob', 'email' => 'bob@example.com', 'phone' => null], $user->toArray());
+    }
+
+    public function test_to_array_uses_persisted_serializer_after_flush(): void
+    {
+        MetadataRegistry::setStoragePath($this->cacheDir);
+
+        $user = UserData::from(['name' => 'Alice', 'email' => 'alice@example.com']);
+        MetadataRegistry::flush();
+
+        // SerializerCompiler::compile() finds the closure restored from the file
+        $this->assertSame(
+            ['name' => 'Alice', 'email' => 'alice@example.com', 'phone' => null],
+            $user->toArray(),
+        );
+    }
+
+    public function test_legacy_plain_meta_cache_file_still_loads(): void
+    {
+        $meta = MetadataRegistry::get(UserData::class);
+        $file = $this->cacheDir.'/'.hash('sha256', UserData::class).'.meta.php';
+        file_put_contents($file, "<?php\n\nreturn ".var_export($meta, true).";\n");
+
+        MetadataRegistry::setStoragePath($this->cacheDir);
+        MetadataRegistry::flush();
+
+        $user = UserData::from(['name' => 'Bob', 'email' => 'bob@example.com']);
+
+        $this->assertSame('Bob', $user->name);
     }
 
     public function test_persist_skips_when_tmp_file_cannot_be_written(): void

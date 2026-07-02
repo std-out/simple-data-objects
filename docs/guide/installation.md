@@ -53,6 +53,12 @@ use StdOut\SimpleDataObjects\Support\MetadataRegistry;
 MetadataRegistry::setStoragePath(storage_path('framework/data-objects'));
 ```
 
+Pre-warm the cache on deploy so the first request pays nothing (see [Metadata Cache](../features/cache.md#pre-warming-on-deploy)):
+
+```bash
+vendor/bin/sdo-warm storage/framework/data-objects app/Data
+```
+
 Clear on deploy:
 
 ```bash

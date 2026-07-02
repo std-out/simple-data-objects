@@ -10,6 +10,12 @@ use StdOut\SimpleDataObjects\Contracts\ValuePipe;
 final class ParameterMeta
 {
     /**
+     * True when hydration needs no transformation at all — the raw input
+     * value is used as-is, letting the hot path skip ValueCaster entirely.
+     */
+    public readonly bool $isPlain;
+
+    /**
      * @param  class-string|null  $nestedDataClass
      * @param  class-string|null  $enumClass
      * @param  class-string|null  $dataCollectionClass
@@ -30,7 +36,13 @@ final class ParameterMeta
         public readonly ?CastsValue $caster,
         /** @var list<class-string<ValuePipe>> */
         public readonly array $pipes = [],
-    ) {}
+    ) {
+        $this->isPlain = $caster === null
+            && $nestedDataClass === null
+            && $enumClass === null
+            && $dataCollectionClass === null
+            && $pipes === [];
+    }
 
     public static function __set_state(array $state): self
     {

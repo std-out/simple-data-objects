@@ -1,0 +1,78 @@
+#!/usr/bin/env php
+<?php
+
+declare(strict_types=1);
+
+// Locate the autoloader. Order matters: composer's bin proxy provides the
+// exact path; otherwise prefer the project the command is run FROM (cwd) —
+// with a path-repository symlink __DIR__ resolves inside the package source,
+// where the relative guesses would pick the wrong vendor tree.
+$candidates = [
+    $_composer_autoload_path ?? null,
+    getcwd().'/vendor/autoload.php',
+    __DIR__.'/../../../autoload.php',
+    __DIR__.'/../vendor/autoload.php',
+];
+
+foreach ($candidates as $autoload) {
+    if ($autoload !== null && is_file($autoload)) {
+        require $autoload;
+        break;
+    }
+}
+
+use StdOut\SimpleDataObjects\Support\CacheWarmer;
+
+$args = array_slice($argv, 1);
+
+if ($args === []) {
+    fwrite(STDERR, "Pre-builds the metadata + compiled hydrator/serializer cache for every\n");
+    fwrite(STDERR, "concrete BaseData subclass found in the scanned sources.\n\n");
+    fwrite(STDERR, "Usage: sdo-warm <cache-dir> [<src-path> ...]\n\n");
+    fwrite(STDERR, "Without <src-path> arguments, the PSR-4 directories from ./composer.json\n");
+    fwrite(STDERR, "are scanned.\n\n");
+    fwrite(STDERR, "Example: vendor/bin/sdo-warm storage/framework/cache/data-objects app/Data\n");
+    exit(2);
+}
+
+$cacheDir = array_shift($args);
+
+if ($args === []) {
+    $args = CacheWarmer::pathsFromComposer(getcwd().'/composer.json');
+
+    if ($args === []) {
+        fwrite(STDERR, "No source paths given and no PSR-4 autoload directories found in ./composer.json.\n");
+        exit(2);
+    }
+
+    echo 'Scanning PSR-4 paths from composer.json: '.implode(', ', $args)."\n\n";
+}
+
+try {
+    $result = CacheWarmer::warm($cacheDir, $args);
+} catch (Throwable $e) {
+    fwrite(STDERR, 'ERROR: '.$e->getMessage()."\n");
+    exit(1);
+}
+
+if ($result['warmed'] === [] && $result['skipped'] === []) {
+    fwrite(STDERR, "WARNING: no concrete BaseData subclasses found under: ".implode(', ', $args)."\n");
+    fwrite(STDERR, "Check that the classes are autoloadable from the current working directory.\n");
+}
+
+foreach ($result['warmed'] as $class) {
+    echo "  warmed  {$class}\n";
+}
+
+foreach ($result['skipped'] as $class) {
+    echo "  skipped {$class} (metadata not exportable — in-memory cache only)\n";
+}
+
+printf(
+    "\n%d class(es) warmed, %d skipped → %s\n",
+    count($result['warmed']),
+    count($result['skipped']),
+    $cacheDir,
+);
+
+exit(0);

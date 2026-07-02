@@ -31,7 +31,7 @@ features:
     details: "#[Cast], #[Rules], #[Flatten], #[Hidden], #[IgnoreIfNull] — all behaviour defined where the property is declared."
   - icon: 🚀
     title: Production-ready performance
-    details: Reflection runs once per class and is cached in memory. Optional file cache lets opcache pre-compile all metadata.
+    details: Hydration and serialization compile to per-class closures. The file cache plus the sdo-warm CLI give production zero reflection and zero runtime compilation.
   - icon: 🛡️
     title: Secure by default
     details: EncryptedCast uses XSalsa20-Poly1305 authenticated encryption. Validation throws before any hydration occurs.

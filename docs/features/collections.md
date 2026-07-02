@@ -35,6 +35,20 @@ $collection = UserData::collection([$user, [...]]);
 // $collection->first() === $user
 ```
 
+## Lazy Collections
+
+`lazyCollection()` returns an `Illuminate\Support\LazyCollection` that hydrates items **one at a time as they are consumed**, instead of materializing everything upfront. Use it for large iterables — a DB cursor, a generator streaming a big CSV — where holding every hydrated instance in memory at once would be wasteful:
+
+```php
+$names = UserData::lazyCollection($csvRowGenerator)
+    ->take(3)
+    ->map(fn (UserData $u) => $u->name)
+    ->all();
+// only 3 rows were ever hydrated, no matter how large the source is
+```
+
+Like `collection()`, already-hydrated instances pass through unchanged.
+
 ## Nested Collections in DTOs
 
 Use `#[DataCollection(ClassName::class)]` to declare a property as a typed collection:

@@ -4,10 +4,9 @@ declare(strict_types=1);
 
 namespace StdOut\SimpleDataObjects;
 
-use BackedEnum;
 use Illuminate\Container\Container;
 use Illuminate\Contracts\Support\Arrayable;
-use Illuminate\Support\Collection;
+use Illuminate\Support\LazyCollection;
 use Illuminate\Translation\ArrayLoader;
 use Illuminate\Translation\Translator;
 use Illuminate\Validation\Factory as ValidatorFactory;
@@ -15,11 +14,12 @@ use Illuminate\Validation\ValidationException;
 use JsonSerializable;
 use StdOut\SimpleDataObjects\Contracts\DataObject;
 use StdOut\SimpleDataObjects\Exceptions\DataHydrationException;
-use StdOut\SimpleDataObjects\Support\Hydrator;
+use StdOut\SimpleDataObjects\Support\HydratorCompiler;
 use StdOut\SimpleDataObjects\Support\InputNormalizer;
+use StdOut\SimpleDataObjects\Support\MetadataRegistry;
+use StdOut\SimpleDataObjects\Support\SerializerCompiler;
 use StdOut\SimpleDataObjects\Support\ValueCaster;
 use Stringable;
-use UnitEnum;
 
 abstract class BaseData implements Arrayable, DataObject, JsonSerializable, Stringable
 {
@@ -27,7 +27,10 @@ abstract class BaseData implements Arrayable, DataObject, JsonSerializable, Stri
 
     public static function from(mixed $data): static
     {
-        return new static(...Hydrator::resolveArguments(static::class, $data));
+        /** @var static */
+        return (HydratorCompiler::$hydrators[static::class] ?? HydratorCompiler::compile(static::class))(
+            is_array($data) ? $data : InputNormalizer::normalize(static::class, $data),
+        );
     }
 
     public static function tryFrom(mixed $data): ?static
@@ -47,6 +50,25 @@ abstract class BaseData implements Arrayable, DataObject, JsonSerializable, Stri
         return TypedDataCollection::of(static::class, $items);
     }
 
+    /**
+     * Like `collection()`, but hydrates one item at a time as the collection
+     * is consumed instead of materializing the whole array upfront. Use this
+     * for large iterables (a DB cursor, a generator reading a big CSV) where
+     * holding every hydrated instance in memory at once would be wasteful.
+     *
+     * @return LazyCollection<int, static>
+     */
+    public static function lazyCollection(iterable $items): LazyCollection
+    {
+        $class = static::class;
+
+        return LazyCollection::make(static function () use ($items, $class): \Generator {
+            foreach ($items as $item) {
+                yield $item instanceof $class ? $item : $class::from($item);
+            }
+        });
+    }
+
     public static function fromJson(string $json): static
     {
         $data = json_decode($json, true, 32);
@@ -60,13 +82,14 @@ abstract class BaseData implements Arrayable, DataObject, JsonSerializable, Stri
 
     public function with(mixed ...$overrides): static
     {
-        $meta = Hydrator::classMeta(static::class);
+        $meta = MetadataRegistry::get(static::class);
         $current = get_object_vars($this);
         $args = [];
 
         foreach ($meta->parameters as $param) {
             if (array_key_exists($param->phpName, $overrides)) {
-                $args[] = ValueCaster::cast($param, $overrides[$param->phpName]);
+                $value = $overrides[$param->phpName];
+                $args[] = $param->isPlain ? $value : ValueCaster::cast($param, $value);
                 unset($overrides[$param->phpName]);
 
                 continue;
@@ -87,7 +110,7 @@ abstract class BaseData implements Arrayable, DataObject, JsonSerializable, Stri
     public static function fromValidated(mixed $data): static
     {
         $array = is_array($data) ? $data : InputNormalizer::normalize(static::class, $data);
-        $meta = Hydrator::classMeta(static::class);
+        $meta = MetadataRegistry::get(static::class);
 
         if ($meta->validationRules !== []) {
             static::validatorFactory()->make($array, $meta->validationRules)->validate();
@@ -99,7 +122,7 @@ abstract class BaseData implements Arrayable, DataObject, JsonSerializable, Stri
     /** @throws ValidationException */
     public static function validate(mixed $data): void
     {
-        $meta = Hydrator::classMeta(static::class);
+        $meta = MetadataRegistry::get(static::class);
 
         if ($meta->validationRules === []) {
             return;
@@ -167,33 +190,7 @@ abstract class BaseData implements Arrayable, DataObject, JsonSerializable, Stri
 
     public function toArray(): array
     {
-        $meta = Hydrator::classMeta(static::class);
-        $vars = get_object_vars($this);
-        $result = [];
-
-        foreach ($meta->parameters as $param) {
-            if ($param->isHidden) {
-                continue;
-            }
-
-            $value = $vars[$param->phpName] ?? null;
-
-            if ($value === null && $param->ignoreIfNull) {
-                continue;
-            }
-
-            if ($param->flatten && $value instanceof self) {
-                $result = array_merge($result, $value->toArray());
-
-                continue;
-            }
-
-            $result[$param->inputName] = $param->caster !== null
-                ? $param->caster->set($value)
-                : $this->normalizeValue($value);
-        }
-
-        return $result;
+        return (SerializerCompiler::$serializers[static::class] ?? SerializerCompiler::compile(static::class))($this);
     }
 
     public function toJson(int $flags = 0): string
@@ -219,34 +216,5 @@ abstract class BaseData implements Arrayable, DataObject, JsonSerializable, Stri
     public function __toString(): string
     {
         return $this->toJson();
-    }
-
-    private function normalizeValue(mixed $value): mixed
-    {
-        if ($value instanceof self) {
-            return $value->toArray();
-        }
-
-        if ($value instanceof Collection) {
-            return $value->map(fn (mixed $item): mixed => $this->normalizeValue($item))->all();
-        }
-
-        if (is_array($value)) {
-            return array_map(fn (mixed $item): mixed => $this->normalizeValue($item), $value);
-        }
-
-        if ($value instanceof BackedEnum) {
-            return $value->value;
-        }
-
-        if ($value instanceof UnitEnum) {
-            return $value->name;
-        }
-
-        if ($value instanceof Arrayable) {
-            return $value->toArray();
-        }
-
-        return $value;
     }
 }

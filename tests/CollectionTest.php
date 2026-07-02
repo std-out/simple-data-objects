@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace StdOut\SimpleDataObjects\Tests;
 
+use Illuminate\Support\LazyCollection;
 use PHPUnit\Framework\TestCase;
 use StdOut\SimpleDataObjects\Exceptions\DataHydrationException;
 use StdOut\SimpleDataObjects\Tests\Fixtures\InvalidCollectionData;
@@ -145,5 +146,75 @@ class CollectionTest extends TestCase
 
         $this->assertInstanceOf(UserData::class, $last);
         $this->assertSame('Bob', $last->name);
+    }
+
+    public function test_lazy_collection_returns_lazy_collection(): void
+    {
+        $collection = UserData::lazyCollection([
+            ['name' => 'Alice', 'email' => 'alice@example.com'],
+            ['name' => 'Bob', 'email' => 'bob@example.com'],
+        ]);
+
+        $this->assertInstanceOf(LazyCollection::class, $collection);
+        $this->assertCount(2, $collection);
+    }
+
+    public function test_lazy_collection_items_are_hydrated(): void
+    {
+        $collection = UserData::lazyCollection([
+            ['name' => 'Alice', 'email' => 'alice@example.com'],
+        ]);
+
+        $this->assertInstanceOf(UserData::class, $collection->first());
+        $this->assertSame('Alice', $collection->first()->name);
+    }
+
+    public function test_lazy_collection_passes_through_existing_instances(): void
+    {
+        $user = UserData::from(['name' => 'Alice', 'email' => 'alice@example.com']);
+        $collection = UserData::lazyCollection([$user]);
+
+        $this->assertSame($user, $collection->first());
+    }
+
+    public function test_lazy_collection_does_not_hydrate_until_consumed(): void
+    {
+        $hydrated = 0;
+
+        $source = (static function () use (&$hydrated): \Generator {
+            foreach (range(1, 3) as $i) {
+                $hydrated++;
+                yield ['name' => "User $i", 'email' => "user{$i}@example.com"];
+            }
+        })();
+
+        $collection = UserData::lazyCollection($source);
+
+        $this->assertSame(0, $hydrated);
+
+        $first = $collection->first();
+
+        $this->assertSame('User 1', $first->name);
+        $this->assertSame(1, $hydrated);
+    }
+
+    public function test_lazy_collection_stops_hydrating_once_enough_items_are_taken(): void
+    {
+        $hydrated = 0;
+
+        $source = (static function () use (&$hydrated): \Generator {
+            foreach (range(1, 1000) as $i) {
+                $hydrated++;
+                yield ['name' => "User $i", 'email' => "user{$i}@example.com"];
+            }
+        })();
+
+        $names = UserData::lazyCollection($source)
+            ->take(3)
+            ->map(fn (UserData $user): string => $user->name)
+            ->all();
+
+        $this->assertSame(['User 1', 'User 2', 'User 3'], $names);
+        $this->assertSame(3, $hydrated);
     }
 }

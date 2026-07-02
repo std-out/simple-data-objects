@@ -27,6 +27,7 @@
         "illuminate/http": "Required to use HasLaravelIntegration::fromRequest() and toResponse()",
         "illuminate/database": "Required to use HasLaravelIntegration::fromModel()"
     },
+    "bin": ["bin/sdo-warm"],
     "autoload": {
         "psr-4": {
             "StdOut\\SimpleDataObjects\\": "src/"

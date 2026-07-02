@@ -6,6 +6,8 @@ The first time a DTO class is hydrated, the library uses PHP Reflection to read 
 
 For subsequent calls in the **same PHP process**, reflection is skipped entirely. This covers long-running runtimes like **Laravel Octane**, **Swoole**, and **RoadRunner** with zero extra configuration.
 
+On top of the metadata, `from()` and `toArray()` compile a **specialized closure per class** on first use (kept in memory for the process): plain properties become direct array reads/writes, and only properties with casts, enums, nested DTOs, or pipes go through the richer runtime path. Behavior is identical to the metadata-driven path — this is purely an execution-speed optimization.
+
 ## File-based Cache (PHP-FPM)
 
 In traditional PHP-FPM environments, each request starts a fresh process. Enable the file cache to persist metadata between requests:
@@ -20,31 +22,46 @@ On first access, a PHP file is written for each class. Subsequent requests `requ
 
 ### Cache File Format
 
-Cache files use `var_export()` with `__set_state()`, not `serialize()`:
+Cache files use `var_export()` with `__set_state()`, not `serialize()`, and carry the **compiled hydrator and serializer closures** alongside the metadata:
 
 ```php
 <?php
 
-return StdOut\SimpleDataObjects\Support\ClassMeta::__set_state([
-    'parameters' => [
-        StdOut\SimpleDataObjects\Support\ParameterMeta::__set_state([
-            'phpName'    => 'name',
-            'inputName'  => 'name',
-            'allowsNull' => false,
-            // ...
-        ]),
-    ],
-]);
+$meta = \StdOut\SimpleDataObjects\Support\ClassMeta::__set_state([/* ... */]);
+$p = $meta->parameters;
+$pipes = $meta->pipes;
+
+return [
+    $meta,
+    static function (array $d) use ($p, $pipes): \App\Data\UserData { /* compiled hydration */ },
+    static function (\App\Data\UserData $o) use ($p): array { /* compiled serialization */ },
+];
 ```
 
 This means:
 - **No deserialization gadget chains** — no `unserialize()` call
-- **Opcache-friendly** — the file is compiled to opcodes once
+- **Opcache-friendly** — the whole file, closures included, is compiled to opcodes once; a warmed process pays neither reflection nor closure compilation
 - **Human-readable** — easy to inspect during debugging
 
 ### File Naming
 
 Cache files are named `sha256(classname).meta.php`. There is no path traversal risk regardless of class naming, and the distinct `.meta.php` suffix guarantees cache clearing can never touch foreign files.
+
+## Pre-warming on Deploy
+
+Instead of letting the first request pay the build cost, generate the cache ahead of time with the bundled CLI:
+
+```sh
+# scan specific paths
+vendor/bin/sdo-warm storage/framework/cache/data-objects app/Data
+
+# or scan all PSR-4 directories from your composer.json automatically
+vendor/bin/sdo-warm storage/framework/cache/data-objects
+```
+
+It scans the sources for **concrete** `BaseData` subclasses (abstract bases are skipped), builds each class's metadata **and compiled closures**, and writes the cache files. Add it to your deploy script right before the app goes live — every FPM worker then starts fully warm.
+
+Classes whose metadata cannot be exported (see [Limitations](#limitations)) are reported as `skipped` and keep using the in-memory cache. A broken DTO definition (e.g. conflicting attributes) fails the command immediately — deploy-time is exactly when you want to find out.
 
 ## Clearing the Cache
 
