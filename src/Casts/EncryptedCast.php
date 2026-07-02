@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace StdOut\SimpleDataObjects\Casts;
 
 use InvalidArgumentException;
+use LogicException;
 use RuntimeException;
 use SodiumException;
 use StdOut\SimpleDataObjects\Contracts\CastsValue;
@@ -12,25 +13,22 @@ use StdOut\SimpleDataObjects\Contracts\CastsValue;
 /**
  * Authenticated encryption using XSalsa20-Poly1305 (libsodium).
  *
+ * Deliberately NOT exportable to the metadata file cache (no __set_state):
+ * exporting would write the key material to disk in plaintext. Classes using
+ * this cast still get the in-memory metadata cache; only file persistence
+ * is skipped.
+ *
  * Breaking change from previous AES-256-CBC version: existing ciphertext
  * produced by the old cast is not compatible and must be re-encrypted.
  */
 final class EncryptedCast implements CastsValue
 {
-    public readonly string $key;
-
     private readonly string $secretKey;
 
-    public function __construct(string $key)
+    public function __construct(#[\SensitiveParameter] string $key)
     {
-        $this->key = $key;
         // BLAKE2b: a secure, fast KDF — no brute-force shortcut unlike raw sha256
         $this->secretKey = sodium_crypto_generichash($key, '', SODIUM_CRYPTO_SECRETBOX_KEYBYTES);
-    }
-
-    public static function __set_state(array $state): self
-    {
-        return new self($state['key']);
     }
 
     public function get(mixed $value): ?string
@@ -71,5 +69,17 @@ final class EncryptedCast implements CastsValue
         $ciphertext = sodium_crypto_secretbox((string) $value, $nonce, $this->secretKey);
 
         return sodium_bin2base64($nonce.$ciphertext, SODIUM_BASE64_VARIANT_URLSAFE_NO_PADDING);
+    }
+
+    /** Prevents the derived key from leaking through serialize(). */
+    public function __serialize(): array
+    {
+        throw new LogicException('EncryptedCast holds key material and must not be serialized.');
+    }
+
+    /** Redacts key material in var_dump()/print_r() output. */
+    public function __debugInfo(): array
+    {
+        return ['secretKey' => '[redacted]'];
     }
 }

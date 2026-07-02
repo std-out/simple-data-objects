@@ -67,8 +67,22 @@ class MetadataCacheTest extends TestCase
         UserData::from(['name' => 'Alice', 'email' => 'alice@example.com']);
 
         $files = glob($this->cacheDir.'/*.php');
-        $expected = hash('sha256', UserData::class).'.php';
+        $expected = hash('sha256', UserData::class).'.meta.php';
         $this->assertSame($expected, basename($files[0]));
+    }
+
+    public function test_clear_cache_only_removes_own_meta_files(): void
+    {
+        MetadataRegistry::setStoragePath($this->cacheDir);
+
+        $foreign = $this->cacheDir.'/foreign.php';
+        file_put_contents($foreign, '<?php return 1;');
+
+        UserData::from(['name' => 'Alice', 'email' => 'alice@example.com']);
+        MetadataRegistry::clearCache();
+
+        $this->assertFileExists($foreign);
+        $this->assertEmpty(glob($this->cacheDir.'/*.meta.php'));
     }
 
     public function test_cached_meta_produces_correct_instance(): void
@@ -177,7 +191,7 @@ class MetadataCacheTest extends TestCase
         $this->assertSame(100, $payment->amount);
     }
 
-    public function test_cache_restores_encrypted_cast_via_set_state(): void
+    public function test_encrypted_cast_is_never_persisted_to_disk(): void
     {
         MetadataRegistry::setStoragePath($this->cacheDir);
 
@@ -185,8 +199,12 @@ class MetadataCacheTest extends TestCase
         $encrypted = $cast->set('secret');
 
         SecretData::from(['token' => $encrypted]);
-        MetadataRegistry::flush();
 
+        // Key material must never be written to the file cache
+        $this->assertEmpty(glob($this->cacheDir.'/*.meta.php'));
+
+        // Hydration still works via the in-memory metadata cache
+        MetadataRegistry::flush();
         $secret = SecretData::from(['token' => $encrypted]);
 
         $this->assertSame('secret', $secret->token);
@@ -260,6 +278,29 @@ class MetadataCacheTest extends TestCase
         MetadataRegistry::setStoragePath('');
     }
 
+    public function test_persist_skips_when_tmp_file_cannot_be_written(): void
+    {
+        // Pre-create a DIRECTORY at the deterministic tmp path so
+        // file_put_contents fails even when tests run as root (read-only
+        // permissions would not stop root), covering the failure branch.
+        $tmpPath = $this->cacheDir.'/'.hash('sha256', UserData::class).'.meta.php.tmp.'.getmypid();
+        mkdir($tmpPath, 0755, true);
+
+        MetadataRegistry::setStoragePath($this->cacheDir);
+        MetadataRegistry::flush();
+
+        set_error_handler(static fn () => true);
+        try {
+            UserData::from(['name' => 'Alice', 'email' => 'alice@example.com']);
+        } finally {
+            restore_error_handler();
+        }
+
+        $this->assertEmpty(glob($this->cacheDir.'/*.meta.php'));
+
+        rmdir($tmpPath);
+    }
+
     public function test_persist_unlinks_tmp_when_rename_fails(): void
     {
         MetadataRegistry::setStoragePath($this->cacheDir);
@@ -267,7 +308,7 @@ class MetadataCacheTest extends TestCase
 
         // Pre-create the target cache file as a directory so rename fails.
         // We suppress the expected PHP warning for the same reason as above.
-        $targetFile = $this->cacheDir.'/'.hash('sha256', UserData::class).'.php';
+        $targetFile = $this->cacheDir.'/'.hash('sha256', UserData::class).'.meta.php';
         mkdir($targetFile, 0755, true);
 
         set_error_handler(static fn () => true);
@@ -285,10 +326,20 @@ class MetadataCacheTest extends TestCase
         rmdir($targetFile);
     }
 
-    public function test_encrypted_cast_set_state_directly(): void
+    public function test_encrypted_cast_refuses_serialization(): void
     {
-        $cast = EncryptedCast::__set_state(['key' => 'direct-test-key', 'secretKey' => '']);
-        $encrypted = $cast->set('hello');
-        $this->assertSame('hello', $cast->get($encrypted));
+        $this->expectException(\LogicException::class);
+
+        serialize(new EncryptedCast('direct-test-key'));
+    }
+
+    public function test_encrypted_cast_redacts_debug_output(): void
+    {
+        ob_start();
+        var_dump(new EncryptedCast('direct-test-key'));
+        $dump = (string) ob_get_clean();
+
+        $this->assertStringContainsString('[redacted]', $dump);
+        $this->assertStringNotContainsString('direct-test-key', $dump);
     }
 }

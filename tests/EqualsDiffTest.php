@@ -106,4 +106,12 @@ class EqualsDiffTest extends TestCase
         $this->assertArrayHasKey('email', $diff);
         $this->assertArrayHasKey('phone', $diff);
     }
+
+    public function test_equals_returns_false_for_different_classes(): void
+    {
+        $user = UserData::from(['name' => 'Alice', 'email' => 'alice@example.com']);
+        $event = EventData::from(['name' => 'Conf', 'startsAt' => '2024-06-01']);
+
+        $this->assertFalse($user->equals($event));
+    }
 }

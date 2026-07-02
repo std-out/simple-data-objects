@@ -1,6 +1,6 @@
 {
     "name": "std-out/simple-data-objects",
-    "description": "Lightweight typed Data Transfer Object library for PHP 8.1+ with attribute-driven hydration",
+    "description": "Lightweight typed Data Transfer Object library for PHP 8.4+ with attribute-driven hydration",
     "keywords": ["dto", "data-object", "data-transfer-object", "laravel", "hydration", "simple"],
     "type": "library",
     "license": "MIT",
@@ -23,6 +23,7 @@
         "phpunit/phpunit": "^11.0"
     },
     "suggest": {
+        "ext-sodium": "Required to use EncryptedCast (bundled with PHP by default)",
         "illuminate/http": "Required to use HasLaravelIntegration::fromRequest() and toResponse()",
         "illuminate/database": "Required to use HasLaravelIntegration::fromModel()"
     },

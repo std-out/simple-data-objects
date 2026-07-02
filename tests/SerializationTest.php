@@ -13,6 +13,7 @@ use StdOut\SimpleDataObjects\Tests\Fixtures\OrderData;
 use StdOut\SimpleDataObjects\Tests\Fixtures\ProfileData;
 use StdOut\SimpleDataObjects\Tests\Fixtures\TaggedData;
 use StdOut\SimpleDataObjects\Tests\Fixtures\TeamData;
+use StdOut\SimpleDataObjects\Tests\Fixtures\TicketData;
 use StdOut\SimpleDataObjects\Tests\Fixtures\UserData;
 
 class SerializationTest extends TestCase
@@ -144,5 +145,12 @@ class SerializationTest extends TestCase
         $array = $data->toArray();
 
         $this->assertSame(['x' => 1, 'y' => 2], $array['payload']);
+    }
+
+    public function test_pure_enum_serializes_to_case_name(): void
+    {
+        $ticket = TicketData::from(['title' => 'Bug', 'priority' => 'High']);
+
+        $this->assertSame('High', $ticket->toArray()['priority']);
     }
 }

@@ -10,8 +10,10 @@ use StdOut\SimpleDataObjects\Exceptions\DataHydrationException;
 use StdOut\SimpleDataObjects\Tests\Fixtures\MultiUnionData;
 use StdOut\SimpleDataObjects\Tests\Fixtures\NullableData;
 use StdOut\SimpleDataObjects\Tests\Fixtures\OrderData;
+use StdOut\SimpleDataObjects\Tests\Fixtures\Priority;
 use StdOut\SimpleDataObjects\Tests\Fixtures\ProfileData;
 use StdOut\SimpleDataObjects\Tests\Fixtures\Status;
+use StdOut\SimpleDataObjects\Tests\Fixtures\TicketData;
 use StdOut\SimpleDataObjects\Tests\Fixtures\UserData;
 
 class HydrationTest extends TestCase
@@ -191,5 +193,50 @@ class HydrationTest extends TestCase
         $data = MultiUnionData::from(['status' => 'active']);
 
         $this->assertSame(Status::Active, $data->status);
+    }
+
+    public function test_invalid_enum_value_for_required_field_throws(): void
+    {
+        $this->expectException(DataHydrationException::class);
+        $this->expectExceptionMessageMatches("/Invalid value 'bogus' for field 'status'/");
+
+        OrderData::from(['id' => 1, 'status' => 'bogus']);
+    }
+
+    public function test_non_scalar_enum_value_for_required_field_throws(): void
+    {
+        $this->expectException(DataHydrationException::class);
+        $this->expectExceptionMessageMatches("/Invalid value array for field 'status'/");
+
+        OrderData::from(['id' => 1, 'status' => ['nested']]);
+    }
+
+    public function test_invalid_enum_value_for_nullable_field_resolves_to_null(): void
+    {
+        $order = OrderData::from(['id' => 1, 'status' => 'active', 'previousStatus' => 'bogus']);
+
+        $this->assertNull($order->previousStatus);
+    }
+
+    public function test_pure_enum_hydrated_from_case_name(): void
+    {
+        $ticket = TicketData::from(['title' => 'Bug', 'priority' => 'High']);
+
+        $this->assertSame(Priority::High, $ticket->priority);
+    }
+
+    public function test_pure_enum_invalid_case_name_throws(): void
+    {
+        $this->expectException(DataHydrationException::class);
+        $this->expectExceptionMessageMatches("/Invalid value 'Urgent' for field 'priority'/");
+
+        TicketData::from(['title' => 'Bug', 'priority' => 'Urgent']);
+    }
+
+    public function test_pure_enum_invalid_value_for_nullable_field_resolves_to_null(): void
+    {
+        $ticket = TicketData::from(['title' => 'Bug', 'priority' => 'Low', 'fallbackPriority' => 'Nope']);
+
+        $this->assertNull($ticket->fallbackPriority);
     }
 }

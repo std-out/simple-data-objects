@@ -6,6 +6,12 @@ namespace StdOut\SimpleDataObjects\Support;
 
 final class MetadataRegistry
 {
+    /**
+     * Distinct suffix so clearCache() can never delete foreign .php files
+     * if the storage path points at a shared directory.
+     */
+    private const string FILE_SUFFIX = '.meta.php';
+
     /** @var array<string, ClassMeta> */
     private static array $cache = [];
 
@@ -29,7 +35,7 @@ final class MetadataRegistry
             return;
         }
 
-        foreach (glob(self::$storagePath.'/*.php') ?: [] as $file) {
+        foreach (glob(self::$storagePath.'/*'.self::FILE_SUFFIX) ?: [] as $file) {
             @unlink($file);
         }
     }
@@ -61,7 +67,7 @@ final class MetadataRegistry
     private static function cacheFile(string $class): string
     {
         // sha256 of class name: no traversal risk, no length issues, deterministic
-        return self::$storagePath.'/'.hash('sha256', $class).'.php';
+        return self::$storagePath.'/'.hash('sha256', $class).self::FILE_SUFFIX;
     }
 
     private static function persist(string $file, ClassMeta $meta): void
@@ -72,8 +78,9 @@ final class MetadataRegistry
 
         $dir = dirname($file);
 
-        if (! is_dir($dir)) {
-            mkdir($dir, 0755, true);
+        // Racing processes may create the directory between checks
+        if (! is_dir($dir) && ! @mkdir($dir, 0755, true) && ! is_dir($dir)) {
+            return;
         }
 
         $export = var_export($meta, true);

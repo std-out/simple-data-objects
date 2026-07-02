@@ -19,6 +19,7 @@ use StdOut\SimpleDataObjects\Support\Hydrator;
 use StdOut\SimpleDataObjects\Support\InputNormalizer;
 use StdOut\SimpleDataObjects\Support\ValueCaster;
 use Stringable;
+use UnitEnum;
 
 abstract class BaseData implements Arrayable, DataObject, JsonSerializable, Stringable
 {
@@ -43,14 +44,7 @@ abstract class BaseData implements Arrayable, DataObject, JsonSerializable, Stri
      */
     public static function collection(iterable $items): TypedDataCollection
     {
-        $class = static::class;
-        $result = [];
-
-        foreach ($items as $item) {
-            $result[] = $item instanceof $class ? $item : $class::from($item);
-        }
-
-        return new TypedDataCollection($result);
+        return TypedDataCollection::of(static::class, $items);
     }
 
     public static function fromJson(string $json): static
@@ -71,9 +65,20 @@ abstract class BaseData implements Arrayable, DataObject, JsonSerializable, Stri
         $args = [];
 
         foreach ($meta->parameters as $param) {
-            $args[] = array_key_exists($param->phpName, $overrides)
-                ? ValueCaster::cast($param, $overrides[$param->phpName])
-                : $current[$param->phpName];
+            if (array_key_exists($param->phpName, $overrides)) {
+                $args[] = ValueCaster::cast($param, $overrides[$param->phpName]);
+                unset($overrides[$param->phpName]);
+
+                continue;
+            }
+
+            $args[] = $current[$param->phpName];
+        }
+
+        if ($overrides !== []) {
+            throw new \InvalidArgumentException(
+                sprintf('Unknown propert%s [%s] for %s::with().', count($overrides) === 1 ? 'y' : 'ies', implode(', ', array_keys($overrides)), static::class),
+            );
         }
 
         return new static(...$args);
@@ -120,10 +125,12 @@ abstract class BaseData implements Arrayable, DataObject, JsonSerializable, Stri
 
         $container = Container::getInstance();
         if ($container->bound('validator')) {
+            // Not memoized: long-running runtimes (Octane) may rebind the
+            // container between requests; resolving a singleton is cheap.
             /** @var ValidatorFactory $factory */
             $factory = $container->make('validator');
 
-            return self::$validatorFactory = $factory;
+            return $factory;
         }
 
         return self::$validatorFactory = new ValidatorFactory(
@@ -136,7 +143,7 @@ abstract class BaseData implements Arrayable, DataObject, JsonSerializable, Stri
 
     public function equals(self $other): bool
     {
-        return $this->toArray() === $other->toArray();
+        return $other::class === static::class && $this->toArray() === $other->toArray();
     }
 
     /** @return array<string, array{0: mixed, 1: mixed}> */
@@ -230,6 +237,10 @@ abstract class BaseData implements Arrayable, DataObject, JsonSerializable, Stri
 
         if ($value instanceof BackedEnum) {
             return $value->value;
+        }
+
+        if ($value instanceof UnitEnum) {
+            return $value->name;
         }
 
         if ($value instanceof Arrayable) {

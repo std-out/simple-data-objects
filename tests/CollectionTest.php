@@ -7,6 +7,7 @@ namespace StdOut\SimpleDataObjects\Tests;
 use PHPUnit\Framework\TestCase;
 use StdOut\SimpleDataObjects\Exceptions\DataHydrationException;
 use StdOut\SimpleDataObjects\Tests\Fixtures\InvalidCollectionData;
+use StdOut\SimpleDataObjects\Tests\Fixtures\NotDataObjectCollectionData;
 use StdOut\SimpleDataObjects\Tests\Fixtures\TeamData;
 use StdOut\SimpleDataObjects\Tests\Fixtures\UserData;
 use StdOut\SimpleDataObjects\TypedDataCollection;
@@ -71,6 +72,14 @@ class CollectionTest extends TestCase
         $this->expectExceptionMessageMatches('/does not exist/');
 
         InvalidCollectionData::from(['items' => []]);
+    }
+
+    public function test_data_collection_attribute_requires_data_object_target(): void
+    {
+        $this->expectException(DataHydrationException::class);
+        $this->expectExceptionMessageMatches('/must implement DataObject/');
+
+        NotDataObjectCollectionData::from(['items' => []]);
     }
 
     public function test_typed_data_collection_is_iterable(): void

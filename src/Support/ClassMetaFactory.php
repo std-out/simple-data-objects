@@ -15,6 +15,7 @@ use StdOut\SimpleDataObjects\Attributes\MapPropertyName;
 use StdOut\SimpleDataObjects\Attributes\Pipe;
 use StdOut\SimpleDataObjects\Attributes\Rules;
 use StdOut\SimpleDataObjects\Attributes\TransformKeys;
+use StdOut\SimpleDataObjects\Contracts\DataObject;
 use StdOut\SimpleDataObjects\Exceptions\DataHydrationException;
 
 final class ClassMetaFactory
@@ -65,6 +66,10 @@ final class ClassMetaFactory
 
             if (! class_exists($dataCollectionClass)) {
                 throw DataHydrationException::classNotFound($dataCollectionClass);
+            }
+
+            if (! is_subclass_of($dataCollectionClass, DataObject::class)) {
+                throw DataHydrationException::notADataObject($dataCollectionClass);
             }
 
             if ($castAttrs !== []) {

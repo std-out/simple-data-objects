@@ -27,4 +27,16 @@ final class DataHydrationException extends RuntimeException
     {
         return new self("Cannot decode JSON string for {$class}.");
     }
+
+    public static function invalidEnumValue(string $enumClass, string $field, mixed $value): self
+    {
+        $given = is_scalar($value) ? "'".$value."'" : get_debug_type($value);
+
+        return new self("Invalid value {$given} for field '{$field}'; expected a case of {$enumClass}.");
+    }
+
+    public static function notADataObject(string $dataClass): self
+    {
+        return new self("DataCollection target class '{$dataClass}' must implement DataObject.");
+    }
 }

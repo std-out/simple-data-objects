@@ -117,4 +117,24 @@ class WithTest extends TestCase
         $this->assertSame('Design', $updated->name);
         $this->assertCount(1, $updated->members);
     }
+
+    public function test_with_unknown_property_throws(): void
+    {
+        $user = UserData::from(['name' => 'Alice', 'email' => 'alice@example.com']);
+
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessageMatches('/Unknown property \[nickname\]/');
+
+        $user->with(nickname: 'Al');
+    }
+
+    public function test_with_multiple_unknown_properties_throws(): void
+    {
+        $user = UserData::from(['name' => 'Alice', 'email' => 'alice@example.com']);
+
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessageMatches('/Unknown properties \[nickname, age\]/');
+
+        $user->with(nickname: 'Al', age: 30);
+    }
 }
