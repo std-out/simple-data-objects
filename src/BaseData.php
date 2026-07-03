@@ -13,7 +13,6 @@ use Illuminate\Validation\Factory as ValidatorFactory;
 use Illuminate\Validation\ValidationException;
 use JsonSerializable;
 use StdOut\SimpleDataObjects\Contracts\DataObject;
-use StdOut\SimpleDataObjects\Exceptions\DataHydrationException;
 use StdOut\SimpleDataObjects\Support\HydratorCompiler;
 use StdOut\SimpleDataObjects\Support\InputNormalizer;
 use StdOut\SimpleDataObjects\Support\MetadataRegistry;
@@ -25,12 +24,54 @@ abstract class BaseData implements Arrayable, DataObject, JsonSerializable, Stri
 {
     private static ?ValidatorFactory $validatorFactory = null;
 
+    /** @var array<class-string, \ReflectionClass<BaseData>> */
+    private static array $reflectors = [];
+
+    /**
+     * Universal factory: accepts an array, an Eloquent model or any
+     * Arrayable, stdClass, JsonSerializable, any Traversable, a JSON string,
+     * a plain object (public properties), or an existing instance of the
+     * same class (returned as-is — instances are immutable).
+     */
     public static function from(mixed $data): static
     {
+        $hydrate = HydratorCompiler::$hydrators[static::class] ?? HydratorCompiler::compile(static::class);
+
+        if (is_array($data)) {
+            /** @var static */
+            return $hydrate($data);
+        }
+
+        if ($data instanceof static) {
+            return $data;
+        }
+
         /** @var static */
-        return (HydratorCompiler::$hydrators[static::class] ?? HydratorCompiler::compile(static::class))(
-            is_array($data) ? $data : InputNormalizer::normalize(static::class, $data),
-        );
+        return $hydrate(InputNormalizer::normalize(static::class, $data));
+    }
+
+    /**
+     * Returns an uninitialized lazy ghost (PHP 8.4): hydration cost is
+     * deferred until the first property access. Use when many DTOs are
+     * created but only some are ever read. Note that invalid input therefore
+     * throws on first access, not here.
+     */
+    public static function fromLazy(mixed $data): static
+    {
+        $class = static::class;
+        $reflector = self::$reflectors[$class] ??= new \ReflectionClass($class);
+
+        /** @var static */
+        return $reflector->newLazyGhost(static function (object $ghost) use ($class, $data): void {
+            $args = (HydratorCompiler::$argResolvers[$class] ?? HydratorCompiler::compileArgs($class))(
+                is_array($data) ? $data : InputNormalizer::normalize($class, $data),
+            );
+
+            // A DTO without a constructor has nothing to initialize
+            if (method_exists($ghost, '__construct')) {
+                $ghost->__construct(...$args);
+            }
+        });
     }
 
     public static function tryFrom(mixed $data): ?static
@@ -63,21 +104,20 @@ abstract class BaseData implements Arrayable, DataObject, JsonSerializable, Stri
         $class = static::class;
 
         return LazyCollection::make(static function () use ($items, $class): \Generator {
+            $hydrate = HydratorCompiler::$hydrators[$class] ?? HydratorCompiler::compile($class);
+
             foreach ($items as $item) {
-                yield $item instanceof $class ? $item : $class::from($item);
+                yield $item instanceof $class
+                    ? $item
+                    : $hydrate(is_array($item) ? $item : InputNormalizer::normalize($class, $item));
             }
         });
     }
 
+    /** Explicit alias of from() for JSON input — same decoding and errors. */
     public static function fromJson(string $json): static
     {
-        $data = json_decode($json, true, 32);
-
-        if (! is_array($data)) {
-            throw DataHydrationException::invalidJson(static::class);
-        }
-
-        return static::from($data);
+        return static::from($json);
     }
 
     public function with(mixed ...$overrides): static

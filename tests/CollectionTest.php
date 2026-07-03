@@ -127,6 +127,14 @@ class CollectionTest extends TestCase
         $this->assertCount(0, $collection);
     }
 
+    public function test_of_factory_rejects_non_data_class(): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessageMatches('/must extend/');
+
+        TypedDataCollection::of(\stdClass::class, [['x' => 1]]);
+    }
+
     public function test_null_value_for_non_nullable_collection_returns_empty_collection(): void
     {
         $team = TeamData::from(['name' => 'Dev', 'members' => null]);

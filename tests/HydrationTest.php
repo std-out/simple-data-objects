@@ -91,6 +91,66 @@ class HydrationTest extends TestCase
         UserData::from(42);
     }
 
+    public function test_from_json_string_directly(): void
+    {
+        $user = UserData::from('{"name":"Alice","email":"alice@example.com"}');
+
+        $this->assertSame('Alice', $user->name);
+    }
+
+    public function test_from_invalid_json_string_throws(): void
+    {
+        $this->expectException(DataHydrationException::class);
+        $this->expectExceptionMessageMatches('/Cannot decode JSON/');
+
+        UserData::from('not json at all');
+    }
+
+    public function test_from_scalar_json_string_throws(): void
+    {
+        $this->expectException(DataHydrationException::class);
+        $this->expectExceptionMessageMatches('/Cannot decode JSON/');
+
+        UserData::from('"just a string"');
+    }
+
+    public function test_from_traversable(): void
+    {
+        $generator = (static function (): \Generator {
+            yield 'name' => 'Alice';
+            yield 'email' => 'alice@example.com';
+        })();
+
+        $user = UserData::from($generator);
+
+        $this->assertSame('Alice', $user->name);
+        $this->assertSame('alice@example.com', $user->email);
+    }
+
+    public function test_from_plain_object_uses_public_properties(): void
+    {
+        $source = new class
+        {
+            public string $name = 'Alice';
+
+            public string $email = 'alice@example.com';
+
+            private string $secret = 'hidden';
+        };
+
+        $user = UserData::from($source);
+
+        $this->assertSame('Alice', $user->name);
+        $this->assertSame('alice@example.com', $user->email);
+    }
+
+    public function test_from_same_class_instance_is_returned_as_is(): void
+    {
+        $original = UserData::from(['name' => 'Alice', 'email' => 'alice@example.com']);
+
+        $this->assertSame($original, UserData::from($original));
+    }
+
     public function test_from_json(): void
     {
         $user = UserData::fromJson('{"name":"Alice","email":"alice@example.com"}');

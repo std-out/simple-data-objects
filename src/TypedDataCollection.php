@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace StdOut\SimpleDataObjects;
 
 use Illuminate\Support\Collection;
+use StdOut\SimpleDataObjects\Support\HydratorCompiler;
+use StdOut\SimpleDataObjects\Support\InputNormalizer;
 
 /**
  * @template T of BaseData
@@ -19,10 +21,14 @@ final class TypedDataCollection extends Collection
      */
     public static function of(string $dataClass, iterable $items = []): static
     {
+        // Resolved once — the per-item loop pays only instanceof + one call
+        $hydrate = HydratorCompiler::$hydrators[$dataClass] ?? HydratorCompiler::compile($dataClass);
         $result = [];
 
         foreach ($items as $item) {
-            $result[] = $item instanceof $dataClass ? $item : $dataClass::from($item);
+            $result[] = $item instanceof $dataClass
+                ? $item
+                : $hydrate(is_array($item) ? $item : InputNormalizer::normalize($dataClass, $item));
         }
 
         return new self($result);

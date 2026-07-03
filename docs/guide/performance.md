@@ -69,16 +69,16 @@ pageClass: bm-page
       <div class="bm-row bm-rise">
         <div class="bm-row-head">
           <span class="bm-row-label">Hydration — collection of 20</span>
-          <span class="bm-row-x">29× faster</span>
+          <span class="bm-row-x">36× faster</span>
         </div>
         <div class="bm-line">
           <span class="bm-series bm-series--us">Simple Data Objects</span>
           <span class="bm-track"><span class="bm-fill bm-fill--us" style="width:100%"></span></span>
-          <span class="bm-value bm-value--us">220K ops/s</span>
+          <span class="bm-value bm-value--us">270K ops/s</span>
         </div>
         <div class="bm-line">
           <span class="bm-series">Popular alternative</span>
-          <span class="bm-track"><span class="bm-fill bm-fill--them" style="width:3.4%"></span></span>
+          <span class="bm-track"><span class="bm-fill bm-fill--them" style="width:2.8%"></span></span>
           <span class="bm-value">7.5K ops/s</span>
         </div>
       </div>
@@ -138,7 +138,11 @@ pageClass: bm-page
         </div>
       </div>
     </div>
-    <p class="bm-prose">CPU time per operation follows the same ratios — less CPU burned per request means more headroom per server. The <code>from()</code>/<code>toArray()</code> hot paths execute <a href="../features/cache.html">compiled per-class closures</a>, and <a href="../features/collections.html#lazy-collections"><code>lazyCollection()</code></a> keeps peak memory flat on any dataset size.</p>
+<div class="bm-prose">
+
+CPU time per operation follows the same ratios — less CPU burned per request means more headroom per server. The `from()`/`toArray()` hot paths execute [compiled per-class closures](../features/cache.md), and [`lazyCollection()`](../features/collections.md#lazy-collections) keeps peak memory flat on any dataset size.
+
+</div>
     <h2 class="bm-h2 bm-h2--table">The numbers</h2>
     <table class="bm-table">
       <thead>
@@ -164,9 +168,9 @@ pageClass: bm-page
         </tr>
         <tr>
           <td class="bm-td">Hydration — collection of 20</td>
-          <td class="bm-td bm-td--num">~220,000 ops/s</td>
+          <td class="bm-td bm-td--num">~270,000 ops/s</td>
           <td class="bm-td bm-td--num bm-td--muted">~7,500 ops/s</td>
-          <td class="bm-td bm-td--num bm-td--adv">~29×</td>
+          <td class="bm-td bm-td--num bm-td--adv">~36×</td>
         </tr>
         <tr>
           <td class="bm-td">Serialization — flat DTO</td>
@@ -199,7 +203,7 @@ pageClass: bm-page
   to { opacity: 1; transform: translateY(0); }
 }
 @keyframes bm-grow-bar {
-  from { width: 0%; }
+  from { width: 0; }
 }
 .bm {
   --bm-paper: var(--vp-c-bg);
@@ -214,7 +218,7 @@ pageClass: bm-page
   --bm-sans: var(--vp-font-family-base);
   --bm-mono: var(--vp-font-family-mono);
   color: var(--bm-ink);
-  font-family: var(--bm-sans);
+  font-family: var(--bm-sans), sans-serif;
   margin: 8px 0 16px;
   padding: 16px 0 8px;
 }
@@ -234,7 +238,7 @@ pageClass: bm-page
   margin-bottom: 22px;
 }
 .bm-kicker-label {
-  font-family: var(--bm-mono);
+  font-family: var(--bm-mono), monospace;
   font-size: 13px;
   letter-spacing: .14em;
   text-transform: uppercase;
@@ -248,7 +252,7 @@ pageClass: bm-page
   align-self: center;
 }
 .bm h1.bm-title {
-  font-family: var(--bm-serif);
+  font-family: var(--bm-serif), sans-serif;
   font-weight: 600;
   font-size: clamp(26px, 3.6vw, 38px);
   line-height: 1.2;
@@ -258,7 +262,7 @@ pageClass: bm-page
   color: var(--bm-ink);
 }
 .bm-method {
-  font-family: var(--bm-mono);
+  font-family: var(--bm-mono), monospace;
   font-size: 14px;
   line-height: 1.7;
   color: var(--bm-ink-soft);
@@ -278,7 +282,7 @@ pageClass: bm-page
   padding: 28px 24px;
 }
 .bm-stat-value {
-  font-family: var(--bm-serif);
+  font-family: var(--bm-serif), sans-serif;
   font-weight: 600;
   font-size: 48px;
   line-height: 1;
@@ -292,7 +296,7 @@ pageClass: bm-page
   margin-bottom: 4px;
 }
 .bm-stat-detail {
-  font-family: var(--bm-mono);
+  font-family: var(--bm-mono), monospace;
   font-size: 12.5px;
   color: var(--bm-ink-muted);
 }
@@ -305,7 +309,7 @@ pageClass: bm-page
   margin-bottom: 6px;
 }
 .bm h2.bm-h2 {
-  font-family: var(--bm-serif);
+  font-family: var(--bm-serif), sans-serif;
   font-weight: 600;
   font-size: 21px;
   margin: 0;
@@ -315,7 +319,7 @@ pageClass: bm-page
   color: var(--bm-ink);
 }
 .bm-note {
-  font-family: var(--bm-mono);
+  font-family: var(--bm-mono), monospace;
   font-size: 12px;
   color: var(--bm-ink-muted);
 }
@@ -342,7 +346,7 @@ pageClass: bm-page
   font-weight: 500;
 }
 .bm-row-x {
-  font-family: var(--bm-mono);
+  font-family: var(--bm-mono), monospace;
   font-size: 13px;
   color: var(--bm-accent);
   font-weight: 600;
@@ -357,7 +361,7 @@ pageClass: bm-page
 .bm-series {
   width: 150px;
   flex-shrink: 0;
-  font-family: var(--bm-mono);
+  font-family: var(--bm-mono), monospace;
   font-size: 12px;
   color: var(--bm-ink-muted);
 }
@@ -382,7 +386,7 @@ pageClass: bm-page
   width: 96px;
   flex-shrink: 0;
   text-align: right;
-  font-family: var(--bm-mono);
+  font-family: var(--bm-mono), monospace;
   font-size: 12.5px;
   color: var(--bm-ink-muted);
 }
@@ -391,7 +395,7 @@ pageClass: bm-page
   color: var(--bm-ink);
 }
 .bm-prose {
-  font-family: var(--bm-mono);
+  font-family: var(--bm-mono), monospace;
   font-size: 13px;
   line-height: 1.75;
   color: var(--bm-ink-soft);
@@ -403,13 +407,13 @@ pageClass: bm-page
   color: var(--bm-ink);
   padding: 1px 5px;
   border-radius: 3px;
-  font-family: var(--bm-mono);
+  font-family: var(--bm-mono), monospace;
   font-size: 12.5px;
 }
 .bm .bm-prose a > code {
   color: var(--bm-accent);
 }
-.bm-prose a {
+.bm .bm-prose a {
   color: var(--bm-accent);
   text-decoration: underline;
   text-underline-offset: 2px;
@@ -422,7 +426,7 @@ pageClass: bm-page
   display: table;
   width: 100%;
   border-collapse: collapse;
-  font-family: var(--bm-mono);
+  font-family: var(--bm-mono), monospace;
   font-size: 13px;
   margin: 0;
 }

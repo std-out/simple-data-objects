@@ -63,6 +63,28 @@ It scans the sources for **concrete** `BaseData` subclasses (abstract bases are 
 
 Classes whose metadata cannot be exported (see [Limitations](#limitations)) are reported as `skipped` and keep using the in-memory cache. A broken DTO definition (e.g. conflicting attributes) fails the command immediately — deploy-time is exactly when you want to find out.
 
+### Going further: opcache.preload
+
+The warmed cache files are plain PHP, so they can be compiled into opcache **before the first request ever arrives** via [preloading](https://www.php.net/manual/en/opcache.preloading.php). Add to your preload script:
+
+```php
+<?php
+// preload.php — runs once at php-fpm startup
+require __DIR__.'/vendor/autoload.php';
+
+foreach (glob(__DIR__.'/storage/framework/data-objects/*.meta.php') ?: [] as $file) {
+    opcache_compile_file($file);
+}
+```
+
+```ini
+; php.ini
+opcache.preload = /var/www/app/preload.php
+opcache.preload_user = www-data
+```
+
+Deploy order: `sdo-warm` → restart php-fpm (preload runs at startup). With this in place a fresh worker's first request pays nothing at all: metadata, compiled hydrators, and serializers are already sitting in shared memory as opcodes. Remember that preloaded files are pinned until the next fpm restart — always restart fpm after re-warming.
+
 ## Clearing the Cache
 
 ```php

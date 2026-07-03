@@ -37,7 +37,7 @@ Benchmarked against **the most popular full-featured data-object library in the 
 |---|---|---|---|
 | Hydration — flat DTO | ~4,500,000 ops/s | ~130,000 ops/s | **~35× faster** |
 | Hydration — nested DTO | ~2,200,000 ops/s | ~74,000 ops/s | **~30× faster** |
-| Hydration — collection of 20 | ~220,000 ops/s | ~7,500 ops/s | **~29× faster** |
+| Hydration — collection of 20 | ~270,000 ops/s | ~7,500 ops/s | **~36× faster** |
 | Serialization — flat DTO | ~7,400,000 ops/s | ~200,000 ops/s | **~37× faster** |
 | Serialization — nested DTO | ~4,000,000 ops/s | ~117,000 ops/s | **~34× faster** |
 | Peak memory — streaming 50,000 rows | 0.26 MB with `lazyCollection()` | ~13 MB | **~50× less memory** |

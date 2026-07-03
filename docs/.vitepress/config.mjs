@@ -45,6 +45,15 @@ export default defineConfig({
         ],
       },
       {
+        text: 'Integrations',
+        items: [
+          { text: 'Plain PHP', link: '/integrations/plain-php' },
+          { text: 'Laravel', link: '/integrations/laravel' },
+          { text: 'Symfony', link: '/integrations/symfony' },
+          { text: 'Slim & PSR-7', link: '/integrations/psr-7' },
+        ],
+      },
+      {
         text: 'Attributes',
         items: [
           { text: 'Overview', link: '/attributes/' },

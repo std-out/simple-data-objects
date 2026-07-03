@@ -1,6 +1,6 @@
 # Hydration
 
-Hydration converts raw input into a typed DTO instance. The primary factory method is `from()`.
+Hydration converts raw input into a typed DTO instance. The primary factory method is `from()` — a **universal factory**: give it whatever you have, and it works out how to hydrate from it.
 
 ## Input Formats
 
@@ -10,17 +10,17 @@ Hydration converts raw input into a typed DTO instance. The primary factory meth
 UserData::from(['name' => 'Alice', 'email' => 'alice@example.com']);
 ```
 
+### Eloquent model / any Arrayable
+
+```php
+UserData::from($eloquentModel);   // uses $model->toArray()
+UserData::from(collect([...]));   // Laravel Collection
+```
+
 ### stdClass
 
 ```php
 UserData::from((object) ['name' => 'Alice', 'email' => 'alice@example.com']);
-```
-
-### Arrayable (e.g. Laravel Collection, Model)
-
-```php
-UserData::from(collect(['name' => 'Alice', 'email' => 'alice@example.com']));
-UserData::from($eloquentModel); // uses $model->toArray()
 ```
 
 ### JsonSerializable
@@ -29,13 +29,39 @@ UserData::from($eloquentModel); // uses $model->toArray()
 UserData::from($someJsonSerializableObject);
 ```
 
+### Any Traversable
+
+Generators, iterators — anything `foreach`-able that yields key/value pairs:
+
+```php
+UserData::from($generatorYieldingFields);
+```
+
 ### JSON String
 
 ```php
-UserData::fromJson('{"name":"Alice","email":"alice@example.com"}');
+UserData::from('{"name":"Alice","email":"alice@example.com"}');
+UserData::fromJson('{"name":"Alice"}'); // explicit variant, same behavior
 ```
 
-JSON depth is limited to **32 levels** to prevent stack exhaustion on adversarial input.
+JSON depth is limited to **32 levels** to prevent stack exhaustion on adversarial input. A string that isn't a JSON object throws `DataHydrationException`.
+
+### Plain object
+
+Any other object hydrates from its **public properties**:
+
+```php
+$row = new ReportRow(); // public $name, public $email
+UserData::from($row);
+```
+
+### An existing instance
+
+Passing an instance of the same class returns it **as-is** — instances are immutable, so no copy is needed:
+
+```php
+UserData::from($user) === $user; // true
+```
 
 ## Safe Factory — tryFrom()
 
@@ -118,6 +144,22 @@ OrderData::from(['status' => 'bogus', 'priority' => 'High']);
 ```
 
 For a fallback value instead of an exception, use [`EnumCast`](../casts/enum.md).
+
+## Lazy Hydration
+
+`fromLazy()` returns a native PHP 8.4 **lazy ghost**: a real instance of your class whose hydration runs only when a property is first read. When a request creates many DTOs but only touches some of them, the untouched ones cost almost nothing:
+
+```php
+$user = UserData::fromLazy($row);   // no hydration happened yet
+
+$user->name;                        // ← hydrates here, once
+$user instanceof UserData;          // true — a real instance, not a proxy
+```
+
+Everything is transparent after the first access — casts, pipes, `toArray()`, `equals()` behave exactly as with `from()`. Two things to keep in mind:
+
+- **Validation of input is deferred too**: invalid data throws `DataHydrationException` at the first property access, not at `fromLazy()`. Use `from()` when you want failures at the construction site.
+- **The win depends on how expensive hydration is.** Measured with 10% of objects actually read: ~3× faster for a cast-heavy DTO (`json_decode`, trims, rounding), ~6× for a DTO holding a collection of 20 nested DTOs — but for a tiny flat DTO plain `from()` is already so cheap that creating the ghost costs about the same as hydrating it. Rule of thumb: reach for `fromLazy()` when DTOs carry casts, nested objects, or collections *and* not every instance is consumed.
 
 ## Optional Fields
 

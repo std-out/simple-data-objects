@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace StdOut\SimpleDataObjects\Support;
 
 use Closure;
+use StdOut\SimpleDataObjects\BaseData;
 
 /**
  * Compiles a specialized hydration closure per data class: plain parameters
@@ -26,9 +27,25 @@ final class HydratorCompiler
      */
     public static array $hydrators = [];
 
+    /**
+     * Argument-list resolvers for the lazy-ghost path: same generated
+     * expressions as the hydrators, but returning the constructor arguments
+     * instead of the instance (a ghost initializes itself via __construct).
+     *
+     * @internal Read directly by BaseData::fromLazy() — do not mutate.
+     *
+     * @var array<class-string, Closure(array): array>
+     */
+    public static array $argResolvers = [];
+
     /** @param class-string $class */
     public static function compile(string $class): Closure
     {
+        // Reachable with a caller-supplied class via TypedDataCollection::of()
+        if (! is_subclass_of($class, BaseData::class)) {
+            throw new \InvalidArgumentException("{$class} must extend ".BaseData::class.' to be hydrated.');
+        }
+
         // get() may already have restored a persisted closure from the file cache
         $meta = MetadataRegistry::get($class);
 
@@ -42,9 +59,21 @@ final class HydratorCompiler
         return self::$hydrators[$class] = eval('return '.self::generate($class, $meta).';');
     }
 
+    /** @param class-string $class */
+    public static function compileArgs(string $class): Closure
+    {
+        $meta = MetadataRegistry::get($class);
+
+        $p = $meta->parameters;
+        $pipes = $meta->pipes;
+
+        return self::$argResolvers[$class] = eval('return '.self::generateArgs($class, $meta).';');
+    }
+
     public static function flush(): void
     {
         self::$hydrators = [];
+        self::$argResolvers = [];
     }
 
     /**
@@ -54,6 +83,38 @@ final class HydratorCompiler
      * @internal also used by MetadataRegistry to persist compiled code
      */
     public static function generate(string $class, ClassMeta $meta): string
+    {
+        [$body, $argList] = self::buildParts($class, $meta);
+
+        return <<<PHP
+        static function (array \$d) use (\$p, \$pipes): \\{$class} {
+        {$body}    return new \\{$class}({$argList});
+        }
+        PHP;
+    }
+
+    /**
+     * Same expressions as generate(), returning the argument list instead of
+     * the constructed instance — for lazy-ghost initializers.
+     */
+    private static function generateArgs(string $class, ClassMeta $meta): string
+    {
+        [$body, $argList] = self::buildParts($class, $meta);
+
+        return <<<PHP
+        static function (array \$d) use (\$p, \$pipes): array {
+        {$body}    return [{$argList}];
+        }
+        PHP;
+    }
+
+    /**
+     * The single source of hydration-argument semantics — both closure
+     * flavors are assembled from this output.
+     *
+     * @return array{0: string, 1: string} pipeline body and argument list
+     */
+    private static function buildParts(string $class, ClassMeta $meta): array
     {
         $classExport = var_export($class, true);
         $body = '';
@@ -96,10 +157,6 @@ final class HydratorCompiler
 
         $argList = $args === [] ? '' : "\n        ".implode(",\n        ", $args).",\n    ";
 
-        return <<<PHP
-        static function (array \$d) use (\$p, \$pipes): \\{$class} {
-        {$body}    return new \\{$class}({$argList});
-        }
-        PHP;
+        return [$body, $argList];
     }
 }

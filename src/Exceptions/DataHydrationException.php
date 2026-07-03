@@ -15,7 +15,7 @@ final class DataHydrationException extends RuntimeException
 
     public static function invalidInput(string $class, string $type): self
     {
-        return new self("Cannot hydrate {$class} from {$type}; expected array, Arrayable, stdClass, or JsonSerializable.");
+        return new self("Cannot hydrate {$class} from {$type}; expected an array, object, Traversable, or JSON string.");
     }
 
     public static function classNotFound(string $dataClass): self

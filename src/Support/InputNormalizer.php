@@ -9,7 +9,9 @@ use JsonSerializable;
 use StdOut\SimpleDataObjects\Exceptions\DataHydrationException;
 
 /**
- * Converts non-array input into an array. Callers check is_array() inline
+ * Converts non-array input into an array: Arrayable (Eloquent models,
+ * collections), stdClass, JsonSerializable, any Traversable, JSON strings,
+ * and plain objects (public properties). Callers check is_array() inline
  * first — the hot path (array input) never pays for this call.
  *
  * @internal
@@ -30,6 +32,25 @@ final class InputNormalizer
             $result = $data->jsonSerialize();
 
             return is_array($result) ? $result : (array) $result;
+        }
+
+        if ($data instanceof \Traversable) {
+            return iterator_to_array($data);
+        }
+
+        if (is_string($data)) {
+            $decoded = json_decode($data, true, 32);
+
+            if (! is_array($decoded)) {
+                throw DataHydrationException::invalidJson($class);
+            }
+
+            return $decoded;
+        }
+
+        // Any other object: hydrate from its public properties
+        if (is_object($data)) {
+            return get_object_vars($data);
         }
 
         throw DataHydrationException::invalidInput($class, get_debug_type($data));
