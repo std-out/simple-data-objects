@@ -1,0 +1,24 @@
+# Ignore development files and directories when exporting (installing via Composer)
+
+# Development, documentation, and testing directories
+/.claude export-ignore
+/.github export-ignore
+/benchmarks export-ignore
+/docs export-ignore
+/tests export-ignore
+
+# Development files in bin/ (excluding bin/sdo-warm, which is needed by users)
+/bin/check-coverage.php export-ignore
+
+# Docker configurations
+.dockerignore export-ignore
+Dockerfile export-ignore
+docker-compose.yml export-ignore
+
+# Testing and formatting configurations
+.gitignore export-ignore
+Makefile export-ignore
+package.json export-ignore
+package-lock.json export-ignore
+phpunit.xml.dist export-ignore
+pint.json export-ignore
