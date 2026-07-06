@@ -1,5 +1,22 @@
 import { defineConfig } from 'vitepress'
 
+// "Blueprint" code palette from the design handoff (docs-page-1d)
+const blueprintCodeTheme = {
+  name: 'blueprint-dark',
+  type: 'dark',
+  colors: {
+    'editor.background': '#0C1220',
+    'editor.foreground': '#C9D4EE',
+  },
+  tokenColors: [
+    { scope: ['comment', 'punctuation.definition.comment'], settings: { foreground: '#566184' } },
+    { scope: ['keyword', 'storage.type', 'storage.modifier', 'keyword.operator'], settings: { foreground: '#FF7A1A' } },
+    { scope: ['string', 'punctuation.definition.string', 'entity.name.function', 'support.function'], settings: { foreground: '#7EA6FF' } },
+    { scope: ['constant.numeric', 'constant.language', 'support.constant'], settings: { foreground: '#FFB36B' } },
+    { scope: ['variable', 'variable.other', 'entity.name.type', 'entity.name.class', 'support.class'], settings: { foreground: '#C9D4EE' } },
+  ],
+}
+
 export default defineConfig({
   title: 'Simple Data Objects',
   description: 'Lightweight, attribute-driven Data Transfer Objects for PHP 8.4+',
@@ -7,7 +24,14 @@ export default defineConfig({
 
   head: [
     ['link', { rel: 'icon', href: '/simple-data-objects/favicon.ico' }],
+    ['link', { rel: 'preconnect', href: 'https://fonts.googleapis.com' }],
+    ['link', { rel: 'preconnect', href: 'https://fonts.gstatic.com', crossorigin: '' }],
+    ['link', { rel: 'stylesheet', href: 'https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap' }],
   ],
+
+  markdown: {
+    theme: blueprintCodeTheme,
+  },
 
   themeConfig: {
     nav: [

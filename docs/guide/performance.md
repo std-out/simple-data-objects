@@ -2,6 +2,7 @@
 title: Performance
 aside: false
 pageClass: bm-page
+breadcrumb: false
 ---
 
 <section class="bm">
