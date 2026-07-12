@@ -200,6 +200,13 @@ CreateOrderData::validate($rawArray); // throws ValidationException
 
 ---
 
+## Contributing
+
+Bug reports, feature ideas, and PRs are welcome — see [CONTRIBUTING.md](CONTRIBUTING.md)
+for the dev setup (one `make build` away) and the quality bar (100% coverage, enforced in CI).
+
+Release history lives in the [CHANGELOG](CHANGELOG.md).
+
 ## License
 
 MIT — see [LICENSE](LICENSE).

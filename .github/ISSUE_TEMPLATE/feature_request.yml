@@ -1,0 +1,30 @@
+name: 💡 Feature request
+description: Suggest a new cast, pipe, attribute, or capability
+labels: [enhancement]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: What are you trying to do that the package doesn't support today?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed API
+      description: Show how you'd like it to look in code — an attribute, a method call, a config option.
+      render: php
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+      description: Workarounds you're using now, or why existing features don't fit.
+  - type: checkboxes
+    id: contribution
+    attributes:
+      label: Contribution
+      options:
+        - label: I'm willing to send a PR for this (see CONTRIBUTING.md)

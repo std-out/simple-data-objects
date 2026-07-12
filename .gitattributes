@@ -10,6 +10,9 @@
 # Development files in bin/ (excluding bin/sdo-warm, which is needed by users)
 /bin/check-coverage.php export-ignore
 
+# Contributor docs (kept out of dist installs; CHANGELOG.md ships with the package)
+CONTRIBUTING.md export-ignore
+
 # Docker configurations
 .dockerignore export-ignore
 Dockerfile export-ignore

@@ -1,0 +1,11 @@
+blank_issues_enabled: true
+contact_links:
+  - name: 💬 Questions & ideas
+    url: https://github.com/std-out/simple-data-objects/discussions
+    about: Ask "how do I…" questions or discuss ideas before opening an issue.
+  - name: 📚 Documentation
+    url: https://std-out.github.io/simple-data-objects/
+    about: Guides for hydration, casts, pipes, validation, performance, and integrations.
+  - name: 🔒 Security vulnerability
+    url: https://github.com/std-out/simple-data-objects/security/policy
+    about: Please report vulnerabilities privately — do not open a public issue.

@@ -1,0 +1,54 @@
+name: 🐛 Bug report
+description: Something behaves differently than documented
+labels: [bug]
+body:
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: What did you expect, and what happened instead?
+      placeholder: "`from()` throws ... but the docs say ..."
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Minimal reproduction
+      description: A DTO class + input that reproduces the issue. The smaller, the faster we can fix it.
+      render: php
+      placeholder: |
+        class OrderData extends BaseData
+        {
+            public function __construct(
+                public readonly string $title,
+            ) {}
+        }
+
+        OrderData::from(['title' => 123]); // ...
+    validations:
+      required: true
+  - type: input
+    id: package-version
+    attributes:
+      label: Package version
+      placeholder: "1.8.0"
+    validations:
+      required: true
+  - type: input
+    id: php-version
+    attributes:
+      label: PHP version
+      placeholder: "8.4.5"
+    validations:
+      required: true
+  - type: input
+    id: laravel-version
+    attributes:
+      label: Laravel version (if used with Laravel)
+      placeholder: "12.x / standalone"
+  - type: checkboxes
+    id: cache
+    attributes:
+      label: Metadata cache
+      options:
+        - label: The issue persists after clearing the metadata cache directory (`MetadataRegistry::setStoragePath()` target)
