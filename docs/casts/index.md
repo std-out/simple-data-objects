@@ -18,6 +18,7 @@ Casts implement `CastsValue` with two methods:
 | [`JsonCast`](./json.md) | `array` | JSON `string` |
 | [`EncryptedCast`](./encrypted.md) | plaintext `string` | encrypted ciphertext |
 | [`UuidCast`](./uuid.md) | validated, lowercase `string` | lowercase `string` |
+| [`CommaSeparatedCast`](./comma-separated.md) | `array` | delimited `string` |
 
 ## Applying Casts
 

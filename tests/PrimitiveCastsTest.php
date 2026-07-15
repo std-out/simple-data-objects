@@ -8,6 +8,7 @@ use InvalidArgumentException;
 use JsonException;
 use PHPUnit\Framework\TestCase;
 use StdOut\SimpleDataObjects\Casts\BooleanCast;
+use StdOut\SimpleDataObjects\Casts\CommaSeparatedCast;
 use StdOut\SimpleDataObjects\Casts\EncryptedCast;
 use StdOut\SimpleDataObjects\Casts\EnumCast;
 use StdOut\SimpleDataObjects\Casts\FloatCast;
@@ -15,6 +16,7 @@ use StdOut\SimpleDataObjects\Casts\IntegerCast;
 use StdOut\SimpleDataObjects\Casts\JsonCast;
 use StdOut\SimpleDataObjects\Casts\TrimCast;
 use StdOut\SimpleDataObjects\Casts\UuidCast;
+use StdOut\SimpleDataObjects\Tests\Fixtures\FilterData;
 use StdOut\SimpleDataObjects\Tests\Fixtures\OrderWithUuidData;
 use StdOut\SimpleDataObjects\Tests\Fixtures\Priority;
 use StdOut\SimpleDataObjects\Tests\Fixtures\ProductData;
@@ -415,5 +417,67 @@ class PrimitiveCastsTest extends TestCase
             '9d3b1f6e-2c4a-4b8e-9f0a-1234567890ab',
             $cast->get('9d3b1f6e-2c4a-4b8e-9f0a-1234567890ab'),
         );
+    }
+
+    // CommaSeparatedCast
+
+    public function test_comma_separated_cast_splits_and_trims_by_default(): void
+    {
+        $this->assertSame(['a', 'b', 'c'], (new CommaSeparatedCast)->get('a, b, c'));
+    }
+
+    public function test_comma_separated_cast_passes_through_array(): void
+    {
+        $array = ['a', 'b'];
+
+        $this->assertSame($array, (new CommaSeparatedCast)->get($array));
+    }
+
+    public function test_comma_separated_cast_empty_string_returns_empty_array(): void
+    {
+        $this->assertSame([], (new CommaSeparatedCast)->get(''));
+    }
+
+    public function test_comma_separated_cast_custom_separator_without_trim(): void
+    {
+        $cast = new CommaSeparatedCast(separator: '|', trim: false);
+
+        $this->assertSame([' a ', ' b '], $cast->get(' a | b '));
+    }
+
+    public function test_comma_separated_cast_get_returns_null_for_null(): void
+    {
+        $this->assertNull((new CommaSeparatedCast)->get(null));
+    }
+
+    public function test_comma_separated_cast_set_joins_array_back_with_separator(): void
+    {
+        $this->assertSame('a,b,c', (new CommaSeparatedCast)->set(['a', 'b', 'c']));
+    }
+
+    public function test_comma_separated_cast_set_returns_null_for_null(): void
+    {
+        $this->assertNull((new CommaSeparatedCast)->set(null));
+    }
+
+    public function test_comma_separated_cast_set_state_restores_instance(): void
+    {
+        $cast = CommaSeparatedCast::__set_state(['separator' => '|', 'trim' => false]);
+
+        $this->assertSame([' a ', ' b '], $cast->get(' a | b '));
+        $this->assertSame(' a | b ', $cast->set([' a ', ' b ']));
+    }
+
+    public function test_comma_separated_cast_hydrates_and_serializes_via_dto(): void
+    {
+        $filter = FilterData::from(['tags' => 'a, b, c', 'raw' => ' x | y ']);
+
+        $this->assertSame(['a', 'b', 'c'], $filter->tags);
+        $this->assertSame([' x ', ' y '], $filter->raw);
+
+        $array = $filter->toArray();
+
+        $this->assertSame('a,b,c', $array['tags']);
+        $this->assertSame(' x | y ', $array['raw']);
     }
 }

@@ -14,6 +14,9 @@ and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.
 - `UuidCast` — validates RFC 4122 UUID strings on hydration and normalizes
   to lowercase on both hydration and serialization. Invalid input throws
   `InvalidArgumentException`.
+- `CommaSeparatedCast` — splits a delimited string into an array on
+  hydration and joins it back on serialization (`separator` and `trim`
+  are configurable; default `,` and `true`).
 
 ### Changed
 - Documentation site: custom VitePress theme with breadcrumb navigation.
