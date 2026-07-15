@@ -121,6 +121,8 @@ For each property:
 | `NullifyEmptyStringsPipe` | `DataPipe` | `'' → null` for every value in the array |
 | `TrimValuePipe` | `ValuePipe` | `trim()` the individual field value |
 | `NullifyEmptyStringValuePipe` | `ValuePipe` | `'' → null` for the individual field value |
+| `LowercaseValuePipe` | `ValuePipe` | `mb_strtolower()` the individual field value |
+| `UppercaseValuePipe` | `ValuePipe` | `mb_strtoupper()` the individual field value |
 
 ## Performance
 

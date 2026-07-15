@@ -7,6 +7,11 @@ and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Added
+- `LowercaseValuePipe` and `UppercaseValuePipe` — case normalization for
+  `#[Pipe]`-attributed properties (e.g. emails, currency/country codes).
+  Non-string values pass through untouched, matching `TrimValuePipe`'s contract.
+
 ### Changed
 - Documentation site: custom VitePress theme with breadcrumb navigation.
 

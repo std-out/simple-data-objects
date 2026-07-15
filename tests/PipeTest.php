@@ -10,6 +10,7 @@ use StdOut\SimpleDataObjects\Support\PipelineRunner;
 use StdOut\SimpleDataObjects\Tests\Fixtures\AppendSuffixPipe;
 use StdOut\SimpleDataObjects\Tests\Fixtures\NullifiedFormData;
 use StdOut\SimpleDataObjects\Tests\Fixtures\PartiallyPipedData;
+use StdOut\SimpleDataObjects\Tests\Fixtures\SignupData;
 use StdOut\SimpleDataObjects\Tests\Fixtures\TrimmedContactData;
 use StdOut\SimpleDataObjects\Tests\Fixtures\UpperCasePipe;
 use StdOut\SimpleDataObjects\Tests\Fixtures\UserData;
@@ -122,5 +123,59 @@ class PipeTest extends TestCase
 
         $this->assertSame('ALICE', $result['name']);
         $this->assertSame('ALICE@EXAMPLE.COM', $result['email']);
+    }
+
+    // --- LowercaseValuePipe / UppercaseValuePipe ---
+
+    public function test_lowercase_value_pipe_lowercases_string(): void
+    {
+        $result = SignupData::from([
+            'email' => '  Alice@Example.COM',
+            'countryCode' => 'us',
+        ]);
+
+        $this->assertSame('alice@example.com', $result->email);
+    }
+
+    public function test_uppercase_value_pipe_uppercases_string(): void
+    {
+        $result = SignupData::from([
+            'email' => 'alice@example.com',
+            'countryCode' => 'us',
+        ]);
+
+        $this->assertSame('US', $result->countryCode);
+    }
+
+    public function test_lowercase_value_pipe_passes_non_string_through_untouched(): void
+    {
+        $result = SignupData::from([
+            'email' => 'alice@example.com',
+            'countryCode' => 'US',
+            'lowercasedAge' => 30,
+        ]);
+
+        $this->assertSame(30, $result->lowercasedAge);
+    }
+
+    public function test_uppercase_value_pipe_passes_non_string_through_untouched(): void
+    {
+        $result = SignupData::from([
+            'email' => 'alice@example.com',
+            'countryCode' => 'US',
+            'uppercasedAge' => 30,
+        ]);
+
+        $this->assertSame(30, $result->uppercasedAge);
+    }
+
+    public function test_lowercase_value_pipe_passes_null_through(): void
+    {
+        $result = SignupData::from([
+            'email' => 'alice@example.com',
+            'countryCode' => 'US',
+        ]);
+
+        $this->assertNull($result->lowercasedAge);
     }
 }
