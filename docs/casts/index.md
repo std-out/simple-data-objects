@@ -17,6 +17,7 @@ Casts implement `CastsValue` with two methods:
 | [`TrimCast`](./trim.md) | trimmed `string` | trimmed `string` |
 | [`JsonCast`](./json.md) | `array` | JSON `string` |
 | [`EncryptedCast`](./encrypted.md) | plaintext `string` | encrypted ciphertext |
+| [`UuidCast`](./uuid.md) | validated, lowercase `string` | lowercase `string` |
 
 ## Applying Casts
 

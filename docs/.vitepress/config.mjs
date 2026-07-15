@@ -103,6 +103,7 @@ export default defineConfig({
           { text: 'TrimCast', link: '/casts/trim' },
           { text: 'JsonCast', link: '/casts/json' },
           { text: 'EncryptedCast', link: '/casts/encrypted' },
+          { text: 'UuidCast', link: '/casts/uuid' },
           { text: 'Custom Casts', link: '/casts/custom' },
         ],
       },

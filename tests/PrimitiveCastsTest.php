@@ -14,6 +14,8 @@ use StdOut\SimpleDataObjects\Casts\FloatCast;
 use StdOut\SimpleDataObjects\Casts\IntegerCast;
 use StdOut\SimpleDataObjects\Casts\JsonCast;
 use StdOut\SimpleDataObjects\Casts\TrimCast;
+use StdOut\SimpleDataObjects\Casts\UuidCast;
+use StdOut\SimpleDataObjects\Tests\Fixtures\OrderWithUuidData;
 use StdOut\SimpleDataObjects\Tests\Fixtures\Priority;
 use StdOut\SimpleDataObjects\Tests\Fixtures\ProductData;
 use StdOut\SimpleDataObjects\Tests\Fixtures\SecretData;
@@ -355,5 +357,63 @@ class PrimitiveCastsTest extends TestCase
         $cast = new FloatCast(2);
 
         $this->assertSame(3.14, $cast->set(3.14159));
+    }
+
+    // UuidCast
+
+    public function test_uuid_cast_accepts_valid_uuid(): void
+    {
+        $this->assertSame(
+            '9d3b1f6e-2c4a-4b8e-9f0a-1234567890ab',
+            (new UuidCast)->get('9d3b1f6e-2c4a-4b8e-9f0a-1234567890ab'),
+        );
+    }
+
+    public function test_uuid_cast_normalizes_case_to_lowercase(): void
+    {
+        $this->assertSame(
+            '9d3b1f6e-2c4a-4b8e-9f0a-1234567890ab',
+            (new UuidCast)->get('9D3B1F6E-2C4A-4B8E-9F0A-1234567890AB'),
+        );
+    }
+
+    public function test_uuid_cast_rejects_invalid_format(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+
+        (new UuidCast)->get('not-a-uuid');
+    }
+
+    public function test_uuid_cast_get_returns_null_for_null(): void
+    {
+        $this->assertNull((new UuidCast)->get(null));
+    }
+
+    public function test_uuid_cast_set_delegates_to_get(): void
+    {
+        $this->assertSame(
+            '9d3b1f6e-2c4a-4b8e-9f0a-1234567890ab',
+            (new UuidCast)->set('9d3b1f6e-2c4a-4b8e-9f0a-1234567890ab'),
+        );
+        $this->assertNull((new UuidCast)->set(null));
+    }
+
+    public function test_uuid_cast_hydrates_and_serializes_via_dto(): void
+    {
+        $order = OrderWithUuidData::from(['id' => '9D3B1F6E-2C4A-4B8E-9F0A-1234567890AB']);
+
+        $this->assertSame('9d3b1f6e-2c4a-4b8e-9f0a-1234567890ab', $order->id);
+        $this->assertSame('9d3b1f6e-2c4a-4b8e-9f0a-1234567890ab', $order->toArray()['id']);
+    }
+
+    public function test_uuid_cast_set_state_restores_instance(): void
+    {
+        $cast = UuidCast::__set_state([]);
+
+        $this->assertInstanceOf(UuidCast::class, $cast);
+        $this->assertSame(
+            '9d3b1f6e-2c4a-4b8e-9f0a-1234567890ab',
+            $cast->get('9d3b1f6e-2c4a-4b8e-9f0a-1234567890ab'),
+        );
     }
 }
