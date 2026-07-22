@@ -92,9 +92,17 @@ class UpdateUserRequest extends FormRequest
 $data = UserData::fromRequest($request); // uses $request->validated() + #[Rules]
 ```
 
-## Metadata Cache in Laravel
+## Cache Warming on Deploy
 
-Add this to your `AppServiceProvider`:
+The compiled hydrator/serializer for each DTO is built lazily, on its first
+use. Without pre-warming, that means whichever request happens to hit a
+given DTO class first pays the compile cost — fine in dev, wasteful right
+after a deploy when every worker starts cold at once.
+
+### 1. Register the cache path
+
+Point the metadata cache at a storage directory in `AppServiceProvider`.
+Skip it in tests so generated cache files don't leak into a test run:
 
 ```php
 use StdOut\SimpleDataObjects\Support\MetadataRegistry;
@@ -103,14 +111,35 @@ public function boot(): void
 {
     if (! app()->runningUnitTests()) {
         MetadataRegistry::setStoragePath(
-            storage_path('framework/data-objects')
+            storage_path('framework/cache/data-objects')
         );
     }
 }
 ```
 
-Clear on deploy (e.g., in `Artisan` post-deploy hook):
+### 2. Warm it as a deploy step
 
-```php
-MetadataRegistry::clearCache();
+`sdo-warm` is a plain Composer binary, not an artisan command — it has no
+framework dependency, so it runs as its own step in your deploy pipeline
+rather than through `php artisan optimize`:
+
+```sh
+vendor/bin/sdo-warm storage/framework/cache/data-objects app/Data
 ```
+
+Add it wherever your other build-time steps live — a Forge/Envoyer deploy
+script, a Vapor build hook, or a CI job — right before workers restart, so
+every worker starts from an already-compiled cache instead of building it
+on the first request it happens to serve. See [Metadata
+Cache](./cache.md#pre-warming-on-deploy) for what the command actually
+scans and writes, and [opcache.preload](./cache.md#going-further-opcachepreload)
+to skip the file-read cost too.
+
+### 3. Clear it on rollback
+
+```sh
+php artisan tinker --execute="StdOut\SimpleDataObjects\Support\MetadataRegistry::clearCache()"
+```
+
+Run this whenever DTO classes or their attributes change between deploys —
+a stale cache entry keeps serving the old compiled shape otherwise.
