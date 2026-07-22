@@ -105,6 +105,7 @@ export default defineConfig({
           { text: 'EncryptedCast', link: '/casts/encrypted' },
           { text: 'UuidCast', link: '/casts/uuid' },
           { text: 'CommaSeparatedCast', link: '/casts/comma-separated' },
+          { text: 'MoneyCast', link: '/casts/money' },
           { text: 'Custom Casts', link: '/casts/custom' },
         ],
       },

@@ -8,15 +8,36 @@ and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.
 ## [Unreleased]
 
 ### Added
-- `LowercaseValuePipe` and `UppercaseValuePipe` — case normalization for
-  `#[Pipe]`-attributed properties (e.g. emails, currency/country codes).
-  Non-string values pass through untouched, matching `TrimValuePipe`'s contract.
-- `UuidCast` — validates RFC 4122 UUID strings on hydration and normalizes
-  to lowercase on both hydration and serialization. Invalid input throws
-  `InvalidArgumentException`.
+- `MoneyCast` and `ValueObjects\Money` — a small immutable money value
+  object (minor units + currency) instead of floats. Accepts int minor
+  units, a decimal string, an `['amount' => ..., 'currency' => ...]` array,
+  or an existing `Money` on hydration; serializes back to int minor units.
+  Currency is fixed per field via the cast constructor and validated on
+  both directions; raw `float` input is rejected. Decimal-string parsing
+  is done without float arithmetic, so equally-precise half-cent amounts
+  round consistently (e.g. `"1.005"` and `"2.005"` no longer drift apart
+  depending on binary float representation).
+
+## [1.11.0] — 2026-07-15
+
+### Added
 - `CommaSeparatedCast` — splits a delimited string into an array on
   hydration and joins it back on serialization (`separator` and `trim`
   are configurable; default `,` and `true`).
+
+## [1.10.0] — 2026-07-15
+
+### Added
+- `UuidCast` — validates RFC 4122 UUID strings on hydration and normalizes
+  to lowercase on both hydration and serialization. Invalid input throws
+  `InvalidArgumentException`.
+
+## [1.9.0] — 2026-07-15
+
+### Added
+- `LowercaseValuePipe` and `UppercaseValuePipe` — case normalization for
+  `#[Pipe]`-attributed properties (e.g. emails, currency/country codes).
+  Non-string values pass through untouched, matching `TrimValuePipe`'s contract.
 
 ### Changed
 - Documentation site: custom VitePress theme with breadcrumb navigation.

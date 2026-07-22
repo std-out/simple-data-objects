@@ -19,6 +19,7 @@ Casts implement `CastsValue` with two methods:
 | [`EncryptedCast`](./encrypted.md) | plaintext `string` | encrypted ciphertext |
 | [`UuidCast`](./uuid.md) | validated, lowercase `string` | lowercase `string` |
 | [`CommaSeparatedCast`](./comma-separated.md) | `array` | delimited `string` |
+| [`MoneyCast`](./money.md) | `Money` (minor units) | `int` minor units |
 
 ## Applying Casts
 
