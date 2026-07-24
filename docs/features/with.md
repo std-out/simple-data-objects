@@ -84,3 +84,5 @@ function applyPromotion(OrderData $order, float $discount): OrderData
 ## How it Works
 
 `with()` reads the current object's properties via `get_object_vars()`, applies overrides through the same `ValueCaster` pipeline used by `from()`, and constructs a new instance via the constructor. No reflection at call time — metadata is already cached.
+
+For [constructor-less and hybrid DTOs](./hydration.md#constructor-less-dtos), fields without a constructor parameter are assigned directly onto the new instance instead — including `readonly` ones, since each `with()` call produces a fresh instance to initialize.

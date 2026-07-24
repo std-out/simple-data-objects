@@ -12,6 +12,8 @@ use StdOut\SimpleDataObjects\Support\MetadataRegistry;
 use StdOut\SimpleDataObjects\Support\ParameterMeta;
 use StdOut\SimpleDataObjects\Support\SerializerCompiler;
 use StdOut\SimpleDataObjects\Tests\Fixtures\EventData;
+use StdOut\SimpleDataObjects\Tests\Fixtures\HybridData;
+use StdOut\SimpleDataObjects\Tests\Fixtures\NoConstructorData;
 use StdOut\SimpleDataObjects\Tests\Fixtures\NonExportableData;
 use StdOut\SimpleDataObjects\Tests\Fixtures\PaymentData;
 use StdOut\SimpleDataObjects\Tests\Fixtures\ProductData;
@@ -296,6 +298,87 @@ class MetadataCacheTest extends TestCase
 
         $user = UserData::from(['name' => 'Bob', 'email' => 'bob@example.com']);
         $this->assertSame(['name' => 'Bob', 'email' => 'bob@example.com', 'phone' => null], $user->toArray());
+    }
+
+    public function test_cache_file_restores_bound_hydrator_for_class_without_constructor(): void
+    {
+        MetadataRegistry::setStoragePath($this->cacheDir);
+
+        NoConstructorData::from(['required' => 'r', 'id' => 'first']);
+        MetadataRegistry::flush();
+
+        $this->assertArrayNotHasKey(NoConstructorData::class, HydratorCompiler::$hydrators);
+
+        // Restoring from the file cache must bind the hydrator to the class
+        // scope, since it assigns directly onto a readonly property — an
+        // unbound closure restored here would fatal on the write below.
+        $data = NoConstructorData::from(['required' => 'r', 'id' => 'second']);
+
+        $this->assertSame('second', $data->id);
+        $this->assertSame('r', $data->required);
+    }
+
+    public function test_legacy_cache_without_has_constructor_field_defaults_to_true(): void
+    {
+        $file = $this->cacheDir.'/'.hash('sha256', UserData::class).'.meta.php';
+        // Simulates a .meta.php file written before hasConstructor existed —
+        // the exported ClassMeta::__set_state() array simply lacks the key.
+        $legacy = "<?php\n\nreturn \\StdOut\\SimpleDataObjects\\Support\\ClassMeta::__set_state(array(\n".
+            "   'parameters' => array(\n  ),\n".
+            "   'validationRules' => array(\n  ),\n".
+            "   'pipes' => array(\n  ),\n".
+            "));\n";
+        file_put_contents($file, $legacy);
+
+        MetadataRegistry::setStoragePath($this->cacheDir);
+        MetadataRegistry::flush();
+
+        $meta = MetadataRegistry::get(UserData::class);
+
+        $this->assertTrue($meta->hasConstructor);
+    }
+
+    public function test_legacy_parameter_meta_without_via_constructor_field_defaults_to_true(): void
+    {
+        // Simulates a ParameterMeta::__set_state() array persisted before
+        // viaConstructor existed.
+        $param = ParameterMeta::__set_state([
+            'phpName' => 'field',
+            'inputName' => 'field',
+            'allowsNull' => false,
+            'hasDefault' => false,
+            'defaultValue' => null,
+            'nestedDataClass' => null,
+            'enumClass' => null,
+            'dataCollectionClass' => null,
+            'isHidden' => false,
+            'ignoreIfNull' => false,
+            'flatten' => false,
+            'rules' => [],
+            'caster' => null,
+        ]);
+
+        $this->assertTrue($param->viaConstructor);
+    }
+
+    public function test_cache_file_restores_bound_hydrator_for_hybrid_class_with_readonly_extra(): void
+    {
+        MetadataRegistry::setStoragePath($this->cacheDir);
+
+        HybridData::from(['id' => '1', 'extraId' => 'first', 'extra_label' => 'L']);
+        MetadataRegistry::flush();
+
+        $this->assertArrayNotHasKey(HybridData::class, HydratorCompiler::$hydrators);
+
+        // Restoring from the file cache must bind the hydrator to the class
+        // scope, since a hybrid class's extra properties are assigned
+        // directly — including the readonly one — same as the pure
+        // constructor-less case.
+        $data = HybridData::from(['id' => '2', 'extraId' => 'second', 'extra_label' => 'L2']);
+
+        $this->assertSame('2', $data->id);
+        $this->assertSame('second', $data->extraId);
+        $this->assertSame('L2', $data->extraLabel);
     }
 
     public function test_to_array_uses_persisted_serializer_after_flush(): void

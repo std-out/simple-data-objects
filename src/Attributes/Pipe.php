@@ -6,7 +6,7 @@ namespace StdOut\SimpleDataObjects\Attributes;
 
 use Attribute;
 
-#[Attribute(Attribute::TARGET_CLASS | Attribute::TARGET_PARAMETER)]
+#[Attribute(Attribute::TARGET_CLASS | Attribute::TARGET_PARAMETER | Attribute::TARGET_PROPERTY)]
 final class Pipe
 {
     /** @var list<class-string> */

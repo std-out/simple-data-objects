@@ -6,12 +6,13 @@ namespace StdOut\SimpleDataObjects\Support;
 
 use ReflectionNamedType;
 use ReflectionParameter;
+use ReflectionProperty;
 use ReflectionUnionType;
 use StdOut\SimpleDataObjects\Contracts\DataObject;
 
 final class TypeResolver
 {
-    public static function resolve(ReflectionParameter $parameter): array
+    public static function resolve(ReflectionParameter|ReflectionProperty $parameter): array
     {
         $type = $parameter->getType();
 

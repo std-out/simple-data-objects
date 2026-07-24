@@ -7,6 +7,31 @@ and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## [1.13.0] — 2026-07-24
+
+### Fixed
+- `BaseData` subclasses declared **without a constructor** (plain typed
+  property declarations, e.g. `public ?string $name = null;`) previously
+  hydrated to a default-initialized instance with the entire input array
+  silently discarded, and `toArray()` always returned `[]`. Both now work
+  correctly, including `readonly` properties, `fromLazy()`, and `with()`.
+
+### Added
+- **Constructor-less and hybrid DTOs.** A `BaseData` subclass no longer needs
+  a constructor — plain typed property declarations are hydrated via
+  post-construction assignment instead. Classes may also mix both styles: a
+  constructor with promoted properties plus additional plain properties
+  declared in the class body are hydrated together, in one call. Both styles
+  support the full attribute set (`#[Cast]`, `#[DataCollection]`,
+  `#[Flatten]`, `#[Hidden]`, `#[IgnoreIfNull]`, `#[MapPropertyName]`,
+  `#[Pipe]`, `#[Rules]`) and readonly properties. Only public, non-static,
+  typed properties are considered — static, private/protected, and untyped
+  properties are ignored, same as they always were for constructor
+  parameters. Pure constructor-only classes (the common case) compile to
+  byte-identical code — zero behavior or performance change.
+
+## [1.12.0] — 2026-07-22
+
 ### Added
 - `MoneyCast` and `ValueObjects\Money` — a small immutable money value
   object (minor units + currency) instead of floats. Accepts int minor

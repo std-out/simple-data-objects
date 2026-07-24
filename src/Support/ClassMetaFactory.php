@@ -6,6 +6,7 @@ namespace StdOut\SimpleDataObjects\Support;
 
 use ReflectionClass;
 use ReflectionParameter;
+use ReflectionProperty;
 use StdOut\SimpleDataObjects\Attributes\Cast;
 use StdOut\SimpleDataObjects\Attributes\DataCollection as DataCollectionAttribute;
 use StdOut\SimpleDataObjects\Attributes\Flatten;
@@ -25,29 +26,67 @@ final class ClassMetaFactory
         $reflection = new ReflectionClass($class);
         $constructor = $reflection->getConstructor();
 
-        if ($constructor === null) {
-            return new ClassMeta([]);
-        }
-
         $transformAttrs = $reflection->getAttributes(TransformKeys::class);
         $strategy = $transformAttrs !== [] ? $transformAttrs[0]->newInstance()->strategy : null;
 
         $pipeAttrs = $reflection->getAttributes(Pipe::class);
         $pipes = $pipeAttrs !== [] ? $pipeAttrs[0]->newInstance()->pipes : [];
 
-        return new ClassMeta(
-            array_map(
-                static fn (ReflectionParameter $p): ParameterMeta => self::buildParam($p, $strategy),
-                $constructor->getParameters(),
-            ),
-            $pipes,
+        // No constructor: fall back to the class's own public typed properties
+        // (plain property-declaration DTOs), hydrated via post-construction
+        // assignment instead of constructor injection.
+        if ($constructor === null) {
+            $members = self::publicTypedProperties($reflection, []);
+
+            return new ClassMeta(
+                array_map(
+                    static fn (ReflectionProperty $p): ParameterMeta => self::buildParam($p, $strategy, viaConstructor: false),
+                    $members,
+                ),
+                $pipes,
+                hasConstructor: false,
+            );
+        }
+
+        $ctorParams = array_map(
+            static fn (ReflectionParameter $p): ParameterMeta => self::buildParam($p, $strategy, viaConstructor: true),
+            $constructor->getParameters(),
         );
+
+        // Hybrid: a promoted property already surfaces as a constructor
+        // parameter above, so exclude those names here — a non-promoted
+        // parameter creates no property at all and can't collide.
+        $ctorNames = array_map(static fn (ReflectionParameter $p): string => $p->getName(), $constructor->getParameters());
+        $extraProps = self::publicTypedProperties($reflection, $ctorNames);
+
+        $extraParams = array_map(
+            static fn (ReflectionProperty $p): ParameterMeta => self::buildParam($p, $strategy, viaConstructor: false),
+            $extraProps,
+        );
+
+        return new ClassMeta(array_merge($ctorParams, $extraParams), $pipes);
     }
 
-    private static function buildParam(ReflectionParameter $parameter, ?string $strategy): ParameterMeta
+    /**
+     * @param  list<string>  $excludeNames
+     * @return list<ReflectionProperty>
+     */
+    private static function publicTypedProperties(ReflectionClass $reflection, array $excludeNames): array
+    {
+        return array_values(array_filter(
+            $reflection->getProperties(ReflectionProperty::IS_PUBLIC),
+            static fn (ReflectionProperty $p): bool => ! $p->isStatic()
+                && $p->getType() !== null
+                && ! in_array($p->getName(), $excludeNames, true),
+        ));
+    }
+
+    private static function buildParam(ReflectionParameter|ReflectionProperty $parameter, ?string $strategy, bool $viaConstructor): ParameterMeta
     {
         $phpName = $parameter->getName();
-        $hasDefault = $parameter->isDefaultValueAvailable();
+        $hasDefault = $parameter instanceof ReflectionParameter
+            ? $parameter->isDefaultValueAvailable()
+            : $parameter->hasDefaultValue();
 
         $mapAttrs = $parameter->getAttributes(MapPropertyName::class);
         $inputName = match (true) {
@@ -106,7 +145,9 @@ final class ClassMetaFactory
         return new ParameterMeta(
             phpName: $phpName,
             inputName: $inputName,
-            allowsNull: $parameter->allowsNull(),
+            allowsNull: $parameter instanceof ReflectionParameter
+                ? $parameter->allowsNull()
+                : ($parameter->getType()?->allowsNull() ?? true),
             hasDefault: $hasDefault,
             defaultValue: $hasDefault ? $parameter->getDefaultValue() : null,
             nestedDataClass: $nestedDataClass,
@@ -118,6 +159,7 @@ final class ClassMetaFactory
             rules: $rulesAttrs !== [] ? $rulesAttrs[0]->newInstance()->rules : [],
             caster: $castAttrs !== [] ? $castAttrs[0]->newInstance()->caster : null,
             pipes: $paramPipes,
+            viaConstructor: $viaConstructor,
         );
     }
 }

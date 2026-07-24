@@ -7,6 +7,8 @@ namespace StdOut\SimpleDataObjects\Tests;
 use DateTime;
 use PHPUnit\Framework\TestCase;
 use StdOut\SimpleDataObjects\Tests\Fixtures\EventData;
+use StdOut\SimpleDataObjects\Tests\Fixtures\HybridData;
+use StdOut\SimpleDataObjects\Tests\Fixtures\NoConstructorData;
 use StdOut\SimpleDataObjects\Tests\Fixtures\ProfileData;
 use StdOut\SimpleDataObjects\Tests\Fixtures\TeamData;
 use StdOut\SimpleDataObjects\Tests\Fixtures\UserData;
@@ -136,5 +138,108 @@ class WithTest extends TestCase
         $this->expectExceptionMessageMatches('/Unknown properties \[nickname, age\]/');
 
         $user->with(nickname: 'Al', age: 30);
+    }
+
+    public function test_with_returns_new_instance_for_class_without_constructor(): void
+    {
+        $original = NoConstructorData::from(['required' => 'r', 'id' => 'abc']);
+        $updated = $original->with(required: 'r2');
+
+        $this->assertNotSame($original, $updated);
+        $this->assertSame('r2', $updated->required);
+    }
+
+    public function test_with_does_not_mutate_original_for_class_without_constructor(): void
+    {
+        $original = NoConstructorData::from(['required' => 'r', 'id' => 'abc']);
+        $original->with(required: 'r2');
+
+        $this->assertSame('r', $original->required);
+    }
+
+    public function test_with_preserves_unchanged_fields_for_class_without_constructor(): void
+    {
+        $original = NoConstructorData::from(['required' => 'r', 'id' => 'abc', 'priority' => 9]);
+        $updated = $original->with(required: 'r2');
+
+        $this->assertSame('abc', $updated->id);
+        $this->assertSame(9, $updated->priority);
+    }
+
+    public function test_with_can_override_readonly_property_for_class_without_constructor(): void
+    {
+        $original = NoConstructorData::from(['required' => 'r', 'id' => 'abc']);
+        $updated = $original->with(id: 'xyz');
+
+        $this->assertSame('xyz', $updated->id);
+        $this->assertSame('abc', $original->id);
+    }
+
+    public function test_with_unknown_property_throws_for_class_without_constructor(): void
+    {
+        $original = NoConstructorData::from(['required' => 'r', 'id' => 'abc']);
+
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessageMatches('/Unknown property \[nickname\]/');
+
+        $original->with(nickname: 'Al');
+    }
+
+    private function hybrid(): HybridData
+    {
+        return HybridData::from(['id' => '1', 'extraId' => 'e1', 'extra_label' => 'Label']);
+    }
+
+    public function test_with_overrides_constructor_field_for_hybrid_class(): void
+    {
+        $updated = $this->hybrid()->with(status: 'active');
+
+        $this->assertSame('active', $updated->status);
+        $this->assertSame('e1', $updated->extraId);
+    }
+
+    public function test_with_overrides_extra_field_for_hybrid_class(): void
+    {
+        $updated = $this->hybrid()->with(note: 'hello');
+
+        $this->assertSame('hello', $updated->note);
+        $this->assertSame('1', $updated->id);
+    }
+
+    public function test_with_overrides_both_constructor_and_extra_fields_for_hybrid_class(): void
+    {
+        $updated = $this->hybrid()->with(status: 'active', extraId: 'e2');
+
+        $this->assertSame('active', $updated->status);
+        $this->assertSame('e2', $updated->extraId);
+        $this->assertSame('Label', $updated->extraLabel);
+    }
+
+    public function test_with_can_override_readonly_extra_property_for_hybrid_class(): void
+    {
+        $original = $this->hybrid();
+        $updated = $original->with(extraId: 'e2');
+
+        $this->assertSame('e2', $updated->extraId);
+        $this->assertSame('e1', $original->extraId);
+    }
+
+    public function test_with_preserves_unchanged_fields_for_hybrid_class(): void
+    {
+        $original = $this->hybrid();
+        $updated = $original->with(note: 'hello');
+
+        $this->assertSame($original->id, $updated->id);
+        $this->assertSame($original->status, $updated->status);
+        $this->assertSame($original->extraId, $updated->extraId);
+        $this->assertSame($original->extraLabel, $updated->extraLabel);
+    }
+
+    public function test_with_unknown_property_throws_for_hybrid_class(): void
+    {
+        $this->expectException(\InvalidArgumentException::class);
+        $this->expectExceptionMessageMatches('/Unknown property \[nickname\]/');
+
+        $this->hybrid()->with(nickname: 'Al');
     }
 }

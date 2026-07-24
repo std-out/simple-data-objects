@@ -187,3 +187,54 @@ If a required field (non-nullable, no default) is missing, `DataHydrationExcepti
 ```php
 UserData::from(['name' => 'Alice']); // throws — 'email' is required
 ```
+
+## Constructor-less DTOs
+
+A constructor isn't required. Plain typed property declarations work the same way — hydrated via direct assignment instead of constructor injection:
+
+```php
+class SettingsData extends BaseData
+{
+    public string $theme = 'light';   // optional — has a default
+    public ?string $locale = null;    // optional — nullable
+    public readonly string $userId;   // required — no default, not nullable
+}
+
+$settings = SettingsData::from(['userId' => 'u_123', 'theme' => 'dark']);
+
+$settings->theme;    // 'dark'
+$settings->locale;   // null
+$settings->userId;   // 'u_123'
+```
+
+The same rules apply as for constructor parameters: a property with no default and a non-nullable type is required and throws `DataHydrationException` when missing; `readonly` properties are supported (including via `with()` and `fromLazy()`); and the full attribute set — `#[Cast]`, `#[DataCollection]`, `#[Flatten]`, `#[Hidden]`, `#[IgnoreIfNull]`, `#[MapPropertyName]`, `#[Pipe]`, `#[Rules]` — works identically on a property as it does on a constructor parameter.
+
+Only **public, non-static, typed** properties are picked up. Static properties, `private`/`protected` properties, and untyped properties (`public $x;`) are ignored — declare them normally for internal bookkeeping without affecting hydration or `toArray()`.
+
+## Hybrid DTOs
+
+A class can mix both styles: a constructor for some fields, plain properties for others. Both are hydrated together in one `from()` call:
+
+```php
+class OrderData extends BaseData
+{
+    public function __construct(
+        public readonly string $id,
+        public readonly string $status = 'pending',
+    ) {}
+
+    // Extra fields, outside the constructor — hydrated the same way
+    public ?string $internalNote = null;
+    public readonly string $trackingId;
+}
+
+$order = OrderData::from([
+    'id'         => 'ORD-1',
+    'trackingId' => 'TRK-9',
+]);
+
+$order->status;      // 'pending' — constructor default
+$order->trackingId;  // 'TRK-9'   — extra property, required (no default)
+```
+
+This is useful for adding fields to an existing constructor-based DTO without touching the constructor's signature (and its call sites). There's no functional difference between a field declared in the constructor and one declared as a plain property — pick whichever reads more naturally for a given class.

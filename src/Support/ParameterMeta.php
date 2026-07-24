@@ -36,6 +36,7 @@ final class ParameterMeta
         public readonly ?CastsValue $caster,
         /** @var list<class-string<ValuePipe>> */
         public readonly array $pipes = [],
+        public readonly bool $viaConstructor = true,
     ) {
         $this->isPlain = $caster === null
             && $nestedDataClass === null
@@ -61,6 +62,7 @@ final class ParameterMeta
             rules: $state['rules'],
             caster: $state['caster'],
             pipes: $state['pipes'] ?? [],
+            viaConstructor: $state['viaConstructor'] ?? true,
         );
     }
 }

@@ -63,13 +63,26 @@ abstract class BaseData implements Arrayable, DataObject, JsonSerializable, Stri
 
         /** @var static */
         return $reflector->newLazyGhost(static function (object $ghost) use ($class, $data): void {
-            $args = (HydratorCompiler::$argResolvers[$class] ?? HydratorCompiler::compileArgs($class))(
-                is_array($data) ? $data : InputNormalizer::normalize($class, $data),
-            );
+            $normalized = is_array($data) ? $data : InputNormalizer::normalize($class, $data);
 
-            // A DTO without a constructor has nothing to initialize
-            if (method_exists($ghost, '__construct')) {
-                $ghost->__construct(...$args);
+            // Kept inside the initializer (not hoisted into fromLazy()) so a
+            // cold metadata cache is only ever built on first property access.
+            $meta = MetadataRegistry::get($class);
+
+            if (! $meta->hasConstructor) {
+                (HydratorCompiler::$populators[$class] ?? HydratorCompiler::compilePopulate($class))($normalized, $ghost);
+
+                return;
+            }
+
+            $args = (HydratorCompiler::$argResolvers[$class] ?? HydratorCompiler::compileArgs($class))($normalized);
+            $ghost->__construct(...$args);
+
+            // Hybrid: the constructor only covers its own parameters — the
+            // extra properties still need populating, same mechanism as the
+            // constructor-less path above.
+            if ($meta->hasExtraProperties) {
+                (HydratorCompiler::$populators[$class] ?? HydratorCompiler::compilePopulate($class))($normalized, $ghost);
             }
         });
     }
@@ -124,18 +137,23 @@ abstract class BaseData implements Arrayable, DataObject, JsonSerializable, Stri
     {
         $meta = MetadataRegistry::get(static::class);
         $current = get_object_vars($this);
-        $args = [];
+        $ctorArgs = [];
+        $extra = [];
 
         foreach ($meta->parameters as $param) {
             if (array_key_exists($param->phpName, $overrides)) {
                 $value = $overrides[$param->phpName];
-                $args[] = $param->isPlain ? $value : ValueCaster::cast($param, $value);
+                $value = $param->isPlain ? $value : ValueCaster::cast($param, $value);
                 unset($overrides[$param->phpName]);
-
-                continue;
+            } else {
+                $value = $current[$param->phpName];
             }
 
-            $args[] = $current[$param->phpName];
+            if ($param->viaConstructor) {
+                $ctorArgs[] = $value;
+            } else {
+                $extra[$param->phpName] = $value;
+            }
         }
 
         if ($overrides !== []) {
@@ -144,7 +162,17 @@ abstract class BaseData implements Arrayable, DataObject, JsonSerializable, Stri
             );
         }
 
-        return new static(...$args);
+        $instance = $meta->hasConstructor ? new static(...$ctorArgs) : new static;
+
+        // Extra (non-constructor) properties — constructor-less classes and
+        // hybrid classes' extra fields. Legal even for readonly properties:
+        // the write happens from BaseData's own scope, an ancestor of every
+        // subclass, which PHP treats as within the declaring scope.
+        foreach ($extra as $phpName => $value) {
+            $instance->{$phpName} = $value;
+        }
+
+        return $instance;
     }
 
     public static function fromValidated(mixed $data): static

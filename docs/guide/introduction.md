@@ -1,6 +1,6 @@
 # Introduction
 
-**Simple Data Objects** is a lightweight PHP 8.4+ library for creating typed Data Transfer Objects (DTOs) using constructor property promotion and PHP attributes.
+**Simple Data Objects** is a lightweight PHP 8.4+ library for creating typed Data Transfer Objects (DTOs) using constructor property promotion (or plain typed properties — [see below](../features/hydration.md#constructor-less-dtos)) and PHP attributes.
 
 ## Why Simple Data Objects?
 

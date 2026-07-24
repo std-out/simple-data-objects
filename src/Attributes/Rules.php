@@ -6,7 +6,7 @@ namespace StdOut\SimpleDataObjects\Attributes;
 
 use Attribute;
 
-#[Attribute(Attribute::TARGET_PARAMETER)]
+#[Attribute(Attribute::TARGET_PARAMETER | Attribute::TARGET_PROPERTY)]
 final class Rules
 {
     public function __construct(

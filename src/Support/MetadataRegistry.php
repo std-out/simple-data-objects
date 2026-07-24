@@ -71,7 +71,12 @@ final class MetadataRegistry
             // serves the whole file precompiled).
             if (is_array($cached)) {
                 [$meta, $hydrator, $serializer] = $cached;
-                HydratorCompiler::$hydrators[$class] = $hydrator;
+                // Constructor-less hydrators, and hybrid classes' extra
+                // properties, assign properties directly (possibly readonly
+                // ones), so they must be bound to the class scope — the same
+                // reason the serializer closure below is always bound.
+                $needsBinding = ! $meta->hasConstructor || $meta->hasExtraProperties;
+                HydratorCompiler::$hydrators[$class] = $needsBinding ? \Closure::bind($hydrator, null, $class) : $hydrator;
                 SerializerCompiler::$serializers[$class] = \Closure::bind($serializer, null, $class);
 
                 return $meta;
