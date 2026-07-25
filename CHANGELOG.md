@@ -5,7 +5,25 @@ All notable changes to `std-out/simple-data-objects` are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [1.14.0] — 2026-07-25
+
+### Added
+- **`#[Discriminator]` — polymorphic hydration.** An abstract data class can
+  now map a discriminator field's value to concrete subclasses:
+  `PaymentMethodData::from(['type' => 'card', ...])` returns a
+  `CardPaymentData`. Resolution happens inside the compiled hydrator (one
+  array lookup — no reflection at runtime) and works across every entry
+  point: `from()`, `tryFrom()`, `fromJson()`, `fromLazy()` (the concrete
+  class is resolved eagerly, hydration stays deferred), `fromValidated()`
+  and `validate()` (which delegate so the concrete subclass's `#[Rules]`
+  apply), `collection()`, `lazyCollection()`, nested properties typed as
+  the abstract base, and `#[DataCollection]` of the base. Supports string
+  and integer map keys, `BackedEnum` input values, an optional `fallback`
+  class for missing/unmapped values, and multi-level hierarchies (a map
+  target may itself be a `#[Discriminator]` class). All configuration
+  errors — non-abstract class, empty map, unknown or foreign target
+  classes — are caught at metadata-build time, and the compiled dispatcher
+  persists through the metadata file cache like any other hydrator.
 
 ## [1.13.0] — 2026-07-24
 

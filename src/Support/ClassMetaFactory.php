@@ -9,6 +9,7 @@ use ReflectionParameter;
 use ReflectionProperty;
 use StdOut\SimpleDataObjects\Attributes\Cast;
 use StdOut\SimpleDataObjects\Attributes\DataCollection as DataCollectionAttribute;
+use StdOut\SimpleDataObjects\Attributes\Discriminator;
 use StdOut\SimpleDataObjects\Attributes\Flatten;
 use StdOut\SimpleDataObjects\Attributes\Hidden;
 use StdOut\SimpleDataObjects\Attributes\IgnoreIfNull;
@@ -32,6 +33,14 @@ final class ClassMetaFactory
         $pipeAttrs = $reflection->getAttributes(Pipe::class);
         $pipes = $pipeAttrs !== [] ? $pipeAttrs[0]->newInstance()->pipes : [];
 
+        $discriminator = self::discriminator($reflection);
+
+        if ($discriminator !== null && $pipes !== []) {
+            throw new \InvalidArgumentException(
+                "{$class}: #[Discriminator] and class-level #[Pipe] cannot be combined — declare pipes on the concrete subclasses instead.",
+            );
+        }
+
         // No constructor: fall back to the class's own public typed properties
         // (plain property-declaration DTOs), hydrated via post-construction
         // assignment instead of constructor injection.
@@ -45,6 +54,9 @@ final class ClassMetaFactory
                 ),
                 $pipes,
                 hasConstructor: false,
+                discriminatorField: $discriminator?->field,
+                discriminatorMap: $discriminator?->map ?? [],
+                discriminatorFallback: $discriminator?->fallback,
             );
         }
 
@@ -64,7 +76,76 @@ final class ClassMetaFactory
             $extraProps,
         );
 
-        return new ClassMeta(array_merge($ctorParams, $extraParams), $pipes);
+        return new ClassMeta(
+            array_merge($ctorParams, $extraParams),
+            $pipes,
+            discriminatorField: $discriminator?->field,
+            discriminatorMap: $discriminator?->map ?? [],
+            discriminatorFallback: $discriminator?->fallback,
+        );
+    }
+
+    /**
+     * Reads and validates #[Discriminator] so every configuration error is
+     * caught at metadata-build time, never on a live hydration.
+     *
+     * @param  ReflectionClass<object>  $reflection
+     */
+    private static function discriminator(ReflectionClass $reflection): ?Discriminator
+    {
+        $attrs = $reflection->getAttributes(Discriminator::class);
+
+        if ($attrs === []) {
+            return null;
+        }
+
+        $class = $reflection->getName();
+
+        if (! $reflection->isAbstract()) {
+            throw new \InvalidArgumentException(
+                "{$class}: #[Discriminator] requires an abstract class — a concrete class in the map would recurse into itself.",
+            );
+        }
+
+        /** @var Discriminator $discriminator */
+        $discriminator = $attrs[0]->newInstance();
+
+        if ($discriminator->map === []) {
+            throw new \InvalidArgumentException("{$class}: #[Discriminator] map cannot be empty.");
+        }
+
+        foreach ($discriminator->map as $target) {
+            self::validateDiscriminatorTarget($class, $target);
+        }
+
+        if ($discriminator->fallback !== null) {
+            self::validateDiscriminatorTarget($class, $discriminator->fallback);
+        }
+
+        return $discriminator;
+    }
+
+    private static function validateDiscriminatorTarget(string $class, mixed $target): void
+    {
+        if (! is_string($target) || ! class_exists($target)) {
+            $given = is_string($target) ? "'{$target}'" : get_debug_type($target);
+
+            throw new \InvalidArgumentException("{$class}: #[Discriminator] target {$given} is not an existing class.");
+        }
+
+        if (! is_subclass_of($target, $class)) {
+            throw new \InvalidArgumentException("{$class}: #[Discriminator] target '{$target}' must extend {$class}.");
+        }
+
+        // An abstract target can only hydrate by dispatching further down —
+        // without its own #[Discriminator] it would fail on every input.
+        $targetReflection = new ReflectionClass($target);
+
+        if ($targetReflection->isAbstract() && $targetReflection->getAttributes(Discriminator::class) === []) {
+            throw new \InvalidArgumentException(
+                "{$class}: #[Discriminator] target '{$target}' is abstract and must declare its own #[Discriminator].",
+            );
+        }
     }
 
     /**

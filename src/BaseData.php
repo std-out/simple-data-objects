@@ -13,6 +13,8 @@ use Illuminate\Validation\Factory as ValidatorFactory;
 use Illuminate\Validation\ValidationException;
 use JsonSerializable;
 use StdOut\SimpleDataObjects\Contracts\DataObject;
+use StdOut\SimpleDataObjects\Exceptions\DataHydrationException;
+use StdOut\SimpleDataObjects\Support\ClassMeta;
 use StdOut\SimpleDataObjects\Support\HydratorCompiler;
 use StdOut\SimpleDataObjects\Support\InputNormalizer;
 use StdOut\SimpleDataObjects\Support\MetadataRegistry;
@@ -60,6 +62,18 @@ abstract class BaseData implements Arrayable, DataObject, JsonSerializable, Stri
     {
         $class = static::class;
         $reflector = self::$reflectors[$class] ??= new \ReflectionClass($class);
+
+        // A ghost's class is fixed at creation, so a #[Discriminator] class
+        // must resolve the concrete class eagerly; hydration stays deferred.
+        if ($reflector->isAbstract()) {
+            $meta = MetadataRegistry::get($class);
+
+            if ($meta->discriminatorField !== null) {
+                $normalized = is_array($data) ? $data : InputNormalizer::normalize($class, $data);
+
+                return self::resolveDiscriminated($meta, $normalized)::fromLazy($normalized);
+            }
+        }
 
         /** @var static */
         return $reflector->newLazyGhost(static function (object $ghost) use ($class, $data): void {
@@ -180,6 +194,13 @@ abstract class BaseData implements Arrayable, DataObject, JsonSerializable, Stri
         $array = is_array($data) ? $data : InputNormalizer::normalize(static::class, $data);
         $meta = MetadataRegistry::get(static::class);
 
+        // Delegate before validating so the concrete class's rules apply,
+        // not the (usually empty) rules of the abstract base.
+        if ($meta->discriminatorField !== null) {
+            /** @var static */
+            return self::resolveDiscriminated($meta, $array)::fromValidated($array);
+        }
+
         if ($meta->validationRules !== []) {
             static::validatorFactory()->make($array, $meta->validationRules)->validate();
         }
@@ -192,6 +213,14 @@ abstract class BaseData implements Arrayable, DataObject, JsonSerializable, Stri
     {
         $meta = MetadataRegistry::get(static::class);
 
+        // Same delegation as fromValidated(): the concrete class's rules apply
+        if ($meta->discriminatorField !== null) {
+            $array = is_array($data) ? $data : InputNormalizer::normalize(static::class, $data);
+            self::resolveDiscriminated($meta, $array)::validate($array);
+
+            return;
+        }
+
         if ($meta->validationRules === []) {
             return;
         }
@@ -201,6 +230,23 @@ abstract class BaseData implements Arrayable, DataObject, JsonSerializable, Stri
         static::validatorFactory()
             ->make($array, $meta->validationRules)
             ->validate();
+    }
+
+    /**
+     * @return class-string<static>
+     *
+     * @throws DataHydrationException
+     */
+    private static function resolveDiscriminated(ClassMeta $meta, array $data): string
+    {
+        /** @var class-string<static>|null $target */
+        $target = $meta->resolveDiscriminatedClass($data);
+
+        return $target ?? throw DataHydrationException::unresolvedDiscriminator(
+            static::class,
+            (string) $meta->discriminatorField,
+            $data[$meta->discriminatorField] ?? null,
+        );
     }
 
     public static function setValidatorFactory(ValidatorFactory $factory): void

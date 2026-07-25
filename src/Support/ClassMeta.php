@@ -30,9 +30,17 @@ final class ClassMeta
     /**
      * @param  list<ParameterMeta>  $parameters
      * @param  list<class-string<DataPipe>>  $pipes
+     * @param  array<int|string, class-string>  $discriminatorMap
+     * @param  class-string|null  $discriminatorFallback
      */
-    public function __construct(array $parameters, array $pipes = [], bool $hasConstructor = true)
-    {
+    public function __construct(
+        array $parameters,
+        array $pipes = [],
+        bool $hasConstructor = true,
+        public readonly ?string $discriminatorField = null,
+        public readonly array $discriminatorMap = [],
+        public readonly ?string $discriminatorFallback = null,
+    ) {
         $validationRules = [];
 
         foreach ($parameters as $meta) {
@@ -48,8 +56,36 @@ final class ClassMeta
         $this->hasExtraProperties = $hasConstructor && array_any($parameters, static fn (ParameterMeta $p): bool => ! $p->viaConstructor);
     }
 
+    /**
+     * Missing and unmapped discriminator values resolve to the configured
+     * fallback, or null when there is none.
+     *
+     * @return class-string|null
+     */
+    public function resolveDiscriminatedClass(array $data): ?string
+    {
+        $value = $data[$this->discriminatorField] ?? null;
+
+        if ($value instanceof \BackedEnum) {
+            $value = $value->value;
+        }
+
+        $target = is_int($value) || is_string($value)
+            ? ($this->discriminatorMap[$value] ?? null)
+            : null;
+
+        return $target ?? $this->discriminatorFallback;
+    }
+
     public static function __set_state(array $state): self
     {
-        return new self($state['parameters'], $state['pipes'] ?? [], $state['hasConstructor'] ?? true);
+        return new self(
+            $state['parameters'],
+            $state['pipes'] ?? [],
+            $state['hasConstructor'] ?? true,
+            $state['discriminatorField'] ?? null,
+            $state['discriminatorMap'] ?? [],
+            $state['discriminatorFallback'] ?? null,
+        );
     }
 }

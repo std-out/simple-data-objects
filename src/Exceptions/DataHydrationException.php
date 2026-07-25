@@ -35,6 +35,17 @@ final class DataHydrationException extends RuntimeException
         return new self("Invalid value {$given} for field '{$field}'; expected a case of {$enumClass}.");
     }
 
+    public static function unresolvedDiscriminator(string $class, string $field, mixed $value): self
+    {
+        if ($value === null) {
+            return new self("Missing discriminator field '{$field}' for {$class}.");
+        }
+
+        $given = is_scalar($value) ? "'".$value."'" : get_debug_type($value);
+
+        return new self("Unknown discriminator value {$given} in field '{$field}' for {$class}.");
+    }
+
     public static function notADataObject(string $dataClass): self
     {
         return new self("DataCollection target class '{$dataClass}' must implement DataObject.");

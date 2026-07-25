@@ -89,6 +89,7 @@ export default defineConfig({
           { text: '#[IgnoreIfNull]', link: '/attributes/ignore-if-null' },
           { text: '#[MapPropertyName]', link: '/attributes/map-property-name' },
           { text: '#[TransformKeys]', link: '/attributes/transform-keys' },
+          { text: '#[Discriminator]', link: '/attributes/discriminator' },
           { text: '#[DataCollection]', link: '/attributes/data-collection' },
         ],
       },

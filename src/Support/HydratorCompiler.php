@@ -122,13 +122,28 @@ final class HydratorCompiler
     }
 
     /**
-     * Returns the closure source expression. Expects `$p` (parameter list)
-     * and `$pipes` in the evaluating scope.
+     * Returns the closure source expression. Expects `$p` (parameter list),
+     * `$pipes`, and `$meta` (for #[Discriminator] dispatchers) in the
+     * evaluating scope.
      *
      * @internal also used by MetadataRegistry to persist compiled code
      */
     public static function generate(string $class, ClassMeta $meta): string
     {
+        // A #[Discriminator] class never hydrates itself — its "hydrator"
+        // dispatches to the concrete subclass's own compiled hydrator.
+        if ($meta->discriminatorField !== null) {
+            $classExport = var_export($class, true);
+            $field = var_export($meta->discriminatorField, true);
+
+            return <<<PHP
+            static function (array \$d) use (\$meta): \\{$class} {
+                \$c = \$meta->resolveDiscriminatedClass(\$d) ?? throw \\StdOut\\SimpleDataObjects\\Exceptions\\DataHydrationException::unresolvedDiscriminator({$classExport}, {$field}, \$d[{$field}] ?? null);
+                return \$c::from(\$d);
+            }
+            PHP;
+        }
+
         if (! $meta->hasConstructor) {
             $body = self::buildPropertyAssignments($class, $meta);
 

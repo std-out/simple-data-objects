@@ -193,6 +193,7 @@ CreateOrderData::validate($rawArray); // throws ValidationException
 | `#[MapPropertyName('input_key')]` | property | map different input key → property |
 | `#[TransformKeys(TransformKeys::SNAKE_CASE)]` | class | transform all keys at class level |
 | `#[DataCollection(ItemData::class)]` | property | typed collection of DTOs |
+| `#[Discriminator('type', ['card' => CardData::class])]` | abstract class | polymorphic hydration — `from()` picks the subclass by field value |
 
 ## Built-in Casts
 
