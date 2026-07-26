@@ -65,6 +65,7 @@ export default defineConfig({
           { text: 'Comparison — equals() & diff()', link: '/features/comparison' },
           { text: 'Collections', link: '/features/collections' },
           { text: 'Laravel Integration', link: '/features/laravel' },
+          { text: 'Livewire Integration', link: '/features/livewire' },
           { text: 'Metadata Cache', link: '/features/cache' },
         ],
       },

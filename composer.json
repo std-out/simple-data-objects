@@ -1,7 +1,7 @@
 {
     "name": "std-out/simple-data-objects",
     "description": "Lightweight typed Data Transfer Object library for PHP 8.4+ with attribute-driven hydration",
-    "keywords": ["dto", "data-object", "data-transfer-object", "laravel", "hydration", "simple"],
+    "keywords": ["dto", "data-object", "data-transfer-object", "laravel", "livewire", "hydration", "simple"],
     "type": "library",
     "license": "MIT",
     "authors": [
@@ -25,7 +25,8 @@
     "suggest": {
         "ext-sodium": "Required to use EncryptedCast (bundled with PHP by default)",
         "illuminate/http": "Required to use HasLaravelIntegration::fromRequest() and toResponse()",
-        "illuminate/database": "Required to use HasLaravelIntegration::fromModel()"
+        "illuminate/database": "Required to use HasLaravelIntegration::fromModel()",
+        "livewire/livewire": "Required to implement \\Livewire\\Wireable alongside the WireableData trait"
     },
     "bin": ["bin/sdo-warm"],
     "autoload": {

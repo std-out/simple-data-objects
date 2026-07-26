@@ -5,6 +5,20 @@ All notable changes to `std-out/simple-data-objects` are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.15.0] — 2026-07-26
+
+### Added
+- **`WireableData` trait — Livewire integration.** Adds `toLivewire()` /
+  `fromLivewire()`, delegating to the existing `toArray()`/`from()` round
+  trip so casts (enums, `DateTimeCast`, custom casts, ...) apply the same
+  way they do everywhere else. Fully decoupled like `HasLaravelIntegration`:
+  the package has no dependency on `livewire/livewire`, and the trait does
+  not `implements \Livewire\Wireable` itself — that interface is untyped,
+  so the trait's methods already satisfy it structurally. The consuming
+  class adds `implements \Livewire\Wireable` itself, which is the only
+  place `livewire/livewire` needs to be installed. See
+  [Livewire Integration](https://std-out.github.io/simple-data-objects/features/livewire).
+
 ## [1.14.0] — 2026-07-25
 
 ### Added
