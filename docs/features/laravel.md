@@ -2,6 +2,8 @@
 
 The `HasLaravelIntegration` trait adds three convenience methods for working inside a Laravel application. It is **optional** — the core library works without it.
 
+For assigning a data object directly as an Eloquent attribute cast (`protected function casts(): array { return ['address' => AddressData::class]; }`), see [Eloquent Attribute Casting](./eloquent-casting.md) — a separate, equally optional trait.
+
 ## Setup
 
 Create a base class for your application DTOs:

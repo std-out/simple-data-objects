@@ -25,7 +25,7 @@
     "suggest": {
         "ext-sodium": "Required to use EncryptedCast (bundled with PHP by default)",
         "illuminate/http": "Required to use HasLaravelIntegration::fromRequest() and toResponse()",
-        "illuminate/database": "Required to use HasLaravelIntegration::fromModel()",
+        "illuminate/database": "Required to use HasLaravelIntegration::fromModel(), IsEloquentCastable, or AsDataCollection",
         "livewire/livewire": "Required to implement \\Livewire\\Wireable alongside the WireableData trait"
     },
     "bin": ["bin/sdo-warm"],
