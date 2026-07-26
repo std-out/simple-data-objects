@@ -7,6 +7,7 @@ namespace StdOut\SimpleDataObjects\Tests;
 use Illuminate\Database\Eloquent\Model;
 use PHPUnit\Framework\TestCase;
 use StdOut\SimpleDataObjects\Exceptions\DataHydrationException;
+use StdOut\SimpleDataObjects\Laravel\AsDataCollection;
 use StdOut\SimpleDataObjects\Laravel\DataCollectionCast;
 use StdOut\SimpleDataObjects\Tests\Fixtures\CastableItemData;
 use StdOut\SimpleDataObjects\TypedDataCollection;
@@ -105,5 +106,18 @@ class DataCollectionCastTest extends TestCase
         $b = '[{"sku":"XYZ","quantity":9}]';
 
         $this->assertFalse($this->cast()->compare($this->model(), 'items', $a, $b));
+    }
+
+    public function test_as_data_collection_of_builds_the_cast_argument_string(): void
+    {
+        $this->assertSame(AsDataCollection::class.':'.CastableItemData::class, AsDataCollection::of(CastableItemData::class));
+    }
+
+    public function test_as_data_collection_cast_using_resolves_to_a_data_collection_cast_for_the_given_class(): void
+    {
+        $cast = AsDataCollection::castUsing([CastableItemData::class]);
+
+        $this->assertInstanceOf(DataCollectionCast::class, $cast);
+        $this->assertInstanceOf(TypedDataCollection::class, $cast->get($this->model(), 'items', [], []));
     }
 }

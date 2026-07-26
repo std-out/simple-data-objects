@@ -9,26 +9,16 @@ and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.
 
 ### Added
 - **`IsEloquentCastable` trait and `AsDataCollection` — Eloquent attribute
-  casting.** A data object can now be assigned directly as an Eloquent
-  attribute cast: `protected function casts(): array { return ['address'
-  => AddressData::class]; }` hydrates/serializes through the same compiled
-  `from()`/`toArray()` round trip as everywhere else, and
-  `AsDataCollection::of(ItemData::class)` does the same for a JSON array
-  column, mirroring Laravel's own `AsCollection::using()` idiom. Both
-  casters implement Eloquent's `ComparesCastableAttributes` contract, so
-  `isDirty()` compares decoded values through the DTO's own `equals()`
-  instead of the raw stored JSON bytes — a freshly re-serialized value with
-  differently-ordered keys is correctly reported as clean. Invalid JSON
-  already in the column throws `DataHydrationException` on access, same as
-  everywhere else `from()` decodes JSON. Works with an abstract
-  `#[Discriminator]` class as the cast target, dispatching to the right
-  concrete subclass. Fully decoupled like `HasLaravelIntegration` and
-  `WireableData`: the package has no dependency on `illuminate/database`.
-  `IsEloquentCastable` doesn't `implements Castable` itself — the
-  consuming class adds that itself, which is the only place
-  `illuminate/database` needs to be installed; the actual caster classes
-  live under a new `Laravel\` namespace and are only autoloaded once
-  `castUsing()` actually runs. See
+  casting.** Assign a data object directly as an Eloquent attribute cast;
+  hydration and serialization go through the same `from()`/`toArray()`
+  round trip as everywhere else. `AsDataCollection::of(ItemData::class)`
+  does the same for a JSON array column. Both casters support Eloquent's
+  dirty-check via `compare()`, comparing decoded values instead of raw
+  JSON bytes — Laravel 12+ only; on 10.x/11.x, dirty-checking falls back
+  to Eloquent's default byte comparison. Works with an abstract
+  `#[Discriminator]` class as the cast target. Fully decoupled, like
+  `HasLaravelIntegration` and `WireableData`: no dependency on
+  `illuminate/database`. See
   [Eloquent Attribute Casting](https://std-out.github.io/simple-data-objects/features/eloquent-casting).
 
 ## [1.15.0] — 2026-07-26

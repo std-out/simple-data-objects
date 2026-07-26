@@ -13,12 +13,9 @@ class CastableOrderModel extends Model
 
     protected $guarded = [];
 
-    protected function casts(): array
-    {
-        return [
-            'address' => CastableAddressData::class,
-            'items' => AsDataCollection::of(CastableItemData::class),
-            'payment' => CastablePaymentData::class,
-        ];
-    }
+    protected $casts = [
+        'address' => CastableAddressData::class,
+        'items' => AsDataCollection::class.':'.CastableItemData::class,
+        'payment' => CastablePaymentData::class,
+    ];
 }

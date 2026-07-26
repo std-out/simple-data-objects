@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace StdOut\SimpleDataObjects\Tests;
 
+use Illuminate\Contracts\Database\Eloquent\ComparesCastableAttributes;
 use Illuminate\Database\Capsule\Manager as Capsule;
 use Illuminate\Database\Schema\Blueprint;
 use PHPUnit\Framework\TestCase;
@@ -44,6 +45,14 @@ class EloquentCastTest extends TestCase
     protected function tearDown(): void
     {
         self::$capsule->getConnection()->table('castable_order_models')->truncate();
+    }
+
+    /** Eloquent dispatches isDirty() to compare() only on Laravel 12+. */
+    private function skipUnlessDirtyCheckDispatchesToCompare(): void
+    {
+        if (! interface_exists(ComparesCastableAttributes::class)) {
+            $this->markTestSkipped('Eloquent dispatches isDirty() to compare() only on Laravel 12+.');
+        }
     }
 
     public function test_single_data_object_round_trips_through_save_and_fresh_load(): void
@@ -150,14 +159,12 @@ class EloquentCastTest extends TestCase
 
     public function test_dirty_check_compares_decoded_values_not_raw_json_bytes(): void
     {
+        $this->skipUnlessDirtyCheckDispatchesToCompare();
+
         $model = CastableOrderModel::create([
             'address' => new CastableAddressData('123 Main St', 'Kyiv'),
         ])->fresh();
 
-        // Simulate a differently-key-ordered (but semantically identical)
-        // JSON string already in storage, e.g. written by another system.
-        // Without DataObjectCast::compare(), Eloquent's dirty-check falls
-        // back to raw byte comparison and this would report dirty.
         self::$capsule->getConnection()
             ->table('castable_order_models')
             ->where('id', $model->id)
@@ -182,6 +189,8 @@ class EloquentCastTest extends TestCase
 
     public function test_collection_dirty_check_compares_decoded_values(): void
     {
+        $this->skipUnlessDirtyCheckDispatchesToCompare();
+
         $model = CastableOrderModel::create([
             'items' => [['sku' => 'ABC', 'quantity' => 2]],
         ])->fresh();

@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace StdOut\SimpleDataObjects\Laravel;
 
 use Illuminate\Contracts\Database\Eloquent\CastsAttributes;
-use Illuminate\Contracts\Database\Eloquent\ComparesCastableAttributes;
 use Illuminate\Database\Eloquent\Model;
 use StdOut\SimpleDataObjects\BaseData;
 use StdOut\SimpleDataObjects\Exceptions\DataHydrationException;
@@ -14,7 +13,7 @@ use StdOut\SimpleDataObjects\TypedDataCollection;
 /**
  * @implements CastsAttributes<TypedDataCollection, TypedDataCollection|iterable|string>
  */
-final class DataCollectionCast implements CastsAttributes, ComparesCastableAttributes
+final class DataCollectionCast implements CastsAttributes
 {
     /** @param class-string<BaseData> $dataClass */
     public function __construct(private readonly string $dataClass) {}

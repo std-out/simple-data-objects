@@ -5,14 +5,13 @@ declare(strict_types=1);
 namespace StdOut\SimpleDataObjects\Laravel;
 
 use Illuminate\Contracts\Database\Eloquent\CastsAttributes;
-use Illuminate\Contracts\Database\Eloquent\ComparesCastableAttributes;
 use Illuminate\Database\Eloquent\Model;
 use StdOut\SimpleDataObjects\BaseData;
 
 /**
  * @implements CastsAttributes<BaseData, BaseData|array|string>
  */
-final class DataObjectCast implements CastsAttributes, ComparesCastableAttributes
+final class DataObjectCast implements CastsAttributes
 {
     /** @param class-string<BaseData> $dataClass */
     public function __construct(private readonly string $dataClass) {}
@@ -28,10 +27,9 @@ final class DataObjectCast implements CastsAttributes, ComparesCastableAttribute
     }
 
     /**
-     * Without this, Eloquent's dirty-checking falls back to comparing the
-     * raw stored JSON strings byte-for-byte, so a freshly re-serialized but
-     * unchanged value can appear dirty. Decoding and comparing via equals()
-     * fixes that.
+     * Picked up by Eloquent via method_exists(), not an interface — Laravel
+     * 12+ only. `ComparesCastableAttributes` isn't declared here since it
+     * doesn't exist before Laravel 12.
      */
     public function compare(Model $model, string $key, mixed $firstValue, mixed $secondValue): bool
     {
