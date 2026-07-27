@@ -5,7 +5,7 @@ All notable changes to `std-out/simple-data-objects` are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [1.16.0] — 2026-07-27
 
 ### Added
 - **`IsEloquentCastable` trait and `AsDataCollection` — Eloquent attribute
