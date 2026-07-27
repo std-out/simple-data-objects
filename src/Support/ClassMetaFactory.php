@@ -17,6 +17,7 @@ use StdOut\SimpleDataObjects\Attributes\MapPropertyName;
 use StdOut\SimpleDataObjects\Attributes\Pipe;
 use StdOut\SimpleDataObjects\Attributes\Rules;
 use StdOut\SimpleDataObjects\Attributes\TransformKeys;
+use StdOut\SimpleDataObjects\Attributes\WhenLoaded;
 use StdOut\SimpleDataObjects\Contracts\DataObject;
 use StdOut\SimpleDataObjects\Exceptions\DataHydrationException;
 
@@ -223,6 +224,8 @@ final class ClassMetaFactory
         $pipeAttrs = $parameter->getAttributes(Pipe::class);
         $paramPipes = $pipeAttrs !== [] ? $pipeAttrs[0]->newInstance()->pipes : [];
 
+        $whenLoadedAttrs = $parameter->getAttributes(WhenLoaded::class);
+
         return new ParameterMeta(
             phpName: $phpName,
             inputName: $inputName,
@@ -241,6 +244,7 @@ final class ClassMetaFactory
             caster: $castAttrs !== [] ? $castAttrs[0]->newInstance()->caster : null,
             pipes: $paramPipes,
             viaConstructor: $viaConstructor,
+            whenLoadedRelation: $whenLoadedAttrs !== [] ? $whenLoadedAttrs[0]->newInstance()->relation : null,
         );
     }
 }

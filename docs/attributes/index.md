@@ -14,3 +14,4 @@ All behaviour in Simple Data Objects is declared via PHP attributes on construct
 | [`#[Discriminator]`](./discriminator.md) | Class (abstract) | Polymorphic hydration — dispatch `from()` to a concrete subclass by field value |
 | [`#[DataCollection]`](./data-collection.md) | Parameter or property | Declare a typed collection property |
 | [`#[Pipe]`](./pipe.md) | Class, parameter, or property | Input preprocessing middleware — whole array (class) or a single value (parameter/property) |
+| [`#[WhenLoaded]`](./when-loaded.md) | Parameter or property | Include an Eloquent relation in `fromModel()` only when it's loaded |

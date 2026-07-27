@@ -50,11 +50,27 @@ public function store(Request $request): JsonResponse
 
 ## fromModel()
 
-Hydrates a DTO from an Eloquent model via `$model->toArray()`:
+Hydrates a DTO from an Eloquent model's own attributes (`$model->attributesToArray()` — no relations):
 
 ```php
 $data = UserData::fromModel(User::findOrFail($id));
 $data->name;  // model attribute
+```
+
+To include a relation, mark the property with [`#[WhenLoaded]`](../attributes/when-loaded.md) — it's added only if the relation was actually eager-loaded:
+
+```php
+class OrderData extends AppData
+{
+    public function __construct(
+        public readonly int $id,
+        #[WhenLoaded('customer')]
+        public readonly ?CustomerData $customer = null,
+    ) {}
+}
+
+OrderData::fromModel(Order::find($id));                    // customer: null
+OrderData::fromModel(Order::with('customer')->find($id));  // customer: hydrated
 ```
 
 ::: tip

@@ -37,6 +37,7 @@ final class ParameterMeta
         /** @var list<class-string<ValuePipe>> */
         public readonly array $pipes = [],
         public readonly bool $viaConstructor = true,
+        public readonly ?string $whenLoadedRelation = null,
     ) {
         $this->isPlain = $caster === null
             && $nestedDataClass === null
@@ -63,6 +64,7 @@ final class ParameterMeta
             caster: $state['caster'],
             pipes: $state['pipes'] ?? [],
             viaConstructor: $state['viaConstructor'] ?? true,
+            whenLoadedRelation: $state['whenLoadedRelation'] ?? null,
         );
     }
 }

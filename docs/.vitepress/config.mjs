@@ -93,6 +93,7 @@ export default defineConfig({
           { text: '#[TransformKeys]', link: '/attributes/transform-keys' },
           { text: '#[Discriminator]', link: '/attributes/discriminator' },
           { text: '#[DataCollection]', link: '/attributes/data-collection' },
+          { text: '#[WhenLoaded]', link: '/attributes/when-loaded' },
         ],
       },
       {

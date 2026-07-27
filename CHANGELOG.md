@@ -20,6 +20,12 @@ and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.
   `HasLaravelIntegration` and `WireableData`: no dependency on
   `illuminate/database`. See
   [Eloquent Attribute Casting](https://std-out.github.io/simple-data-objects/features/eloquent-casting).
+- **`#[WhenLoaded]`.** `fromModel()` now hydrates from `$model->attributesToArray()`
+  (no relations) and adds a relation only when its property is marked
+  `#[WhenLoaded('relationName')]` and the relation is actually loaded;
+  otherwise the property falls back to its default like any missing field.
+  Works with `#[DataCollection]` for `hasMany`/`belongsToMany` relations. See
+  [`#[WhenLoaded]`](https://std-out.github.io/simple-data-objects/attributes/when-loaded).
 
 ## [1.15.0] — 2026-07-26
 

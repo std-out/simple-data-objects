@@ -42,10 +42,10 @@ class HasLaravelIntegrationTest extends TestCase
         $this->assertSame('bob@example.com', $data->email);
     }
 
-    public function test_from_model_hydrates_from_model_array(): void
+    public function test_from_model_hydrates_from_model_attributes(): void
     {
         $model = $this->createMock(Model::class);
-        $model->method('toArray')->willReturn(['name' => 'Carol', 'email' => 'carol@example.com']);
+        $model->method('attributesToArray')->willReturn(['name' => 'Carol', 'email' => 'carol@example.com']);
 
         $data = LaravelUserData::fromModel($model);
 
