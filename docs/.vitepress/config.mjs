@@ -105,6 +105,7 @@ export default defineConfig({
             { text: '#[Discriminator]', link: '/attributes/discriminator' },
             { text: '#[DataCollection]', link: '/attributes/data-collection' },
             { text: '#[WhenLoaded]', link: '/attributes/when-loaded' },
+            { text: '#[RejectUnknownKeys]', link: '/attributes/reject-unknown-keys' },
           ],
         },
         {

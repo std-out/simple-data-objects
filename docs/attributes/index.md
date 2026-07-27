@@ -1,6 +1,6 @@
 # Attributes Overview
 
-All behaviour in Simple Data Objects is declared via PHP attributes on constructor parameters (or on the class itself for `#[TransformKeys]`/`#[Pipe]`/`#[Discriminator]`). Every parameter-level attribute also works on a plain property for [constructor-less and hybrid DTOs](../features/hydration.md#constructor-less-dtos) — same syntax, same behavior either way.
+All behaviour in Simple Data Objects is declared via PHP attributes on constructor parameters (or on the class itself for `#[TransformKeys]`/`#[Pipe]`/`#[Discriminator]`/`#[RejectUnknownKeys]`). Every parameter-level attribute also works on a plain property for [constructor-less and hybrid DTOs](../features/hydration.md#constructor-less-dtos) — same syntax, same behavior either way.
 
 | Attribute | Target | Purpose |
 |---|---|---|
@@ -15,3 +15,4 @@ All behaviour in Simple Data Objects is declared via PHP attributes on construct
 | [`#[DataCollection]`](./data-collection.md) | Parameter or property | Declare a typed collection property |
 | [`#[Pipe]`](./pipe.md) | Class, parameter, or property | Input preprocessing middleware — whole array (class) or a single value (parameter/property) |
 | [`#[WhenLoaded]`](./when-loaded.md) | Parameter or property | Include an Eloquent relation in `fromModel()` only when it's loaded |
+| [`#[RejectUnknownKeys]`](./reject-unknown-keys.md) | Class | Strict mode — throw when input contains a key the class doesn't recognize |

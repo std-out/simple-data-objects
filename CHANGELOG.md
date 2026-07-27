@@ -26,6 +26,15 @@ and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.
   otherwise the property falls back to its default like any missing field.
   Works with `#[DataCollection]` for `hasMany`/`belongsToMany` relations. See
   [`#[WhenLoaded]`](https://std-out.github.io/simple-data-objects/attributes/when-loaded).
+- **`#[RejectUnknownKeys]` — strict mode.** Hydration throws
+  `DataHydrationException` when the input contains a key the class doesn't
+  recognize, instead of silently ignoring it — checked against each
+  parameter's input name (after `#[MapPropertyName]`/`#[TransformKeys]`),
+  before pipes or per-field extraction run. The exception's `$unknownKeys`
+  array exposes the offending keys directly. Rejected at metadata-build
+  time when combined with `#[Flatten]` or `#[Discriminator]`, since neither
+  has a fixed set of keys to check against. See
+  [`#[RejectUnknownKeys]`](https://std-out.github.io/simple-data-objects/attributes/reject-unknown-keys).
 
 ## [1.15.0] — 2026-07-26
 

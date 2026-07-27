@@ -8,6 +8,12 @@ use RuntimeException;
 
 final class DataHydrationException extends RuntimeException
 {
+    /** @param list<string> $unknownKeys */
+    public function __construct(string $message, public readonly array $unknownKeys = [])
+    {
+        parent::__construct($message);
+    }
+
     public static function missingField(string $class, string $field): self
     {
         return new self("Missing required field '{$field}' for {$class}.");
@@ -49,5 +55,16 @@ final class DataHydrationException extends RuntimeException
     public static function notADataObject(string $dataClass): self
     {
         return new self("DataCollection target class '{$dataClass}' must implement DataObject.");
+    }
+
+    /** @param list<string> $unknownKeys */
+    public static function unknownKeys(string $class, array $unknownKeys): self
+    {
+        $list = implode(', ', array_map(static fn (string $key): string => "'{$key}'", $unknownKeys));
+
+        return new self(
+            sprintf('Unknown key%s [%s] for %s.', count($unknownKeys) === 1 ? '' : 's', $list, $class),
+            $unknownKeys,
+        );
     }
 }

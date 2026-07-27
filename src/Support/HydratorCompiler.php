@@ -145,16 +145,18 @@ final class HydratorCompiler
         }
 
         if (! $meta->hasConstructor) {
+            $unknownCheck = self::buildUnknownKeysCheck($class, $meta);
             $body = self::buildPropertyAssignments($class, $meta);
 
             return <<<PHP
             static function (array \$d) use (\$p, \$pipes): \\{$class} {
-                \$o = new \\{$class}();
+            {$unknownCheck}    \$o = new \\{$class}();
             {$body}    return \$o;
             }
             PHP;
         }
 
+        $unknownCheck = self::buildUnknownKeysCheck($class, $meta);
         [$body, $argList] = self::buildParts($class, $meta);
 
         if ($meta->hasExtraProperties) {
@@ -162,7 +164,7 @@ final class HydratorCompiler
 
             return <<<PHP
             static function (array \$d) use (\$p, \$pipes): \\{$class} {
-            {$body}    \$o = new \\{$class}({$argList});
+            {$unknownCheck}{$body}    \$o = new \\{$class}({$argList});
             {$extraBody}    return \$o;
             }
             PHP;
@@ -170,7 +172,7 @@ final class HydratorCompiler
 
         return <<<PHP
         static function (array \$d) use (\$p, \$pipes): \\{$class} {
-        {$body}    return new \\{$class}({$argList});
+        {$unknownCheck}{$body}    return new \\{$class}({$argList});
         }
         PHP;
     }
@@ -182,11 +184,12 @@ final class HydratorCompiler
      */
     private static function generateArgs(string $class, ClassMeta $meta): string
     {
+        $unknownCheck = self::buildUnknownKeysCheck($class, $meta);
         [$body, $argList] = self::buildParts($class, $meta);
 
         return <<<PHP
         static function (array \$d) use (\$p, \$pipes): array {
-        {$body}    return [{$argList}];
+        {$unknownCheck}{$body}    return [{$argList}];
         }
         PHP;
     }
@@ -199,12 +202,34 @@ final class HydratorCompiler
      */
     private static function generatePopulate(string $class, ClassMeta $meta): string
     {
+        $unknownCheck = self::buildUnknownKeysCheck($class, $meta);
         $body = self::buildPropertyAssignments($class, $meta);
 
         return <<<PHP
         static function (array \$d, \\{$class} \$o) use (\$p, \$pipes): void {
-        {$body}}
+        {$unknownCheck}{$body}}
         PHP;
+    }
+
+    /**
+     * #[RejectUnknownKeys]: checked against the caller's raw input, before
+     * pipes or per-field extraction run. Empty string when unused.
+     */
+    private static function buildUnknownKeysCheck(string $class, ClassMeta $meta): string
+    {
+        if (! $meta->rejectUnknownKeys) {
+            return '';
+        }
+
+        $classExport = var_export($class, true);
+        $knownKeys = var_export(array_fill_keys(
+            array_map(static fn (ParameterMeta $p): string => $p->inputName, $meta->parameters),
+            true,
+        ), true);
+
+        return "    if (\$u = \\array_diff_key(\$d, {$knownKeys})) {\n"
+            ."        throw \\StdOut\\SimpleDataObjects\\Exceptions\\DataHydrationException::unknownKeys({$classExport}, \\array_keys(\$u));\n"
+            ."    }\n";
     }
 
     /**

@@ -15,6 +15,7 @@ use StdOut\SimpleDataObjects\Attributes\Hidden;
 use StdOut\SimpleDataObjects\Attributes\IgnoreIfNull;
 use StdOut\SimpleDataObjects\Attributes\MapPropertyName;
 use StdOut\SimpleDataObjects\Attributes\Pipe;
+use StdOut\SimpleDataObjects\Attributes\RejectUnknownKeys;
 use StdOut\SimpleDataObjects\Attributes\Rules;
 use StdOut\SimpleDataObjects\Attributes\TransformKeys;
 use StdOut\SimpleDataObjects\Attributes\WhenLoaded;
@@ -42,22 +43,34 @@ final class ClassMetaFactory
             );
         }
 
+        $rejectUnknownKeys = $reflection->getAttributes(RejectUnknownKeys::class) !== [];
+
+        if ($rejectUnknownKeys && $discriminator !== null) {
+            throw new \InvalidArgumentException(
+                "{$class}: #[RejectUnknownKeys] and #[Discriminator] cannot be combined — declare it on the concrete subclasses instead.",
+            );
+        }
+
         // No constructor: fall back to the class's own public typed properties
         // (plain property-declaration DTOs), hydrated via post-construction
         // assignment instead of constructor injection.
         if ($constructor === null) {
             $members = self::publicTypedProperties($reflection, []);
+            $params = array_map(
+                static fn (ReflectionProperty $p): ParameterMeta => self::buildParam($p, $strategy, viaConstructor: false),
+                $members,
+            );
+
+            self::assertNoFlattenWithRejectUnknownKeys($class, $params, $rejectUnknownKeys);
 
             return new ClassMeta(
-                array_map(
-                    static fn (ReflectionProperty $p): ParameterMeta => self::buildParam($p, $strategy, viaConstructor: false),
-                    $members,
-                ),
+                $params,
                 $pipes,
                 hasConstructor: false,
                 discriminatorField: $discriminator?->field,
                 discriminatorMap: $discriminator?->map ?? [],
                 discriminatorFallback: $discriminator?->fallback,
+                rejectUnknownKeys: $rejectUnknownKeys,
             );
         }
 
@@ -77,13 +90,28 @@ final class ClassMetaFactory
             $extraProps,
         );
 
+        $allParams = array_merge($ctorParams, $extraParams);
+
+        self::assertNoFlattenWithRejectUnknownKeys($class, $allParams, $rejectUnknownKeys);
+
         return new ClassMeta(
-            array_merge($ctorParams, $extraParams),
+            $allParams,
             $pipes,
             discriminatorField: $discriminator?->field,
             discriminatorMap: $discriminator?->map ?? [],
             discriminatorFallback: $discriminator?->fallback,
+            rejectUnknownKeys: $rejectUnknownKeys,
         );
+    }
+
+    /** @param list<ParameterMeta> $params */
+    private static function assertNoFlattenWithRejectUnknownKeys(string $class, array $params, bool $rejectUnknownKeys): void
+    {
+        if ($rejectUnknownKeys && array_any($params, static fn (ParameterMeta $p): bool => $p->flatten)) {
+            throw new \InvalidArgumentException(
+                "{$class}: #[RejectUnknownKeys] and #[Flatten] cannot be combined — a flattened nested DTO consumes keys the parent doesn't know about.",
+            );
+        }
     }
 
     /**
