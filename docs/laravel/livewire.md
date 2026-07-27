@@ -56,7 +56,7 @@ class Counter extends Component
 
 ## Combining with Laravel Integration
 
-`WireableData` and [`HasLaravelIntegration`](./laravel.md) are independent traits — use either, both, or neither on a given class:
+`WireableData` and [`HasLaravelIntegration`](./index.md) are independent traits — use either, both, or neither on a given class:
 
 ```php
 class OrderData extends BaseData implements \Livewire\Wireable

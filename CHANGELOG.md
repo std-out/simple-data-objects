@@ -19,7 +19,7 @@ and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.
   `#[Discriminator]` class as the cast target. Fully decoupled, like
   `HasLaravelIntegration` and `WireableData`: no dependency on
   `illuminate/database`. See
-  [Eloquent Attribute Casting](https://std-out.github.io/simple-data-objects/features/eloquent-casting).
+  [Eloquent Attribute Casting](https://std-out.github.io/simple-data-objects/laravel/eloquent-casting).
 - **`#[WhenLoaded]`.** `fromModel()` now hydrates from `$model->attributesToArray()`
   (no relations) and adds a relation only when its property is marked
   `#[WhenLoaded('relationName')]` and the relation is actually loaded;
@@ -39,7 +39,7 @@ and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.
   so the trait's methods already satisfy it structurally. The consuming
   class adds `implements \Livewire\Wireable` itself, which is the only
   place `livewire/livewire` needs to be installed. See
-  [Livewire Integration](https://std-out.github.io/simple-data-objects/features/livewire).
+  [Livewire Integration](https://std-out.github.io/simple-data-objects/laravel/livewire).
 
 ## [1.14.0] — 2026-07-25
 

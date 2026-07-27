@@ -39,7 +39,7 @@ $order = OrderData::fromModel($orderModel);
 $order = OrderData::from($orderModel);       // same thing — from() understands models
 ```
 
-See [Laravel Integration](../features/laravel.md) for the full trait reference and [Validation](../features/validation.md) for `#[Rules]`.
+See the [Laravel section](../laravel/index.md) for the full trait reference, [Eloquent attribute casting](../laravel/eloquent-casting.md), and [Livewire integration](../laravel/livewire.md), and [Validation](../features/validation.md) for `#[Rules]`.
 
 ## Deploy
 

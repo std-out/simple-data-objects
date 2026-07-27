@@ -37,6 +37,7 @@ export default defineConfig({
     nav: [
       { text: 'Guide', link: '/guide/installation' },
       { text: 'Features', link: '/features/hydration' },
+      { text: 'Laravel', link: '/laravel/' },
       { text: 'Casts', link: '/casts/' },
       {
         text: 'GitHub',
@@ -44,76 +45,87 @@ export default defineConfig({
       },
     ],
 
-    sidebar: [
-      {
-        text: 'Getting Started',
-        items: [
-          { text: 'Introduction', link: '/guide/introduction' },
-          { text: 'Installation', link: '/guide/installation' },
-          { text: 'Quick Start', link: '/guide/quick-start' },
-          { text: 'Performance', link: '/guide/performance' },
-        ],
-      },
-      {
-        text: 'Features',
-        items: [
-          { text: 'Hydration', link: '/features/hydration' },
-          { text: 'Serialization', link: '/features/serialization' },
-          { text: 'Validation', link: '/features/validation' },
-          { text: 'DataPipe — Preprocessing', link: '/features/pipes' },
-          { text: 'Immutable Copies — with()', link: '/features/with' },
-          { text: 'Comparison — equals() & diff()', link: '/features/comparison' },
-          { text: 'Collections', link: '/features/collections' },
-          { text: 'Laravel Integration', link: '/features/laravel' },
-          { text: 'Eloquent Attribute Casting', link: '/features/eloquent-casting' },
-          { text: 'Livewire Integration', link: '/features/livewire' },
-          { text: 'Metadata Cache', link: '/features/cache' },
-        ],
-      },
-      {
-        text: 'Integrations',
-        items: [
-          { text: 'Plain PHP', link: '/integrations/plain-php' },
-          { text: 'Laravel', link: '/integrations/laravel' },
-          { text: 'Symfony', link: '/integrations/symfony' },
-          { text: 'Slim & PSR-7', link: '/integrations/psr-7' },
-        ],
-      },
-      {
-        text: 'Attributes',
-        items: [
-          { text: 'Overview', link: '/attributes/' },
-          { text: '#[Cast]', link: '/attributes/cast' },
-          { text: '#[Rules]', link: '/attributes/rules' },
-          { text: '#[Pipe]', link: '/attributes/pipe' },
-          { text: '#[Flatten]', link: '/attributes/flatten' },
-          { text: '#[Hidden]', link: '/attributes/hidden' },
-          { text: '#[IgnoreIfNull]', link: '/attributes/ignore-if-null' },
-          { text: '#[MapPropertyName]', link: '/attributes/map-property-name' },
-          { text: '#[TransformKeys]', link: '/attributes/transform-keys' },
-          { text: '#[Discriminator]', link: '/attributes/discriminator' },
-          { text: '#[DataCollection]', link: '/attributes/data-collection' },
-          { text: '#[WhenLoaded]', link: '/attributes/when-loaded' },
-        ],
-      },
-      {
-        text: 'Built-in Casts',
-        items: [
-          { text: 'Overview', link: '/casts/' },
-          { text: 'DateTimeCast', link: '/casts/date-time' },
-          { text: 'EnumCast', link: '/casts/enum' },
-          { text: 'BooleanCast', link: '/casts/boolean' },
-          { text: 'IntegerCast & FloatCast', link: '/casts/numeric' },
-          { text: 'TrimCast', link: '/casts/trim' },
-          { text: 'JsonCast', link: '/casts/json' },
-          { text: 'EncryptedCast', link: '/casts/encrypted' },
-          { text: 'UuidCast', link: '/casts/uuid' },
-          { text: 'CommaSeparatedCast', link: '/casts/comma-separated' },
-          { text: 'MoneyCast', link: '/casts/money' },
-          { text: 'Custom Casts', link: '/casts/custom' },
-        ],
-      },
-    ],
+    sidebar: {
+      '/laravel/': [
+        {
+          text: 'Laravel',
+          items: [
+            { text: 'Overview', link: '/laravel/' },
+            { text: 'Eloquent Attribute Casting', link: '/laravel/eloquent-casting' },
+            { text: 'Livewire Integration', link: '/laravel/livewire' },
+            { text: '#[WhenLoaded]', link: '/attributes/when-loaded' },
+          ],
+        },
+      ],
+
+      '/': [
+        {
+          text: 'Getting Started',
+          items: [
+            { text: 'Introduction', link: '/guide/introduction' },
+            { text: 'Installation', link: '/guide/installation' },
+            { text: 'Quick Start', link: '/guide/quick-start' },
+            { text: 'Performance', link: '/guide/performance' },
+          ],
+        },
+        {
+          text: 'Features',
+          items: [
+            { text: 'Hydration', link: '/features/hydration' },
+            { text: 'Serialization', link: '/features/serialization' },
+            { text: 'Validation', link: '/features/validation' },
+            { text: 'DataPipe — Preprocessing', link: '/features/pipes' },
+            { text: 'Immutable Copies — with()', link: '/features/with' },
+            { text: 'Comparison — equals() & diff()', link: '/features/comparison' },
+            { text: 'Collections', link: '/features/collections' },
+            { text: 'Metadata Cache', link: '/features/cache' },
+          ],
+        },
+        {
+          text: 'Integrations',
+          items: [
+            { text: 'Plain PHP', link: '/integrations/plain-php' },
+            { text: 'Laravel', link: '/integrations/laravel' },
+            { text: 'Symfony', link: '/integrations/symfony' },
+            { text: 'Slim & PSR-7', link: '/integrations/psr-7' },
+          ],
+        },
+        {
+          text: 'Attributes',
+          items: [
+            { text: 'Overview', link: '/attributes/' },
+            { text: '#[Cast]', link: '/attributes/cast' },
+            { text: '#[Rules]', link: '/attributes/rules' },
+            { text: '#[Pipe]', link: '/attributes/pipe' },
+            { text: '#[Flatten]', link: '/attributes/flatten' },
+            { text: '#[Hidden]', link: '/attributes/hidden' },
+            { text: '#[IgnoreIfNull]', link: '/attributes/ignore-if-null' },
+            { text: '#[MapPropertyName]', link: '/attributes/map-property-name' },
+            { text: '#[TransformKeys]', link: '/attributes/transform-keys' },
+            { text: '#[Discriminator]', link: '/attributes/discriminator' },
+            { text: '#[DataCollection]', link: '/attributes/data-collection' },
+            { text: '#[WhenLoaded]', link: '/attributes/when-loaded' },
+          ],
+        },
+        {
+          text: 'Built-in Casts',
+          items: [
+            { text: 'Overview', link: '/casts/' },
+            { text: 'DateTimeCast', link: '/casts/date-time' },
+            { text: 'EnumCast', link: '/casts/enum' },
+            { text: 'BooleanCast', link: '/casts/boolean' },
+            { text: 'IntegerCast & FloatCast', link: '/casts/numeric' },
+            { text: 'TrimCast', link: '/casts/trim' },
+            { text: 'JsonCast', link: '/casts/json' },
+            { text: 'EncryptedCast', link: '/casts/encrypted' },
+            { text: 'UuidCast', link: '/casts/uuid' },
+            { text: 'CommaSeparatedCast', link: '/casts/comma-separated' },
+            { text: 'MoneyCast', link: '/casts/money' },
+            { text: 'Custom Casts', link: '/casts/custom' },
+          ],
+        },
+      ],
+    },
 
     socialLinks: [
       { icon: 'github', link: 'https://github.com/std-out/simple-data-objects' },

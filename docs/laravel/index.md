@@ -149,8 +149,8 @@ Add it wherever your other build-time steps live — a Forge/Envoyer deploy
 script, a Vapor build hook, or a CI job — right before workers restart, so
 every worker starts from an already-compiled cache instead of building it
 on the first request it happens to serve. See [Metadata
-Cache](./cache.md#pre-warming-on-deploy) for what the command actually
-scans and writes, and [opcache.preload](./cache.md#going-further-opcachepreload)
+Cache](../features/cache.md#pre-warming-on-deploy) for what the command actually
+scans and writes, and [opcache.preload](../features/cache.md#going-further-opcachepreload)
 to skip the file-read cost too.
 
 ### 3. Clear it on rollback
@@ -161,3 +161,10 @@ php artisan tinker --execute="StdOut\SimpleDataObjects\Support\MetadataRegistry:
 
 Run this whenever DTO classes or their attributes change between deploys —
 a stale cache entry keeps serving the old compiled shape otherwise.
+
+## Octane / Long-Running Workers
+
+Nothing to configure: metadata and compiled closures live in per-worker
+static caches, so after the first request each worker runs entirely from
+memory. The validator factory is resolved from the container per call, so
+container rebinds between requests are picked up correctly.

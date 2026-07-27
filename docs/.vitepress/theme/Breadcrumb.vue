@@ -18,7 +18,19 @@ const trail = computed(() => {
   const section = segment.charAt(0).toUpperCase() + segment.slice(1)
 
   const link = '/' + path.replace(/(index)?\.md$/, '')
-  const group = (theme.value.sidebar ?? []).find((g) =>
+
+  // sidebar may be a flat array or a multi-sidebar object keyed by path
+  // prefix — resolve it the same way VitePress does: the most specific
+  // (longest) matching prefix wins.
+  const rawSidebar = theme.value.sidebar
+  const groups = Array.isArray(rawSidebar)
+    ? rawSidebar
+    : Object.keys(rawSidebar ?? {})
+        .filter((prefix) => link.startsWith(prefix))
+        .sort((a, b) => b.length - a.length)
+        .flatMap((prefix) => rawSidebar[prefix] ?? [])
+
+  const group = groups.find((g) =>
     g.items?.some((item) => item.link === link || item.link + '/' === link),
   )?.text
 

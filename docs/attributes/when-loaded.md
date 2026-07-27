@@ -1,6 +1,6 @@
 # #[WhenLoaded]
 
-Includes an Eloquent relation in `fromModel()` hydration only when that relation is actually loaded on the model. Requires [`HasLaravelIntegration`](../features/laravel.md).
+Includes an Eloquent relation in `fromModel()` hydration only when that relation is actually loaded on the model. Requires [`HasLaravelIntegration`](../laravel/index.md).
 
 ## Syntax
 
