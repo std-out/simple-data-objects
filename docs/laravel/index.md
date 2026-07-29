@@ -4,6 +4,8 @@ The `HasLaravelIntegration` trait adds three convenience methods for working ins
 
 For assigning a data object directly as an Eloquent attribute cast (`protected function casts(): array { return ['address' => AddressData::class]; }`), see [Eloquent Attribute Casting](./eloquent-casting.md) — a separate, equally optional trait.
 
+`HasLaravelIntegration` also unlocks [automatic controller injection](./service-provider.md#controller-injection): type-hint a DTO as a controller parameter and get it hydrated + validated with no `FormRequest` at all.
+
 ## Setup
 
 Create a base class for your application DTOs:
@@ -119,44 +121,47 @@ after a deploy when every worker starts cold at once.
 
 ### 1. Register the cache path
 
-Point the metadata cache at a storage directory in `AppServiceProvider`.
-Skip it in tests so generated cache files don't leak into a test run:
+Set `cache_path` in `config/simple-data-objects.php` (see [Service Provider &
+Commands](./service-provider.md#config)) and
+`SimpleDataObjectsServiceProvider` calls `MetadataRegistry::setStoragePath()`
+for you — no `AppServiceProvider` wiring needed:
 
 ```php
-use StdOut\SimpleDataObjects\Support\MetadataRegistry;
-
-public function boot(): void
-{
-    if (! app()->runningUnitTests()) {
-        MetadataRegistry::setStoragePath(
-            storage_path('framework/cache/data-objects')
-        );
-    }
-}
+// config/simple-data-objects.php
+return [
+    'cache_path' => env('SDO_CACHE_PATH', storage_path('framework/cache/data-objects')),
+];
 ```
+
+The provider applies whatever `cache_path` resolves to, in every environment — including your test suite, if `cache_path` is set there too. Leave `SDO_CACHE_PATH` unset in `.env.testing` (or otherwise scope the value to non-testing environments) if you don't want generated cache files during test runs.
 
 ### 2. Warm it as a deploy step
 
-`sdo-warm` is a plain Composer binary, not an artisan command — it has no
-framework dependency, so it runs as its own step in your deploy pipeline
-rather than through `php artisan optimize`:
+```sh
+php artisan sdo:warm
+```
+
+On Laravel 11+ this is also registered against `php artisan optimize` /
+`optimize:clear` automatically, so it needs no extra deploy-script wiring —
+just make sure it runs right before workers restart, so every worker starts
+from an already-compiled cache instead of building it on the first request
+it happens to serve. See [Metadata
+Cache](../features/cache.md#pre-warming-on-deploy) for what the command actually
+scans and writes, and [opcache.preload](../features/cache.md#going-further-opcachepreload)
+to skip the file-read cost too.
+
+Not using Laravel, or on 10.x where `optimize` doesn't pick up custom
+commands? The standalone `bin/sdo-warm` Composer binary does the same thing
+with no framework dependency at all:
 
 ```sh
 vendor/bin/sdo-warm storage/framework/cache/data-objects app/Data
 ```
 
-Add it wherever your other build-time steps live — a Forge/Envoyer deploy
-script, a Vapor build hook, or a CI job — right before workers restart, so
-every worker starts from an already-compiled cache instead of building it
-on the first request it happens to serve. See [Metadata
-Cache](../features/cache.md#pre-warming-on-deploy) for what the command actually
-scans and writes, and [opcache.preload](../features/cache.md#going-further-opcachepreload)
-to skip the file-read cost too.
-
 ### 3. Clear it on rollback
 
 ```sh
-php artisan tinker --execute="StdOut\SimpleDataObjects\Support\MetadataRegistry::clearCache()"
+php artisan sdo:clear
 ```
 
 Run this whenever DTO classes or their attributes change between deploys —

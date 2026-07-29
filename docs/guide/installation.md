@@ -19,6 +19,8 @@ No service provider or configuration needed. The library auto-discovers the vali
 composer require illuminate/http illuminate/database
 ```
 
+Artisan commands (`sdo:warm`, `sdo:clear`, `make:data`) and automatic controller injection are a separate, **manually registered** service provider — see [Service Provider & Commands](../laravel/service-provider.md#installation). Nothing is auto-discovered; installing this package never changes behavior in a Laravel app (or any other project) until you opt in.
+
 ## Standalone (without Laravel)
 
 Works out of the box. When no Laravel container is present, a minimal validator is bootstrapped automatically with the default English messages.

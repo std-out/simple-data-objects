@@ -1,0 +1,14 @@
+<?php
+
+declare(strict_types=1);
+
+namespace {{ namespace }};
+
+use StdOut\SimpleDataObjects\BaseData;
+{{ imports }}
+{{ classDoc }}class {{ class }} extends BaseData
+{
+    public function __construct(
+{{ properties }}
+    ) {}
+}

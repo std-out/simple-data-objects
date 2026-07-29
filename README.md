@@ -170,8 +170,12 @@ $team->members->filter(fn (UserData $u) => $u->active)->first()->name;
 ### Validation anywhere
 
 ```php
-// In Laravel — fromRequest() auto-validates
+// In Laravel — call fromRequest() yourself, auto-validates
 $data = CreateOrderData::fromRequest($request);
+
+// Or register SimpleDataObjectsServiceProvider (opt-in, not auto-discovered)
+// and skip FormRequest entirely:
+public function store(CreateOrderData $data) { /* already validated */ }
 
 // Standalone — no Laravel app needed
 CreateOrderData::validate($rawArray); // throws ValidationException

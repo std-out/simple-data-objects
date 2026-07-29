@@ -5,6 +5,24 @@ All notable changes to `std-out/simple-data-objects` are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.17.0] — 2026-07-29
+
+### Added
+- **`SimpleDataObjectsServiceProvider`** — artisan commands and automatic controller injection.
+  - **Manual Registration:** Not auto-discovered — register it yourself in `bootstrap/providers.php` (Laravel 11+) or `config/app.php` (10.x). Every other Laravel-facing piece in this package is already opt-in per-class, and this is the one that adds process-wide container behavior, so turning it on is a deliberate step rather than something that changes behavior for every Laravel app that installs this package.
+  - **Automatic Injection & Validation:** Type-hint a `BaseData` subclass that uses `HasLaravelIntegration` as a controller or route-closure parameter and it hydrates + validates from the current request automatically.
+    - No `FormRequest` needed.
+    - A validation failure still surfaces as the normal `ValidationException` → `422`.
+  - **Zero Overhead:** Implemented as a `beforeResolving(BaseData::class, ...)` container hook scoped to `BaseData` and its subclasses, so it adds no overhead to unrelated container resolutions. Classes without `HasLaravelIntegration`, already explicitly bound classes, and abstract base classes are all left alone.
+  - **Global Configuration:** Opt out globally with `inject_from_request => false` in the new publishable `config/simple-data-objects.php`.
+  - **New Artisan Commands:**
+    - `sdo:warm` / `sdo:clear`: Thin wrappers over the existing `CacheWarmer`/`MetadataRegistry`, auto-registered against `php artisan optimize` on Laravel 11+.
+    - `make:data`: A DTO stub generator.
+      - `--from-model`: Reads a model's table columns (`Schema::getColumns()`, Laravel 11+) into typed constructor-promoted properties.
+      - `--rules`: Adds inferred `#[Rules]`.
+      - `--collection`: Adds a doc-comment pointing at the existing `static::collection()`.
+  - **Documentation:** See [Service Provider & Commands](https://std-out.github.io/simple-data-objects/laravel/service-provider).
+
 ## [1.16.0] — 2026-07-27
 
 ### Added

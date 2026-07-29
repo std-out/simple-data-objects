@@ -51,6 +51,7 @@ export default defineConfig({
           text: 'Laravel',
           items: [
             { text: 'Overview', link: '/laravel/' },
+            { text: 'Service Provider & Commands', link: '/laravel/service-provider' },
             { text: 'Eloquent Attribute Casting', link: '/laravel/eloquent-casting' },
             { text: 'Livewire Integration', link: '/laravel/livewire' },
             { text: '#[WhenLoaded]', link: '/attributes/when-loaded' },

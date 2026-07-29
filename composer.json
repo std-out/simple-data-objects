@@ -17,15 +17,18 @@
         "illuminate/validation": "^10.0|^11.0|^12.0|^13.0"
     },
     "require-dev": {
+        "illuminate/console": "^10.0|^11.0|^12.0|^13.0",
         "illuminate/database": "^10.0|^11.0|^12.0|^13.0",
         "illuminate/http": "^10.0|^11.0|^12.0|^13.0",
         "laravel/pint": "^1.0",
+        "orchestra/testbench": "^11.0",
         "phpunit/phpunit": "^11.0"
     },
     "suggest": {
         "ext-sodium": "Required to use EncryptedCast (bundled with PHP by default)",
         "illuminate/http": "Required to use HasLaravelIntegration::fromRequest() and toResponse()",
-        "illuminate/database": "Required to use HasLaravelIntegration::fromModel(), IsEloquentCastable, or AsDataCollection",
+        "illuminate/database": "Required to use HasLaravelIntegration::fromModel(), IsEloquentCastable, AsDataCollection, or make:data --from-model",
+        "illuminate/console": "Required to use the sdo:warm, sdo:clear, and make:data artisan commands",
         "livewire/livewire": "Required to implement \\Livewire\\Wireable alongside the WireableData trait"
     },
     "bin": ["bin/sdo-warm"],
