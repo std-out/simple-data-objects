@@ -1,6 +1,6 @@
 # Laravel
 
-Works with Laravel 10–13. The core never touches the framework; the optional `HasLaravelIntegration` trait adds the request/model/response bridges.
+Works with Laravel 12–13. The core never touches the framework; the optional `HasLaravelIntegration` trait adds the request/model/response bridges.
 
 ## Setup
 

@@ -141,18 +141,17 @@ The provider applies whatever `cache_path` resolves to, in every environment —
 php artisan sdo:warm
 ```
 
-On Laravel 11+ this is also registered against `php artisan optimize` /
-`optimize:clear` automatically, so it needs no extra deploy-script wiring —
-just make sure it runs right before workers restart, so every worker starts
-from an already-compiled cache instead of building it on the first request
-it happens to serve. See [Metadata
+This is also registered against `php artisan optimize` / `optimize:clear`
+automatically, so it needs no extra deploy-script wiring — just make sure it
+runs right before workers restart, so every worker starts from an
+already-compiled cache instead of building it on the first request it
+happens to serve. See [Metadata
 Cache](../features/cache.md#pre-warming-on-deploy) for what the command actually
 scans and writes, and [opcache.preload](../features/cache.md#going-further-opcachepreload)
 to skip the file-read cost too.
 
-Not using Laravel, or on 10.x where `optimize` doesn't pick up custom
-commands? The standalone `bin/sdo-warm` Composer binary does the same thing
-with no framework dependency at all:
+Not using Laravel? The standalone `bin/sdo-warm` Composer binary does the
+same thing with no framework dependency at all:
 
 ```sh
 vendor/bin/sdo-warm storage/framework/cache/data-objects app/Data

@@ -4,7 +4,7 @@ layout: home
 hero:
   name: "Simple Data Objects"
   text: "Typed DTOs for PHP 8.4+"
-  tagline: Lightweight, attribute-driven Data Transfer Objects. Works standalone or inside Laravel 10–13.
+  tagline: Lightweight, attribute-driven Data Transfer Objects. Works standalone or inside Laravel 12–13.
   image:
     src: https://raw.githubusercontent.com/std-out/simple-data-objects/main/docs/public/logo.svg
     alt: Simple Data Objects

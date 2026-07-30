@@ -41,12 +41,7 @@ final class SimpleDataObjectsServiceProvider extends ServiceProvider
             MakeDataCommand::class,
         ]);
 
-        // Laravel 11+ only — `optimizes()` doesn't exist on the 10.x base
-        // ServiceProvider, so `php artisan optimize` simply won't pick these
-        // up there; the commands still work standalone.
-        if (method_exists($this, 'optimizes')) {
-            $this->optimizes(optimize: 'sdo:warm', clear: 'sdo:clear');
-        }
+        $this->optimizes(optimize: 'sdo:warm', clear: 'sdo:clear');
 
         $cachePath = $this->app->make('config')->get('simple-data-objects.cache_path');
 

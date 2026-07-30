@@ -35,7 +35,7 @@ $order->address = new AddressData(...);             // or assign an instance dir
 $order->save();                        // stored as JSON via toJson()
 ```
 
-On a Laravel version without the `casts()` method (10.x), use the `$casts` property instead — the mapping is identical either way:
+If you prefer the older `$casts` property style, the mapping is identical either way:
 
 ```php
 protected $casts = ['address' => AddressData::class];
@@ -60,7 +60,7 @@ $order->items;      // TypedDataCollection<ItemData>
 $order->items[0]->sku;
 ```
 
-In the `$casts` property style (Laravel 10.x), write the same string `of()` builds under the hood:
+In the `$casts` property style, write the same string `of()` builds under the hood:
 
 ```php
 protected $casts = ['items' => AsDataCollection::class.':'.ItemData::class];
@@ -79,7 +79,7 @@ The actual caster classes — `StdOut\SimpleDataObjects\Laravel\DataObjectCast` 
 
 Eloquent normally checks whether an attribute changed by comparing the raw stored value byte-for-byte, which would make a freshly re-serialized DTO look "dirty" any time its JSON came out differently ordered than what's already stored — even when nothing meaningfully changed. Both casters define a `compare()` method that Eloquent picks up automatically (via `method_exists()`, not an interface) to avoid that: `isDirty()` decodes both sides and compares through the DTO's own `equals()` (or item-by-item for collections), so only an actual data change is reported as dirty.
 
-This requires **Laravel 12+** — the dirty-check dispatch to `compare()` doesn't exist in Eloquent before that. On 10.x/11.x, `isDirty()` falls back to Eloquent's default raw-byte comparison, so a value can occasionally show up as dirty even when unchanged; single-object and collection casting themselves work the same on every supported version (10–13).
+This works on every supported version (12–13) — both dispatch `isDirty()` checks to `compare()`.
 
 ## Null and invalid data
 

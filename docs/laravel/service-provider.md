@@ -9,19 +9,11 @@ It is **not auto-discovered** — this package has no `extra.laravel.providers` 
 Register the provider yourself:
 
 ```php
-// bootstrap/providers.php (Laravel 11+)
+// bootstrap/providers.php
 return [
     // ...
     StdOut\SimpleDataObjects\Laravel\SimpleDataObjectsServiceProvider::class,
 ];
-```
-
-```php
-// config/app.php 'providers' array (Laravel 10)
-'providers' => [
-    // ...
-    StdOut\SimpleDataObjects\Laravel\SimpleDataObjectsServiceProvider::class,
-],
 ```
 
 A full Laravel application already provides `illuminate/console` and `illuminate/database` via `laravel/framework`, so there's nothing extra to install — this step only matters if you're assembling a bare set of Illuminate components without the full framework.
@@ -98,7 +90,7 @@ php artisan sdo:warm                      # uses config('simple-data-objects.pat
 php artisan sdo:warm app/Data --cache=storage/framework/cache/data-objects
 ```
 
-On Laravel 11+, this is also registered against `php artisan optimize` / `optimize:clear` automatically — no extra wiring needed in a deploy script. On 10.x, run it as its own deploy step (see [Cache Warming on Deploy](./index.md#cache-warming-on-deploy)).
+This is also registered against `php artisan optimize` / `optimize:clear` automatically — no extra wiring needed in a deploy script (see [Cache Warming on Deploy](./index.md#cache-warming-on-deploy)).
 
 ### `sdo:clear`
 

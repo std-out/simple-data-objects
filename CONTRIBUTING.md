@@ -48,7 +48,7 @@ composer lint:check        # pint --test (what CI runs)
 These are checked by CI on every PR — running them locally first saves a
 round-trip:
 
-1. **Tests pass** on all supported Laravel versions (10–13).
+1. **Tests pass** on all supported Laravel versions (12–13).
 2. **100% line coverage, no exceptions.** The gate is
    `bin/check-coverage.php` at threshold 100, and there are no
    `@codeCoverageIgnore` annotations in the codebase. If your change adds a

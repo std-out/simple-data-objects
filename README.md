@@ -9,7 +9,7 @@
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
 **Lightweight, attribute-driven DTOs for PHP 8.4+.**  
-Works standalone or inside Laravel 10–13. No reflection in production.
+Works standalone or inside Laravel 12–13. No reflection in production.
 
 ```bash
 composer require std-out/simple-data-objects
