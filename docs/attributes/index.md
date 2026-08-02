@@ -17,3 +17,4 @@ All behaviour in Simple Data Objects is declared via PHP attributes on construct
 | [`#[Pipe]`](./pipe.md) | Class, parameter, or property | Input preprocessing middleware — whole array (class) or a single value (parameter/property) |
 | [`#[WhenLoaded]`](./when-loaded.md) | Parameter or property | Include an Eloquent relation in `fromModel()` only when it's loaded |
 | [`#[RejectUnknownKeys]`](./reject-unknown-keys.md) | Class | Strict mode — throw when input contains a key the class doesn't recognize |
+| [`#[WrapIn]`](./wrap-in.md) | Class | Wrap `toResponse()`'s payload under a key (`toArray()`/`toJson()` unaffected) |

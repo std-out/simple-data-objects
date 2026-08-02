@@ -4,9 +4,11 @@ declare(strict_types=1);
 
 namespace StdOut\SimpleDataObjects\Concerns;
 
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use StdOut\SimpleDataObjects\Laravel\PaginatedDataCollection;
 use StdOut\SimpleDataObjects\Support\MetadataRegistry;
 
 trait HasLaravelIntegration
@@ -39,8 +41,19 @@ trait HasLaravelIntegration
         return static::from($data);
     }
 
-    public function toResponse($request): JsonResponse
+    public function toResponse($request, int $status = 200, array $headers = []): JsonResponse
     {
-        return new JsonResponse($this->toArray());
+        $wrapIn = MetadataRegistry::get(static::class)->wrapIn;
+        $data = $this->toArray();
+
+        return new JsonResponse($wrapIn !== null ? [$wrapIn => $data] : $data, $status, $headers);
+    }
+
+    /**
+     * @return PaginatedDataCollection<static>
+     */
+    public static function paginatedCollection(LengthAwarePaginator $paginator): PaginatedDataCollection
+    {
+        return PaginatedDataCollection::of(static::class, $paginator);
     }
 }

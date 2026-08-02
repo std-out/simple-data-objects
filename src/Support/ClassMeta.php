@@ -41,6 +41,7 @@ final class ClassMeta
         public readonly array $discriminatorMap = [],
         public readonly ?string $discriminatorFallback = null,
         public readonly bool $rejectUnknownKeys = false,
+        public readonly ?string $wrapIn = null,
     ) {
         $validationRules = [];
 
@@ -92,6 +93,7 @@ final class ClassMeta
             $state['discriminatorMap'] ?? [],
             $state['discriminatorFallback'] ?? null,
             $state['rejectUnknownKeys'] ?? false,
+            $state['wrapIn'] ?? null,
         );
     }
 }

@@ -54,6 +54,7 @@ export default defineConfig({
             { text: 'Service Provider & Commands', link: '/laravel/service-provider' },
             { text: 'Eloquent Attribute Casting', link: '/laravel/eloquent-casting' },
             { text: 'Livewire Integration', link: '/laravel/livewire' },
+            { text: 'Pagination & Response Envelope', link: '/laravel/pagination' },
             { text: '#[WhenLoaded]', link: '/attributes/when-loaded' },
           ],
         },
@@ -108,6 +109,7 @@ export default defineConfig({
             { text: '#[DataCollection]', link: '/attributes/data-collection' },
             { text: '#[WhenLoaded]', link: '/attributes/when-loaded' },
             { text: '#[RejectUnknownKeys]', link: '/attributes/reject-unknown-keys' },
+            { text: '#[WrapIn]', link: '/attributes/wrap-in' },
           ],
         },
         {

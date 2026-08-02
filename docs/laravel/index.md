@@ -1,6 +1,6 @@
 # Laravel Integration
 
-The `HasLaravelIntegration` trait adds three convenience methods for working inside a Laravel application. It is **optional** — the core library works without it.
+The `HasLaravelIntegration` trait adds convenience methods for working inside a Laravel application. It is **optional** — the core library works without it.
 
 For assigning a data object directly as an Eloquent attribute cast (`protected function casts(): array { return ['address' => AddressData::class]; }`), see [Eloquent Attribute Casting](./eloquent-casting.md) — a separate, equally optional trait.
 
@@ -85,14 +85,24 @@ return UserData::fromModel($user)->with(email: $newEmail)->toJson();
 
 ## toResponse()
 
-Returns a `JsonResponse` from the DTO's array representation:
+Returns a `JsonResponse` from the DTO's array representation, with optional `status` and `headers`:
 
 ```php
 public function show(int $id): JsonResponse
 {
     $user = User::findOrFail($id);
-    return UserData::fromModel($user)->toResponse($request);
+    return UserData::fromModel($user)->toResponse($request, status: 200);
 }
+```
+
+Add [`#[WrapIn('data')]`](../attributes/wrap-in.md) on the class to wrap the payload under a key — `toArray()`/`toJson()` stay unwrapped, only `toResponse()` is affected.
+
+## paginatedCollection()
+
+Wraps a Laravel paginator into a `{"data":[...],"meta":{...},"links":{...}}` envelope — see [Pagination & Response Envelope](./pagination.md).
+
+```php
+return ItemData::paginatedCollection(Item::paginate(20));
 ```
 
 ## Validation + FormRequest

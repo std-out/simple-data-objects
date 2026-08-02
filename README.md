@@ -199,6 +199,7 @@ CreateOrderData::validate($rawArray); // throws ValidationException
 | `#[TransformKeys(TransformKeys::SNAKE_CASE)]` | class | transform all keys at class level |
 | `#[DataCollection(ItemData::class)]` | property | typed collection of DTOs |
 | `#[Discriminator('type', ['card' => CardData::class])]` | abstract class | polymorphic hydration — `from()` picks the subclass by field value |
+| `#[WrapIn('data')]` | class | wrap `toResponse()`'s payload under a key |
 
 ## Built-in Casts
 

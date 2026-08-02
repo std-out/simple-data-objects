@@ -5,6 +5,25 @@ All notable changes to `std-out/simple-data-objects` are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.20.0] — 2026-08-02
+
+### Added
+- **`PaginatedDataCollection`** — wraps a Laravel paginator into a
+  `{"data":[...],"meta":{...},"links":{...}}` envelope, hydrating items
+  through the same compiled hydrator as `from()`.
+  - `HasLaravelIntegration::paginatedCollection()` — opt-in entry point,
+    e.g. `ItemData::paginatedCollection(Item::paginate(20))`.
+  - `Responsable` + `JsonSerializable` — return it directly from a
+    controller.
+  - No new hard dependency: only `Illuminate\Contracts\Pagination\*`
+    (already required via `illuminate/contracts`); `illuminate/pagination`
+    is require-dev, needed only by the concrete paginator you pass in.
+- **`#[WrapIn]`** — wraps a single object's `toResponse()` payload under a
+  key (`{"data": {...}}`), without touching `toArray()`/`toJson()` — the
+  `from(toArray())` round-trip stays intact.
+- **`toResponse()`** now accepts `status` and `headers` parameters.
+- **Documentation:** see [Pagination & Response Envelope](https://std-out.github.io/simple-data-objects/laravel/pagination) and [#[WrapIn]](https://std-out.github.io/simple-data-objects/attributes/wrap-in).
+
 ## [1.19.0] — 2026-08-02
 
 ### Added

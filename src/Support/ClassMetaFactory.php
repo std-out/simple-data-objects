@@ -20,6 +20,7 @@ use StdOut\SimpleDataObjects\Attributes\RejectUnknownKeys;
 use StdOut\SimpleDataObjects\Attributes\Rules;
 use StdOut\SimpleDataObjects\Attributes\TransformKeys;
 use StdOut\SimpleDataObjects\Attributes\WhenLoaded;
+use StdOut\SimpleDataObjects\Attributes\WrapIn;
 use StdOut\SimpleDataObjects\Contracts\DataObject;
 use StdOut\SimpleDataObjects\Exceptions\DataHydrationException;
 
@@ -52,6 +53,9 @@ final class ClassMetaFactory
 
         $rejectUnknownKeys = $reflection->getAttributes(RejectUnknownKeys::class) !== [];
 
+        $wrapAttrs = $reflection->getAttributes(WrapIn::class);
+        $wrapIn = $wrapAttrs !== [] ? $wrapAttrs[0]->newInstance()->key : null;
+
         if ($rejectUnknownKeys && $discriminator !== null) {
             throw new \InvalidArgumentException(
                 "{$class}: #[RejectUnknownKeys] and #[Discriminator] cannot be combined — declare it on the concrete subclasses instead.",
@@ -78,6 +82,7 @@ final class ClassMetaFactory
                 discriminatorMap: $discriminator?->map ?? [],
                 discriminatorFallback: $discriminator?->fallback,
                 rejectUnknownKeys: $rejectUnknownKeys,
+                wrapIn: $wrapIn,
             );
         }
 
@@ -108,6 +113,7 @@ final class ClassMetaFactory
             discriminatorMap: $discriminator?->map ?? [],
             discriminatorFallback: $discriminator?->fallback,
             rejectUnknownKeys: $rejectUnknownKeys,
+            wrapIn: $wrapIn,
         );
     }
 

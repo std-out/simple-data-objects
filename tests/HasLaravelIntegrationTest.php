@@ -9,6 +9,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use PHPUnit\Framework\TestCase;
 use StdOut\SimpleDataObjects\Tests\Fixtures\LaravelUserData;
+use StdOut\SimpleDataObjects\Tests\Fixtures\WrappedOrderData;
 
 class HasLaravelIntegrationTest extends TestCase
 {
@@ -63,5 +64,29 @@ class HasLaravelIntegrationTest extends TestCase
             ['name' => 'Alice', 'email' => 'alice@example.com'],
             $response->getData(true),
         );
+    }
+
+    public function test_to_response_accepts_status_and_headers(): void
+    {
+        $data = LaravelUserData::from(['name' => 'Alice', 'email' => 'alice@example.com']);
+        $response = $data->toResponse(null, 201, ['X-Test' => 'yes']);
+
+        $this->assertSame(201, $response->getStatusCode());
+        $this->assertSame('yes', $response->headers->get('X-Test'));
+    }
+
+    public function test_to_response_wraps_with_wrap_in(): void
+    {
+        $data = WrappedOrderData::from(['title' => 'Widget']);
+        $response = $data->toResponse(null);
+
+        $this->assertSame(['data' => ['title' => 'Widget']], $response->getData(true));
+    }
+
+    public function test_to_array_is_not_wrapped_by_wrap_in(): void
+    {
+        $data = WrappedOrderData::from(['title' => 'Widget']);
+
+        $this->assertSame(['title' => 'Widget'], $data->toArray());
     }
 }
