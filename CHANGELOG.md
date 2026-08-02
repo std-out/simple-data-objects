@@ -5,6 +5,26 @@ All notable changes to `std-out/simple-data-objects` are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.19.0] — 2026-08-02
+
+### Added
+- **`#[InferRules]`** — auto-generate validation rules from property types.
+  - Opt-in per class: `string`/`int`/`float`/`bool`/`array` map to their
+    matching Laravel rule, enums to `Rule::enum(...)`, all prefixed with
+    `required` or `nullable` based on the property's own nullability.
+  - **Nested cascade:** a nested `BaseData` or `#[DataCollection]` property
+    gets `['required'|'nullable', 'array']` for itself, plus the nested
+    class's own rules cascaded under dot notation (`address.city`,
+    `items.*.price`). Only cascades through classes that themselves
+    contribute rules; self-referential and mutually cyclic `BaseData`
+    graphs stop at the cycle instead of recursing forever.
+  - **`#[Rules]` interop:** an explicit `#[Rules]` on a property still
+    replaces the inferred rule by default — pass `merge: true` to append
+    to it instead (`#[Rules(['max:100'], merge: true)]`).
+  - Zero runtime cost: resolved once in `ClassMetaFactory::build()` and
+    cached like every other rule, same as hand-written `#[Rules]`.
+  - **Documentation:** see [#[InferRules]](https://std-out.github.io/simple-data-objects/attributes/infer-rules).
+
 ## [1.18.0] — 2026-07-30
 
 ### Removed

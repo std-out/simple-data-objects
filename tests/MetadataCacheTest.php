@@ -13,6 +13,8 @@ use StdOut\SimpleDataObjects\Support\ParameterMeta;
 use StdOut\SimpleDataObjects\Support\SerializerCompiler;
 use StdOut\SimpleDataObjects\Tests\Fixtures\EventData;
 use StdOut\SimpleDataObjects\Tests\Fixtures\HybridData;
+use StdOut\SimpleDataObjects\Tests\Fixtures\InferredEnumData;
+use StdOut\SimpleDataObjects\Tests\Fixtures\InferredNestedData;
 use StdOut\SimpleDataObjects\Tests\Fixtures\NoConstructorData;
 use StdOut\SimpleDataObjects\Tests\Fixtures\NonExportableData;
 use StdOut\SimpleDataObjects\Tests\Fixtures\PaymentData;
@@ -256,6 +258,56 @@ class MetadataCacheTest extends TestCase
         $method = $ref->getMethod('isExportable');
 
         $this->assertFalse($method->invoke(null, $meta));
+    }
+
+    public function test_isexportable_returns_false_for_non_string_nested_rule(): void
+    {
+        $param = new ParameterMeta(
+            phpName: 'field',
+            inputName: 'field',
+            allowsNull: false,
+            hasDefault: false,
+            defaultValue: null,
+            nestedDataClass: null,
+            enumClass: null,
+            dataCollectionClass: null,
+            isHidden: false,
+            ignoreIfNull: false,
+            flatten: false,
+            rules: [],
+            caster: null,
+            nestedRules: ['child' => [new \stdClass]],
+        );
+        $meta = new ClassMeta([$param]);
+
+        $ref = new \ReflectionClass(MetadataRegistry::class);
+        $method = $ref->getMethod('isExportable');
+
+        $this->assertFalse($method->invoke(null, $meta));
+    }
+
+    public function test_inferred_dot_cascade_rules_are_persisted_to_cache(): void
+    {
+        MetadataRegistry::setStoragePath($this->cacheDir);
+
+        InferredNestedData::from(['name' => 'Ada', 'address' => ['street' => 'Ave', 'city' => 'London']]);
+        MetadataRegistry::flush();
+
+        $rules = MetadataRegistry::get(InferredNestedData::class)->validationRules;
+
+        $this->assertSame(['required', 'string'], $rules['address.street']);
+        $this->assertSame(['required', 'string'], $rules['address.city']);
+        $this->assertNotEmpty(glob($this->cacheDir.'/*.meta.php'));
+    }
+
+    public function test_inferred_enum_rule_skips_file_persistence(): void
+    {
+        MetadataRegistry::setStoragePath($this->cacheDir);
+
+        InferredEnumData::from(['status' => 'active']);
+
+        $files = glob($this->cacheDir.'/*.php');
+        $this->assertEmpty($files);
     }
 
     public function test_persist_silently_skips_when_file_put_contents_fails(): void

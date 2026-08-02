@@ -153,6 +153,14 @@ final class MetadataRegistry
                     return false;
                 }
             }
+
+            foreach ($param->nestedRules as $rules) {
+                foreach ($rules as $rule) {
+                    if (! is_string($rule)) {
+                        return false;
+                    }
+                }
+            }
         }
 
         return true;

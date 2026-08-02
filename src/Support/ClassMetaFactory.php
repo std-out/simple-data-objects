@@ -13,6 +13,7 @@ use StdOut\SimpleDataObjects\Attributes\Discriminator;
 use StdOut\SimpleDataObjects\Attributes\Flatten;
 use StdOut\SimpleDataObjects\Attributes\Hidden;
 use StdOut\SimpleDataObjects\Attributes\IgnoreIfNull;
+use StdOut\SimpleDataObjects\Attributes\InferRules;
 use StdOut\SimpleDataObjects\Attributes\MapPropertyName;
 use StdOut\SimpleDataObjects\Attributes\Pipe;
 use StdOut\SimpleDataObjects\Attributes\RejectUnknownKeys;
@@ -26,8 +27,14 @@ final class ClassMetaFactory
 {
     public static function build(string $class): ClassMeta
     {
+        return RuleInferrer::guarding($class, static fn (): ClassMeta => self::doBuild($class));
+    }
+
+    private static function doBuild(string $class): ClassMeta
+    {
         $reflection = new ReflectionClass($class);
         $constructor = $reflection->getConstructor();
+        $inferRules = $reflection->getAttributes(InferRules::class) !== [];
 
         $transformAttrs = $reflection->getAttributes(TransformKeys::class);
         $strategy = $transformAttrs !== [] ? $transformAttrs[0]->newInstance()->strategy : null;
@@ -57,7 +64,7 @@ final class ClassMetaFactory
         if ($constructor === null) {
             $members = self::publicTypedProperties($reflection, []);
             $params = array_map(
-                static fn (ReflectionProperty $p): ParameterMeta => self::buildParam($p, $strategy, viaConstructor: false),
+                static fn (ReflectionProperty $p): ParameterMeta => self::buildParam($p, $strategy, $inferRules, viaConstructor: false),
                 $members,
             );
 
@@ -75,7 +82,7 @@ final class ClassMetaFactory
         }
 
         $ctorParams = array_map(
-            static fn (ReflectionParameter $p): ParameterMeta => self::buildParam($p, $strategy, viaConstructor: true),
+            static fn (ReflectionParameter $p): ParameterMeta => self::buildParam($p, $strategy, $inferRules, viaConstructor: true),
             $constructor->getParameters(),
         );
 
@@ -86,7 +93,7 @@ final class ClassMetaFactory
         $extraProps = self::publicTypedProperties($reflection, $ctorNames);
 
         $extraParams = array_map(
-            static fn (ReflectionProperty $p): ParameterMeta => self::buildParam($p, $strategy, viaConstructor: false),
+            static fn (ReflectionProperty $p): ParameterMeta => self::buildParam($p, $strategy, $inferRules, viaConstructor: false),
             $extraProps,
         );
 
@@ -191,7 +198,7 @@ final class ClassMetaFactory
         ));
     }
 
-    private static function buildParam(ReflectionParameter|ReflectionProperty $parameter, ?string $strategy, bool $viaConstructor): ParameterMeta
+    private static function buildParam(ReflectionParameter|ReflectionProperty $parameter, ?string $strategy, bool $inferRules, bool $viaConstructor): ParameterMeta
     {
         $phpName = $parameter->getName();
         $hasDefault = $parameter instanceof ReflectionParameter
@@ -249,17 +256,29 @@ final class ClassMetaFactory
         }
 
         $rulesAttrs = $parameter->getAttributes(Rules::class);
+        $explicitRules = $rulesAttrs !== [] ? $rulesAttrs[0]->newInstance() : null;
         $pipeAttrs = $parameter->getAttributes(Pipe::class);
         $paramPipes = $pipeAttrs !== [] ? $pipeAttrs[0]->newInstance()->pipes : [];
 
         $whenLoadedAttrs = $parameter->getAttributes(WhenLoaded::class);
 
+        $allowsNull = $parameter instanceof ReflectionParameter
+            ? $parameter->allowsNull()
+            : ($parameter->getType()?->allowsNull() ?? true);
+
+        $rules = match (true) {
+            $explicitRules !== null && ! $explicitRules->merge => $explicitRules->rules,
+            $inferRules => [
+                ...RuleInferrer::forParameter($parameter, $allowsNull, $nestedDataClass, $enumClass, $dataCollectionClass),
+                ...$explicitRules?->rules ?? [],
+            ],
+            default => $explicitRules?->rules ?? [],
+        };
+
         return new ParameterMeta(
             phpName: $phpName,
             inputName: $inputName,
-            allowsNull: $parameter instanceof ReflectionParameter
-                ? $parameter->allowsNull()
-                : ($parameter->getType()?->allowsNull() ?? true),
+            allowsNull: $allowsNull,
             hasDefault: $hasDefault,
             defaultValue: $hasDefault ? $parameter->getDefaultValue() : null,
             nestedDataClass: $nestedDataClass,
@@ -268,11 +287,12 @@ final class ClassMetaFactory
             isHidden: $parameter->getAttributes(Hidden::class) !== [],
             ignoreIfNull: $parameter->getAttributes(IgnoreIfNull::class) !== [],
             flatten: $parameter->getAttributes(Flatten::class) !== [],
-            rules: $rulesAttrs !== [] ? $rulesAttrs[0]->newInstance()->rules : [],
+            rules: $rules,
             caster: $castAttrs !== [] ? $castAttrs[0]->newInstance()->caster : null,
             pipes: $paramPipes,
             viaConstructor: $viaConstructor,
             whenLoadedRelation: $whenLoadedAttrs !== [] ? $whenLoadedAttrs[0]->newInstance()->relation : null,
+            nestedRules: $inferRules ? RuleInferrer::cascade($nestedDataClass, $dataCollectionClass) : [],
         );
     }
 }

@@ -1,11 +1,12 @@
 # Attributes Overview
 
-All behaviour in Simple Data Objects is declared via PHP attributes on constructor parameters (or on the class itself for `#[TransformKeys]`/`#[Pipe]`/`#[Discriminator]`/`#[RejectUnknownKeys]`). Every parameter-level attribute also works on a plain property for [constructor-less and hybrid DTOs](../features/hydration.md#constructor-less-dtos) — same syntax, same behavior either way.
+All behaviour in Simple Data Objects is declared via PHP attributes on constructor parameters (or on the class itself for `#[TransformKeys]`/`#[Pipe]`/`#[Discriminator]`/`#[RejectUnknownKeys]`/`#[InferRules]`). Every parameter-level attribute also works on a plain property for [constructor-less and hybrid DTOs](../features/hydration.md#constructor-less-dtos) — same syntax, same behavior either way.
 
 | Attribute | Target | Purpose |
 |---|---|---|
 | [`#[Cast]`](./cast.md) | Parameter or property | Apply a type cast during hydration and serialization |
 | [`#[Rules]`](./rules.md) | Parameter or property | Laravel validation rules |
+| [`#[InferRules]`](./infer-rules.md) | Class | Auto-generate validation rules from property types |
 | [`#[Flatten]`](./flatten.md) | Parameter or property | Inline nested DTO fields into the parent array |
 | [`#[Hidden]`](./hidden.md) | Parameter or property | Exclude from `toArray()` / JSON output |
 | [`#[IgnoreIfNull]`](./ignore-if-null.md) | Parameter or property | Omit from output when value is `null` |

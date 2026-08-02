@@ -97,6 +97,7 @@ export default defineConfig({
             { text: 'Overview', link: '/attributes/' },
             { text: '#[Cast]', link: '/attributes/cast' },
             { text: '#[Rules]', link: '/attributes/rules' },
+            { text: '#[InferRules]', link: '/attributes/infer-rules' },
             { text: '#[Pipe]', link: '/attributes/pipe' },
             { text: '#[Flatten]', link: '/attributes/flatten' },
             { text: '#[Hidden]', link: '/attributes/hidden' },

@@ -189,6 +189,7 @@ CreateOrderData::validate($rawArray); // throws ValidationException
 |---|---|---|
 | `#[Cast(new DateTimeCast('Y-m-d'))]` | property | type conversion on hydration + serialization |
 | `#[Rules(['required', 'email'])]` | property | Laravel validation rules |
+| `#[InferRules]` | class | auto-infer validation rules from property types |
 | `#[Pipe(TrimValuePipe::class)]` | property | value-level preprocessing pipeline |
 | `#[Pipe(TrimStringsPipe::class)]` | class | array-level preprocessing pipeline |
 | `#[Flatten]` | property | inline nested DTO fields into parent |

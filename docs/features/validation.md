@@ -26,6 +26,23 @@ class RegisterData extends BaseData
 }
 ```
 
+## Auto-Inferring Rules from Types
+
+Writing `#[Rules]` on every property is optional — [`#[InferRules]`](../attributes/infer-rules.md) generates them from the property types instead, including recursive dot-notation for nested DTOs and collections:
+
+```php
+use StdOut\SimpleDataObjects\Attributes\InferRules;
+
+#[InferRules]
+class RegisterData extends BaseData
+{
+    public function __construct(
+        public readonly string $name,        // → ['required', 'string']
+        public readonly ?string $bio = null,  // → ['nullable', 'string']
+    ) {}
+}
+```
+
 ## fromValidated() — Validate then Hydrate
 
 Throws `Illuminate\Validation\ValidationException` if validation fails; returns a hydrated instance on success.

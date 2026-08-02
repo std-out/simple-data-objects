@@ -65,3 +65,16 @@ Always include `nullable` in rules for optional properties to avoid spurious "fi
 #[Rules(['nullable', 'string', 'max:200'])]
 public readonly ?string $notes = null,
 ```
+
+## Combining with #[InferRules]
+
+On a class with [`#[InferRules]`](./infer-rules.md), an explicit `#[Rules]` **replaces** the type-inferred rules by default. Pass `merge: true` to append to them instead:
+
+```php
+#[InferRules]
+class OrderData extends BaseData
+{
+    #[Rules(['max:200'], merge: true)]
+    public readonly string $notes;   // inferred ['required', 'string'] + ['max:200']
+}
+```

@@ -11,5 +11,6 @@ final class Rules
 {
     public function __construct(
         public readonly array $rules,
+        public readonly bool $merge = false,
     ) {}
 }
