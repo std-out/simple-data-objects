@@ -54,7 +54,7 @@ All behaviour is declared on the constructor parameters:
 - **`#[Hidden]`** — exclude from `toArray()` output
 - **`#[IgnoreIfNull]`** — omit null fields from output
 - **`#[Flatten]`** — inline nested DTO fields into the parent array
-- **`#[MapPropertyName]`** / **`#[TransformKeys]`** — key remapping
+- **`#[MapPropertyName]`** / **`#[MapInputName]`** / **`#[MapOutputName]`** / **`#[TransformKeys]`** — key remapping
 
 ### Performance
 Reflection runs **once per class per process**, results are cached in memory. Enable file-based cache with `MetadataRegistry::setStoragePath()` to have opcache pre-compile all metadata across requests.

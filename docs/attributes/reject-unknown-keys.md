@@ -29,7 +29,7 @@ CreateOrderData::from(['title' => 'Widget', 'amount' => 5, 'ammount' => 5]);
 
 ## What counts as "known"
 
-A key is known if it matches a parameter's **input name** — the name hydration actually reads, after [`#[MapPropertyName]`](./map-property-name.md) or a class-level [`#[TransformKeys]`](./transform-keys.md) strategy has been applied. The underlying PHP property name is irrelevant if it's been renamed:
+A key is known if it matches one of a parameter's **input names** — the name(s) hydration actually reads, after [`#[MapPropertyName]`](./map-property-name.md)/[`#[MapInputName]`/`#[MapOutputName]`](./map-input-output-name.md) or a class-level [`#[TransformKeys]`](./transform-keys.md) strategy has been applied. Every alias is known, and so is the output key (for the `from(toArray())` roundtrip) — the underlying PHP property name is irrelevant if it's been renamed:
 
 ```php
 #[RejectUnknownKeys]

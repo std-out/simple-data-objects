@@ -34,7 +34,7 @@ trait HasLaravelIntegration
 
         foreach (MetadataRegistry::get(static::class)->parameters as $param) {
             if ($param->whenLoadedRelation !== null && $model->relationLoaded($param->whenLoadedRelation)) {
-                $data[$param->inputName] = $model->getRelation($param->whenLoadedRelation);
+                $data[$param->inputNames[0]] = $model->getRelation($param->whenLoadedRelation);
             }
         }
 

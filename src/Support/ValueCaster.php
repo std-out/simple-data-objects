@@ -59,7 +59,7 @@ final class ValueCaster
         }
 
         if ($enum === null && ! $meta->allowsNull) {
-            throw DataHydrationException::invalidEnumValue($meta->enumClass, $meta->inputName, $value);
+            throw DataHydrationException::invalidEnumValue($meta->enumClass, (string) $meta->inputNames[0], $value);
         }
 
         return $enum;

@@ -207,7 +207,7 @@ $settings->locale;   // null
 $settings->userId;   // 'u_123'
 ```
 
-The same rules apply as for constructor parameters: a property with no default and a non-nullable type is required and throws `DataHydrationException` when missing; `readonly` properties are supported (including via `with()` and `fromLazy()`); and the full attribute set — `#[Cast]`, `#[DataCollection]`, `#[Flatten]`, `#[Hidden]`, `#[IgnoreIfNull]`, `#[MapPropertyName]`, `#[Pipe]`, `#[Rules]` — works identically on a property as it does on a constructor parameter.
+The same rules apply as for constructor parameters: a property with no default and a non-nullable type is required and throws `DataHydrationException` when missing; `readonly` properties are supported (including via `with()` and `fromLazy()`); and the full attribute set — `#[Cast]`, `#[DataCollection]`, `#[Flatten]`, `#[Hidden]`, `#[IgnoreIfNull]`, `#[MapPropertyName]`, `#[MapInputName]`, `#[MapOutputName]`, `#[Pipe]`, `#[Rules]` — works identically on a property as it does on a constructor parameter.
 
 Only **public, non-static, typed** properties are picked up. Static properties, `private`/`protected` properties, and untyped properties (`public $x;`) are ignored — declare them normally for internal bookkeeping without affecting hydration or `toArray()`.
 

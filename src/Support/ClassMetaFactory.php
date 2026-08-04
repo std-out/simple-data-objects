@@ -14,6 +14,8 @@ use StdOut\SimpleDataObjects\Attributes\Flatten;
 use StdOut\SimpleDataObjects\Attributes\Hidden;
 use StdOut\SimpleDataObjects\Attributes\IgnoreIfNull;
 use StdOut\SimpleDataObjects\Attributes\InferRules;
+use StdOut\SimpleDataObjects\Attributes\MapInputName;
+use StdOut\SimpleDataObjects\Attributes\MapOutputName;
 use StdOut\SimpleDataObjects\Attributes\MapPropertyName;
 use StdOut\SimpleDataObjects\Attributes\Pipe;
 use StdOut\SimpleDataObjects\Attributes\RejectUnknownKeys;
@@ -211,12 +213,7 @@ final class ClassMetaFactory
             ? $parameter->isDefaultValueAvailable()
             : $parameter->hasDefaultValue();
 
-        $mapAttrs = $parameter->getAttributes(MapPropertyName::class);
-        $inputName = match (true) {
-            $mapAttrs !== [] => (string) $mapAttrs[0]->newInstance()->input,
-            $strategy !== null => KeyTransformer::apply($phpName, $strategy),
-            default => $phpName,
-        };
+        [$inputNames, $outputName] = self::resolveNameMapping($parameter, $phpName, $strategy);
 
         $dataCollectionClass = null;
         $collectionAttrs = $parameter->getAttributes(DataCollectionAttribute::class);
@@ -283,7 +280,8 @@ final class ClassMetaFactory
 
         return new ParameterMeta(
             phpName: $phpName,
-            inputName: $inputName,
+            inputNames: $inputNames,
+            outputName: $outputName,
             allowsNull: $allowsNull,
             hasDefault: $hasDefault,
             defaultValue: $hasDefault ? $parameter->getDefaultValue() : null,
@@ -300,5 +298,57 @@ final class ClassMetaFactory
             whenLoadedRelation: $whenLoadedAttrs !== [] ? $whenLoadedAttrs[0]->newInstance()->relation : null,
             nestedRules: $inferRules ? RuleInferrer::cascade($nestedDataClass, $dataCollectionClass) : [],
         );
+    }
+
+    /**
+     * The output key is always appended as an extra input alias when it
+     * diverges from the declared ones, so `from(toArray())` keeps working.
+     *
+     * @return array{0: list<string|int>, 1: string}
+     */
+    private static function resolveNameMapping(ReflectionParameter|ReflectionProperty $parameter, string $phpName, ?string $strategy): array
+    {
+        $mapAttrs = $parameter->getAttributes(MapPropertyName::class);
+        $inputAttrs = $parameter->getAttributes(MapInputName::class);
+        $outputAttrs = $parameter->getAttributes(MapOutputName::class);
+
+        if ($mapAttrs !== [] && ($inputAttrs !== [] || $outputAttrs !== [])) {
+            throw new \InvalidArgumentException(
+                "Parameter \"{$phpName}\": #[MapPropertyName] cannot be combined with #[MapInputName]/#[MapOutputName] — use one or the other.",
+            );
+        }
+
+        if ($mapAttrs !== []) {
+            $inputNames = self::mappedInputs($mapAttrs[0]->newInstance()->inputs, $phpName);
+
+            return [$inputNames, (string) $inputNames[0]];
+        }
+
+        $default = $strategy !== null ? KeyTransformer::apply($phpName, $strategy) : $phpName;
+
+        $inputNames = $inputAttrs !== []
+            ? self::mappedInputs($inputAttrs[0]->newInstance()->inputs, $phpName)
+            : [$default];
+
+        $outputName = $outputAttrs !== [] ? $outputAttrs[0]->newInstance()->output : $default;
+
+        if (! in_array($outputName, $inputNames, true)) {
+            $inputNames[] = $outputName;
+        }
+
+        return [$inputNames, $outputName];
+    }
+
+    /**
+     * @param  list<string|int>  $inputs
+     * @return list<string|int>
+     */
+    private static function mappedInputs(array $inputs, string $phpName): array
+    {
+        if ($inputs === []) {
+            throw new \InvalidArgumentException("Parameter \"{$phpName}\": name-mapping attribute requires at least one input name.");
+        }
+
+        return $inputs;
     }
 }

@@ -16,13 +16,15 @@ final class ParameterMeta
     public readonly bool $isPlain;
 
     /**
+     * @param  list<string|int>  $inputNames  Accepted input keys, tried in order — first present wins.
      * @param  class-string|null  $nestedDataClass
      * @param  class-string|null  $enumClass
      * @param  class-string|null  $dataCollectionClass
      */
     public function __construct(
         public readonly string $phpName,
-        public readonly string $inputName,
+        public readonly array $inputNames,
+        public readonly string $outputName,
         public readonly bool $allowsNull,
         public readonly bool $hasDefault,
         public readonly mixed $defaultValue,
@@ -50,9 +52,14 @@ final class ParameterMeta
 
     public static function __set_state(array $state): self
     {
+        // Older caches only have a single 'inputName' — reuse it as both.
+        $inputNames = $state['inputNames'] ?? [$state['inputName']];
+        $outputName = $state['outputName'] ?? $state['inputName'] ?? $inputNames[0];
+
         return new self(
             phpName: $state['phpName'],
-            inputName: $state['inputName'],
+            inputNames: $inputNames,
+            outputName: $outputName,
             allowsNull: $state['allowsNull'],
             hasDefault: $state['hasDefault'],
             defaultValue: $state['defaultValue'],

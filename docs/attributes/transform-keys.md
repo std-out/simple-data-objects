@@ -59,3 +59,5 @@ $data->toArray();
 ## Interaction with #[MapPropertyName]
 
 `#[MapPropertyName]` on individual parameters takes precedence over `#[TransformKeys]`. Use `#[MapPropertyName]` to override specific keys when most keys follow the class-level transform.
+
+`#[MapInputName]`/`#[MapOutputName]` interact the same way per direction: an explicit `#[MapInputName]` replaces the transformed name for hydration, and an explicit `#[MapOutputName]` replaces it for serialization; whichever side is left unset still falls back to the class-level transform.

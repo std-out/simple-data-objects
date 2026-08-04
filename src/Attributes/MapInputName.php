@@ -7,7 +7,7 @@ namespace StdOut\SimpleDataObjects\Attributes;
 use Attribute;
 
 #[Attribute(Attribute::TARGET_PARAMETER | Attribute::TARGET_PROPERTY)]
-final class MapPropertyName
+final class MapInputName
 {
     /** @var list<string|int> */
     public readonly array $inputs;

@@ -5,6 +5,23 @@ All notable changes to `std-out/simple-data-objects` are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.21.0] — 2026-08-04
+
+### Added
+- **`#[MapPropertyName]` now accepts aliases** — `#[MapPropertyName('user_id', 'userId', 'uid')]`
+  tries each input key in order, first one present wins. Serialization still
+  uses the first alias, unchanged from before.
+- **`#[MapInputName]` / `#[MapOutputName]`** — map hydration and
+  serialization keys independently, for APIs migrating a field name over
+  time (accept the old key on input, already emit the new key on output).
+  `#[MapInputName]` also accepts aliases. Cannot be combined with
+  `#[MapPropertyName]` on the same property.
+  - **Roundtrip invariant preserved:** whenever the output key diverges from
+    the declared input names, it's automatically accepted as a fallback
+    input alias too, so `from($dto->toArray())` keeps working.
+  - `#[RejectUnknownKeys]` treats every alias and the output key as known.
+- **Documentation:** see [#[MapPropertyName]](https://std-out.github.io/simple-data-objects/attributes/map-property-name) and [#[MapInputName] / #[MapOutputName]](https://std-out.github.io/simple-data-objects/attributes/map-input-output-name).
+
 ## [1.20.0] — 2026-08-02
 
 ### Added

@@ -222,10 +222,15 @@ final class HydratorCompiler
         }
 
         $classExport = var_export($class, true);
-        $knownKeys = var_export(array_fill_keys(
-            array_map(static fn (ParameterMeta $p): string => $p->inputName, $meta->parameters),
-            true,
-        ), true);
+        $known = [];
+
+        foreach ($meta->parameters as $param) {
+            foreach ($param->inputNames as $name) {
+                $known[$name] = true;
+            }
+        }
+
+        $knownKeys = var_export($known, true);
 
         return "    if (\$u = \\array_diff_key(\$d, {$knownKeys})) {\n"
             ."        throw \\StdOut\\SimpleDataObjects\\Exceptions\\DataHydrationException::unknownKeys({$classExport}, \\array_keys(\$u));\n"
@@ -263,10 +268,11 @@ final class HydratorCompiler
                 continue;
             }
 
-            $key = var_export($param->inputName, true);
+            [$key, $presence] = self::resolveKeyExpr($i, $param->inputNames, $body);
 
-            // Missing key and explicit null both resolve to null — ?? is exact here
-            if ($param->isPlain && $param->allowsNull && (! $param->hasDefault || $param->defaultValue === null)) {
+            // Missing key and explicit null both resolve to null — ?? is exact here,
+            // but only for a single name: with aliases, $d[null] would read the "" key.
+            if (count($param->inputNames) === 1 && $param->isPlain && $param->allowsNull && (! $param->hasDefault || $param->defaultValue === null)) {
                 $args[] = "\$d[{$key}] ?? null";
 
                 continue;
@@ -276,18 +282,49 @@ final class HydratorCompiler
                 ? "\$d[{$key}]"
                 : "\\StdOut\\SimpleDataObjects\\Support\\ValueCaster::cast(\$p[{$i}], \$d[{$key}])";
 
+            $missingKey = var_export($param->inputNames[0], true);
+
             $absent = match (true) {
                 $param->hasDefault => "\$p[{$i}]->defaultValue",
                 $param->allowsNull => 'null',
-                default => "throw \\StdOut\\SimpleDataObjects\\Exceptions\\DataHydrationException::missingField({$classExport}, {$key})",
+                default => "throw \\StdOut\\SimpleDataObjects\\Exceptions\\DataHydrationException::missingField({$classExport}, {$missingKey})",
             };
 
-            $args[] = "\\array_key_exists({$key}, \$d) ? {$present} : {$absent}";
+            $args[] = "{$presence} ? {$present} : {$absent}";
         }
 
         $argList = $args === [] ? '' : "\n        ".implode(",\n        ", $args).",\n    ";
 
         return [$body, $argList];
+    }
+
+    /**
+     * A single name compiles to the same literal-key codegen as before
+     * (zero overhead); aliases compile to a "first present key wins"
+     * ternary chain, materialized once into a `$k{i}` local.
+     *
+     * @param  list<string|int>  $names
+     * @return array{0: string, 1: string} key expression, presence-check expression
+     */
+    private static function resolveKeyExpr(int $i, array $names, string &$body): array
+    {
+        if (count($names) === 1) {
+            $key = var_export($names[0], true);
+
+            return [$key, "\\array_key_exists({$key}, \$d)"];
+        }
+
+        $expr = 'null';
+
+        foreach (array_reverse($names) as $name) {
+            $nameExport = var_export($name, true);
+            $expr = "\\array_key_exists({$nameExport}, \$d) ? {$nameExport} : ({$expr})";
+        }
+
+        $var = "\$k{$i}";
+        $body .= "    {$var} = {$expr};\n";
+
+        return [$var, "{$var} !== null"];
     }
 
     /**
@@ -327,10 +364,11 @@ final class HydratorCompiler
                 continue;
             }
 
-            $key = var_export($param->inputName, true);
+            [$key, $presence] = self::resolveKeyExpr($i, $param->inputNames, $body);
 
-            // Missing key and explicit null both resolve to null — ?? is exact here
-            if ($param->isPlain && $param->allowsNull && (! $param->hasDefault || $param->defaultValue === null)) {
+            // Missing key and explicit null both resolve to null — ?? is exact here.
+            // Only safe for a single accepted name; see resolveKeyExpr().
+            if (count($param->inputNames) === 1 && $param->isPlain && $param->allowsNull && (! $param->hasDefault || $param->defaultValue === null)) {
                 $body .= "    {$target} = \$d[{$key}] ?? null;\n";
 
                 continue;
@@ -340,13 +378,15 @@ final class HydratorCompiler
                 ? "\$d[{$key}]"
                 : "\\StdOut\\SimpleDataObjects\\Support\\ValueCaster::cast(\$p[{$i}], \$d[{$key}])";
 
+            $missingKey = var_export($param->inputNames[0], true);
+
             $absent = match (true) {
                 $param->hasDefault => "\$p[{$i}]->defaultValue",
                 $param->allowsNull => 'null',
-                default => "throw \\StdOut\\SimpleDataObjects\\Exceptions\\DataHydrationException::missingField({$classExport}, {$key})",
+                default => "throw \\StdOut\\SimpleDataObjects\\Exceptions\\DataHydrationException::missingField({$classExport}, {$missingKey})",
             };
 
-            $body .= "    {$target} = \\array_key_exists({$key}, \$d) ? {$present} : {$absent};\n";
+            $body .= "    {$target} = {$presence} ? {$present} : {$absent};\n";
         }
 
         return $body;

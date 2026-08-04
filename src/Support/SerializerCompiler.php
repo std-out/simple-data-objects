@@ -64,7 +64,7 @@ final class SerializerCompiler
                 continue;
             }
 
-            $key = var_export($param->inputName, true);
+            $key = var_export($param->outputName, true);
             $body .= "    \$v = \$o->{$param->phpName};\n";
 
             $assign = match (true) {

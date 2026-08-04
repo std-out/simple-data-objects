@@ -104,6 +104,7 @@ export default defineConfig({
             { text: '#[Hidden]', link: '/attributes/hidden' },
             { text: '#[IgnoreIfNull]', link: '/attributes/ignore-if-null' },
             { text: '#[MapPropertyName]', link: '/attributes/map-property-name' },
+            { text: '#[MapInputName] / #[MapOutputName]', link: '/attributes/map-input-output-name' },
             { text: '#[TransformKeys]', link: '/attributes/transform-keys' },
             { text: '#[Discriminator]', link: '/attributes/discriminator' },
             { text: '#[DataCollection]', link: '/attributes/data-collection' },

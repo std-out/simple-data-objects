@@ -46,12 +46,14 @@ final class ClassMeta
         $validationRules = [];
 
         foreach ($parameters as $meta) {
+            $inputName = $meta->inputNames[0];
+
             if ($meta->rules !== []) {
-                $validationRules[$meta->inputName] = $meta->rules;
+                $validationRules[$inputName] = $meta->rules;
             }
 
             foreach ($meta->nestedRules as $suffix => $rules) {
-                $validationRules["{$meta->inputName}.{$suffix}"] = $rules;
+                $validationRules["{$inputName}.{$suffix}"] = $rules;
             }
         }
 

@@ -195,7 +195,8 @@ CreateOrderData::validate($rawArray); // throws ValidationException
 | `#[Flatten]` | property | inline nested DTO fields into parent |
 | `#[Hidden]` | property | exclude from `toArray()` / JSON |
 | `#[IgnoreIfNull]` | property | omit from output when `null` |
-| `#[MapPropertyName('input_key')]` | property | map different input key → property |
+| `#[MapPropertyName('input_key', ...)]` | property | map input key(s) (aliases) → property, same name on output |
+| `#[MapInputName]` / `#[MapOutputName]` | property | map hydration and serialization keys independently |
 | `#[TransformKeys(TransformKeys::SNAKE_CASE)]` | class | transform all keys at class level |
 | `#[DataCollection(ItemData::class)]` | property | typed collection of DTOs |
 | `#[Discriminator('type', ['card' => CardData::class])]` | abstract class | polymorphic hydration — `from()` picks the subclass by field value |

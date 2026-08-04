@@ -11,6 +11,7 @@ use StdOut\SimpleDataObjects\Support\HydratorCompiler;
 use StdOut\SimpleDataObjects\Support\MetadataRegistry;
 use StdOut\SimpleDataObjects\Support\ParameterMeta;
 use StdOut\SimpleDataObjects\Support\SerializerCompiler;
+use StdOut\SimpleDataObjects\Tests\Fixtures\AliasedUserData;
 use StdOut\SimpleDataObjects\Tests\Fixtures\EventData;
 use StdOut\SimpleDataObjects\Tests\Fixtures\HybridData;
 use StdOut\SimpleDataObjects\Tests\Fixtures\InferredEnumData;
@@ -239,7 +240,8 @@ class MetadataCacheTest extends TestCase
     {
         $param = new ParameterMeta(
             phpName: 'field',
-            inputName: 'field',
+            inputNames: ['field'],
+            outputName: 'field',
             allowsNull: false,
             hasDefault: false,
             defaultValue: null,
@@ -264,7 +266,8 @@ class MetadataCacheTest extends TestCase
     {
         $param = new ParameterMeta(
             phpName: 'field',
-            inputName: 'field',
+            inputNames: ['field'],
+            outputName: 'field',
             allowsNull: false,
             hasDefault: false,
             defaultValue: null,
@@ -350,6 +353,21 @@ class MetadataCacheTest extends TestCase
 
         $user = UserData::from(['name' => 'Bob', 'email' => 'bob@example.com']);
         $this->assertSame(['name' => 'Bob', 'email' => 'bob@example.com', 'phone' => null], $user->toArray());
+    }
+
+    public function test_cache_file_persists_and_restores_multi_alias_input_names(): void
+    {
+        MetadataRegistry::setStoragePath($this->cacheDir);
+
+        AliasedUserData::from(['uid' => 1, 'name' => 'Alice']);
+        MetadataRegistry::flush();
+
+        $this->assertArrayNotHasKey(AliasedUserData::class, HydratorCompiler::$hydrators);
+
+        $data = AliasedUserData::from(['uid' => 2, 'name' => 'Bob']);
+
+        $this->assertSame(2, $data->userId);
+        $this->assertSame(['user_id' => 2, 'name' => 'Bob'], $data->toArray());
     }
 
     public function test_cache_file_restores_bound_hydrator_for_class_without_constructor(): void

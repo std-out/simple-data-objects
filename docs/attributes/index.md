@@ -10,7 +10,8 @@ All behaviour in Simple Data Objects is declared via PHP attributes on construct
 | [`#[Flatten]`](./flatten.md) | Parameter or property | Inline nested DTO fields into the parent array |
 | [`#[Hidden]`](./hidden.md) | Parameter or property | Exclude from `toArray()` / JSON output |
 | [`#[IgnoreIfNull]`](./ignore-if-null.md) | Parameter or property | Omit from output when value is `null` |
-| [`#[MapPropertyName]`](./map-property-name.md) | Parameter or property | Map a different input key to this property |
+| [`#[MapPropertyName]`](./map-property-name.md) | Parameter or property | Map a different input key (or several aliases) to this property |
+| [`#[MapInputName]` / `#[MapOutputName]`](./map-input-output-name.md) | Parameter or property | Map hydration and serialization keys independently |
 | [`#[TransformKeys]`](./transform-keys.md) | Class | Transform all input keys at the class level |
 | [`#[Discriminator]`](./discriminator.md) | Class (abstract) | Polymorphic hydration — dispatch `from()` to a concrete subclass by field value |
 | [`#[DataCollection]`](./data-collection.md) | Parameter or property | Declare a typed collection property |

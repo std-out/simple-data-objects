@@ -10,6 +10,7 @@ use StdOut\SimpleDataObjects\Support\ClassMetaFactory;
 use StdOut\SimpleDataObjects\Support\MetadataRegistry;
 use StdOut\SimpleDataObjects\Tests\Fixtures\RejectUnknownKeysDiscriminatorData;
 use StdOut\SimpleDataObjects\Tests\Fixtures\RejectUnknownKeysFlattenData;
+use StdOut\SimpleDataObjects\Tests\Fixtures\StrictAliasedData;
 use StdOut\SimpleDataObjects\Tests\Fixtures\StrictHybridData;
 use StdOut\SimpleDataObjects\Tests\Fixtures\StrictNoConstructorData;
 use StdOut\SimpleDataObjects\Tests\Fixtures\StrictSnakeCasedData;
@@ -91,6 +92,20 @@ class RejectUnknownKeysTest extends TestCase
         $restored = StrictUserData::from($original->toArray());
 
         $this->assertTrue($original->equals($restored));
+    }
+
+    public function test_every_alias_of_a_mapped_property_is_a_known_key(): void
+    {
+        $this->assertSame(1, StrictAliasedData::from(['user_id' => 1])->userId);
+        $this->assertSame(2, StrictAliasedData::from(['uid' => 2])->userId);
+    }
+
+    public function test_rejects_an_unmapped_key_even_with_aliases_declared(): void
+    {
+        $this->expectException(DataHydrationException::class);
+        $this->expectExceptionMessageMatches("/Unknown key \['userId'\]/");
+
+        StrictAliasedData::from(['userId' => 1]);
     }
 
     public function test_collection_rejects_unknown_keys_per_item(): void

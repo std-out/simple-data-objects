@@ -51,6 +51,26 @@ $payment->toArray();
 // ]
 ```
 
+## Aliases
+
+Pass more than one name to accept several possible input keys — the first one present in the data wins:
+
+```php
+#[MapPropertyName('user_id', 'userId', 'uid')]
+public readonly int $userId,
+```
+
+```php
+PaymentData::from(['uid' => 42, ...]);       // accepted
+PaymentData::from(['user_id' => 42, ...]);   // also accepted, takes priority if both are present
+```
+
+`toArray()` always serializes under the **first** alias (`user_id` above) — aliases beyond the first exist purely to widen what hydration accepts, they never affect output.
+
+## Independent input/output names
+
+`#[MapPropertyName]` always uses the same name for both directions. To map a different key for hydration than for serialization, use [`#[MapInputName]` / `#[MapOutputName]`](./map-input-output-name.md) instead — they cannot be combined with `#[MapPropertyName]` on the same property.
+
 ## Class-level Remapping
 
 For systematic key transformation (snake_case ↔ camelCase), use [`#[TransformKeys]`](./transform-keys.md) on the class instead of mapping each property individually.
