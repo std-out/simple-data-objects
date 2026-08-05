@@ -12,6 +12,7 @@ use StdOut\SimpleDataObjects\Support\MetadataRegistry;
 use StdOut\SimpleDataObjects\Support\ParameterMeta;
 use StdOut\SimpleDataObjects\Support\SerializerCompiler;
 use StdOut\SimpleDataObjects\Tests\Fixtures\AliasedUserData;
+use StdOut\SimpleDataObjects\Tests\Fixtures\ComputedNameData;
 use StdOut\SimpleDataObjects\Tests\Fixtures\EventData;
 use StdOut\SimpleDataObjects\Tests\Fixtures\HybridData;
 use StdOut\SimpleDataObjects\Tests\Fixtures\InferredEnumData;
@@ -368,6 +369,20 @@ class MetadataCacheTest extends TestCase
 
         $this->assertSame(2, $data->userId);
         $this->assertSame(['user_id' => 2, 'name' => 'Bob'], $data->toArray());
+    }
+
+    public function test_cache_file_persists_and_restores_computed_fields(): void
+    {
+        MetadataRegistry::setStoragePath($this->cacheDir);
+
+        ComputedNameData::from(['firstName' => 'Ada', 'lastName' => 'Lovelace']);
+        MetadataRegistry::flush();
+
+        $this->assertArrayNotHasKey(ComputedNameData::class, SerializerCompiler::$serializers);
+
+        $data = ComputedNameData::from(['firstName' => 'Grace', 'lastName' => 'Hopper']);
+
+        $this->assertSame('Grace Hopper', $data->toArray()['fullName']);
     }
 
     public function test_cache_file_restores_bound_hydrator_for_class_without_constructor(): void

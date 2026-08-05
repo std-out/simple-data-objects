@@ -83,6 +83,11 @@ final class SerializerCompiler
                 : "    {$assign}\n";
         }
 
+        foreach ($meta->computed as $method => $key) {
+            $keyExport = var_export($key, true);
+            $body .= "    \$r[{$keyExport}] = \\StdOut\\SimpleDataObjects\\Support\\ValueNormalizer::normalize(\$o->{$method}());\n";
+        }
+
         return <<<PHP
         static function (\\{$class} \$o) use (\$p): array {
             \$r = [];

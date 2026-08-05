@@ -5,6 +5,22 @@ All notable changes to `std-out/simple-data-objects` are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.22.0] — 2026-08-05
+
+### Added
+- **`#[Computed]`** — adds a derived, method-backed field to serialization
+  output. Works on constructor-based, constructor-less, and hybrid classes.
+  - Public, non-static, zero-required-parameter methods only; a method
+    requiring parameters throws at metadata-build time.
+  - Default output key is the method name (subject to the class-level
+    `#[TransformKeys]` strategy, same as properties); override with
+    `#[Computed('custom_key')]`.
+  - The return value is normalized the same way any other field is —
+    nested `BaseData`, enums, and `Collection`s serialize correctly.
+  - Ignored on input, so `from($dto->toArray())` keeps working;
+    `#[RejectUnknownKeys]` treats the computed key as known.
+- **Documentation:** see [#[Computed]](https://std-out.github.io/simple-data-objects/attributes/computed).
+
 ## [1.21.0] — 2026-08-04
 
 ### Added

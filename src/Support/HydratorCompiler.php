@@ -230,6 +230,10 @@ final class HydratorCompiler
             }
         }
 
+        foreach ($meta->computed as $key) {
+            $known[$key] = true;
+        }
+
         $knownKeys = var_export($known, true);
 
         return "    if (\$u = \\array_diff_key(\$d, {$knownKeys})) {\n"

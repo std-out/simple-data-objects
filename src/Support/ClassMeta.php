@@ -32,6 +32,7 @@ final class ClassMeta
      * @param  list<class-string<DataPipe>>  $pipes
      * @param  array<int|string, class-string>  $discriminatorMap
      * @param  class-string|null  $discriminatorFallback
+     * @param  array<string, string>  $computed  method name => output key
      */
     public function __construct(
         array $parameters,
@@ -42,6 +43,7 @@ final class ClassMeta
         public readonly ?string $discriminatorFallback = null,
         public readonly bool $rejectUnknownKeys = false,
         public readonly ?string $wrapIn = null,
+        public readonly array $computed = [],
     ) {
         $validationRules = [];
 
@@ -96,6 +98,7 @@ final class ClassMeta
             $state['discriminatorFallback'] ?? null,
             $state['rejectUnknownKeys'] ?? false,
             $state['wrapIn'] ?? null,
+            $state['computed'] ?? [],
         );
     }
 }

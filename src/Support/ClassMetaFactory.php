@@ -5,9 +5,11 @@ declare(strict_types=1);
 namespace StdOut\SimpleDataObjects\Support;
 
 use ReflectionClass;
+use ReflectionMethod;
 use ReflectionParameter;
 use ReflectionProperty;
 use StdOut\SimpleDataObjects\Attributes\Cast;
+use StdOut\SimpleDataObjects\Attributes\Computed;
 use StdOut\SimpleDataObjects\Attributes\DataCollection as DataCollectionAttribute;
 use StdOut\SimpleDataObjects\Attributes\Discriminator;
 use StdOut\SimpleDataObjects\Attributes\Flatten;
@@ -58,6 +60,8 @@ final class ClassMetaFactory
         $wrapAttrs = $reflection->getAttributes(WrapIn::class);
         $wrapIn = $wrapAttrs !== [] ? $wrapAttrs[0]->newInstance()->key : null;
 
+        $computed = self::computedMethods($reflection, $strategy);
+
         if ($rejectUnknownKeys && $discriminator !== null) {
             throw new \InvalidArgumentException(
                 "{$class}: #[RejectUnknownKeys] and #[Discriminator] cannot be combined — declare it on the concrete subclasses instead.",
@@ -85,6 +89,7 @@ final class ClassMetaFactory
                 discriminatorFallback: $discriminator?->fallback,
                 rejectUnknownKeys: $rejectUnknownKeys,
                 wrapIn: $wrapIn,
+                computed: $computed,
             );
         }
 
@@ -116,7 +121,35 @@ final class ClassMetaFactory
             discriminatorFallback: $discriminator?->fallback,
             rejectUnknownKeys: $rejectUnknownKeys,
             wrapIn: $wrapIn,
+            computed: $computed,
         );
+    }
+
+    /** @return array<string, string> method name => output key */
+    private static function computedMethods(ReflectionClass $reflection, ?string $strategy): array
+    {
+        $computed = [];
+
+        foreach ($reflection->getMethods(ReflectionMethod::IS_PUBLIC) as $method) {
+            $attrs = $method->getAttributes(Computed::class);
+
+            if ($attrs === [] || $method->isStatic()) {
+                continue;
+            }
+
+            if ($method->getNumberOfRequiredParameters() > 0) {
+                throw new \InvalidArgumentException(
+                    "{$reflection->getName()}::{$method->getName()}(): #[Computed] methods cannot require parameters.",
+                );
+            }
+
+            $key = $attrs[0]->newInstance()->key
+                ?? ($strategy !== null ? KeyTransformer::apply($method->getName(), $strategy) : $method->getName());
+
+            $computed[$method->getName()] = $key;
+        }
+
+        return $computed;
     }
 
     /** @param list<ParameterMeta> $params */

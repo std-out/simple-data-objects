@@ -103,6 +103,7 @@ export default defineConfig({
             { text: '#[Flatten]', link: '/attributes/flatten' },
             { text: '#[Hidden]', link: '/attributes/hidden' },
             { text: '#[IgnoreIfNull]', link: '/attributes/ignore-if-null' },
+            { text: '#[Computed]', link: '/attributes/computed' },
             { text: '#[MapPropertyName]', link: '/attributes/map-property-name' },
             { text: '#[MapInputName] / #[MapOutputName]', link: '/attributes/map-input-output-name' },
             { text: '#[TransformKeys]', link: '/attributes/transform-keys' },

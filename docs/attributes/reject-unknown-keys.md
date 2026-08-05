@@ -45,6 +45,8 @@ UserData::from(['user_email' => '...']); // known
 UserData::from(['email' => '...']);      // unknown — 'email' was never the input name
 ```
 
+A [`#[Computed]`](./computed.md) field's output key is known too, so passing it back through `from(toArray())` doesn't trip the check.
+
 `#[Hidden]`, `#[IgnoreIfNull]`, and `#[WhenLoaded]` parameters are still known input keys — those attributes only affect output or `fromModel()`, not what `from()` accepts.
 
 ## The exception
