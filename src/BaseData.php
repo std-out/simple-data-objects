@@ -111,6 +111,35 @@ abstract class BaseData implements Arrayable, DataObject, JsonSerializable, Stri
     }
 
     /**
+     * Like from(), but never throws — every failure is collected into the
+     * returned result instead of aborting on the first one.
+     *
+     * @return HydrationResult<static>
+     */
+    public static function fromResult(mixed $data): HydrationResult
+    {
+        $collect = HydratorCompiler::$collectingHydrators[static::class] ?? HydratorCompiler::compileCollecting(static::class);
+
+        if (is_array($data)) {
+            /** @var HydrationResult<static> */
+            return $collect($data);
+        }
+
+        if ($data instanceof static) {
+            return HydrationResult::success($data);
+        }
+
+        try {
+            $data = InputNormalizer::normalize(static::class, $data);
+        } catch (DataHydrationException $e) {
+            return HydrationResult::failure(['$input' => $e->getMessage()]);
+        }
+
+        /** @var HydrationResult<static> */
+        return $collect($data);
+    }
+
+    /**
      * @return TypedDataCollection<static>
      */
     public static function collection(iterable $items): TypedDataCollection
@@ -206,6 +235,57 @@ abstract class BaseData implements Arrayable, DataObject, JsonSerializable, Stri
         }
 
         return static::from($array);
+    }
+
+    /**
+     * fromResult(), with Rules validation errors merged into the same map
+     * (validation errors win on a key collision). Never throws.
+     *
+     * @return HydrationResult<static>
+     */
+    public static function fromValidatedResult(mixed $data): HydrationResult
+    {
+        if (! is_array($data)) {
+            try {
+                $data = InputNormalizer::normalize(static::class, $data);
+            } catch (DataHydrationException $e) {
+                return HydrationResult::failure(['$input' => $e->getMessage()]);
+            }
+        }
+
+        $meta = MetadataRegistry::get(static::class);
+
+        // Same delegation as fromValidated(): the concrete class's rules apply
+        if ($meta->discriminatorField !== null) {
+            try {
+                $target = self::resolveDiscriminated($meta, $data);
+            } catch (DataHydrationException $e) {
+                return HydrationResult::failure([(string) $meta->discriminatorField => $e->getMessage()]);
+            }
+
+            /** @var HydrationResult<static> */
+            return $target::fromValidatedResult($data);
+        }
+
+        $result = static::fromResult($data);
+
+        if ($meta->validationRules === []) {
+            return $result;
+        }
+
+        $validator = static::validatorFactory()->make($data, $meta->validationRules);
+
+        if (! $validator->fails()) {
+            return $result;
+        }
+
+        $validationErrors = [];
+
+        foreach ($validator->errors()->messages() as $key => $messages) {
+            $validationErrors[$key] = $messages[0];
+        }
+
+        return HydrationResult::failure([...$result->errors(), ...$validationErrors]);
     }
 
     /** @throws ValidationException */

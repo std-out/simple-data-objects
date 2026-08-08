@@ -73,3 +73,7 @@ Both combinations are rejected at metadata-build time, not silently ignored:
 ## Standalone constructor-less, hybrid, and lazy classes
 
 Works the same on [constructor-less and hybrid DTOs](../features/hydration.md#constructor-less-dtos) — the known-key set includes properties populated via constructor injection and via post-construction assignment alike. With [`fromLazy()`](../features/hydration.md#lazy-hydration), the check runs on first property access, same as any other hydration error.
+
+## Interaction with fromResult()
+
+Under [`fromResult()`](../features/error-accumulation.md), an unknown key doesn't abort — it's reported as a `'$unknown'` entry alongside whatever field errors also accumulated, instead of throwing immediately.

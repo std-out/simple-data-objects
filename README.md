@@ -181,6 +181,20 @@ public function store(CreateOrderData $data) { /* already validated */ }
 CreateOrderData::validate($rawArray); // throws ValidationException
 ```
 
+### Never-throw error accumulation
+
+`fromResult()` tries every field instead of stopping at the first one, with dot-paths for nested DTOs and collections:
+
+```php
+$result = CreateOrderData::fromResult($request->all());
+
+$result->ok();       // bool
+$result->errors();   // ['deliveryDate' => 'Invalid date format', 'items.2.price' => '...']
+$result->value();    // CreateOrderData — throws if !ok()
+
+// fromValidatedResult() merges in #[Rules] failures the same way
+```
+
 ---
 
 ## All Attributes

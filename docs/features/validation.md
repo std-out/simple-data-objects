@@ -126,3 +126,7 @@ class CreateUserController
     }
 }
 ```
+
+## Never throwing: fromValidatedResult()
+
+`fromValidated()`/`validate()` throw on the first problem. For a "collect every error and never throw" alternative — merging `#[Rules]` failures with hydration failures into one map, with dot-paths for nested DTOs and collections — see [`fromResult()` — Error Accumulation](./error-accumulation.md).

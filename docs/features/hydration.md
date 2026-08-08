@@ -79,6 +79,8 @@ if ($user === null) {
 Use `tryFrom()` when you want to handle bad input gracefully. Use `from()` for trusted internal data.
 :::
 
+`tryFrom()` tells you *that* hydration failed, but not *why* — it discards the reason and stops at the first bad field. When you need every problem at once (with a field name attached to each), use [`fromResult()`](./error-accumulation.md) instead.
+
 ## Nested DTOs
 
 Type-hint a property as another `BaseData` subclass and it is hydrated automatically:

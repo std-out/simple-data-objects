@@ -42,7 +42,7 @@ $order->toJson();        // JSON string
 ## Core Concepts
 
 ### Hydration
-`from()` is a universal factory: it accepts arrays, Eloquent models and any `Arrayable`, `stdClass`, `JsonSerializable`, any `Traversable`, JSON strings, and plain objects. Nested DTOs, enums, and collections are resolved automatically.
+`from()` is a universal factory: it accepts arrays, Eloquent models and any `Arrayable`, `stdClass`, `JsonSerializable`, any `Traversable`, JSON strings, and plain objects. Nested DTOs, enums, and collections are resolved automatically. `tryFrom()` returns `null` instead of throwing; `fromResult()` goes further and never throws either, collecting every field's error (dot-pathed for nested DTOs and collections) instead of stopping at the first one.
 
 ### Serialization
 `toArray()` and `toJson()` serialize the object back to its wire format. Casts apply in both directions — hydration reads them, serialization writes them.

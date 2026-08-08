@@ -5,6 +5,33 @@ All notable changes to `std-out/simple-data-objects` are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.23.0] — 2026-08-08
+
+### Added
+- **`fromResult()` / `fromValidatedResult()`** — a "safe parse" alternative
+  to `from()`/`tryFrom()` that never throws. Every parameter is tried, and
+  every failure is collected into a `HydrationResult` instead of aborting
+  on the first one.
+  - **`HydrationResult`** — `ok()`, `value()` (throws `LogicException` if
+    called on a failed result), `valueOrNull()`, `errors()`.
+  - **Dot-path errors for nested structure**: a nested `BaseData` or
+    `#[DataCollection]` field recurses into the target class's own
+    `fromResult()`, merging its errors under `field.name` /
+    `field.index.name`. `#[Flatten]` merges flat, with no prefix, since its
+    fields already live in the parent's own namespace.
+  - `#[RejectUnknownKeys]` reports a `'$unknown'` entry instead of
+    aborting; a failing class-level `#[Pipe]` reports `'$pipeline'` (and
+    skips per-field extraction, since the transform left the input
+    unreliable); a throwing constructor reports `'$construct'`; invalid
+    non-array input reports `'$input'`.
+  - **`fromValidatedResult()`** merges `#[Rules]`/`#[InferRules]` failures
+    into the same error map (the first message per field; a validation
+    message wins over a hydration message on the same key).
+  - Compiled the same way `from()` is — a specialized closure per class,
+    cached separately and lazily — so `from()`/`tryFrom()` pay nothing for
+    it, whether or not a class ever calls `fromResult()`.
+- **Documentation:** see [fromResult() — Error Accumulation](https://std-out.github.io/simple-data-objects/features/error-accumulation).
+
 ## [1.22.0] — 2026-08-05
 
 ### Added
