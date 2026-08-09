@@ -40,6 +40,13 @@ export default defineConfig({
       { text: 'Laravel', link: '/laravel/' },
       { text: 'Casts', link: '/casts/' },
       {
+        text: 'v1.x (stable)',
+        items: [
+          { text: 'v1.x (stable) — current', link: '/' },
+          { text: 'v2.0 (next)', link: 'https://std-out.github.io/simple-data-objects/v2/' },
+        ],
+      },
+      {
         text: 'GitHub',
         link: 'https://github.com/std-out/simple-data-objects',
       },
