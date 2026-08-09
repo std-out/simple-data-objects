@@ -43,6 +43,8 @@ final class ParameterMeta
         /** @var array<string, array<mixed>> */
         public readonly array $nestedRules = [],
         public readonly bool $isOptional = false,
+        /** @var list<string> */
+        public readonly array $hiddenExcept = [],
     ) {
         $this->isPlain = $caster === null
             && $nestedDataClass === null
@@ -77,6 +79,7 @@ final class ParameterMeta
             whenLoadedRelation: $state['whenLoadedRelation'] ?? null,
             nestedRules: $state['nestedRules'] ?? [],
             isOptional: $state['isOptional'] ?? false,
+            hiddenExcept: $state['hiddenExcept'] ?? [],
         );
     }
 }

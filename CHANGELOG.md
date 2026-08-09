@@ -35,6 +35,23 @@ and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.
   - Cannot be combined with a declared default value or with `#[Flatten]`
     — both throw at metadata-build time.
 - **Documentation:** see [Optional — Absent vs Null](https://std-out.github.io/simple-data-objects/features/optional).
+- **`#[Hidden(except: [...])]`** — serialization groups/context. A field can now
+  be hidden by default and shown only in specific output contexts, instead of
+  the previous all-or-nothing behavior; bare `#[Hidden]` is unchanged.
+  - **`toArray(context: 'admin')`** (and `toJson()`, `definedOnly()`) picks
+    which context to render. Each context compiles its own specialized
+    serializer, cached separately — zero runtime branching per field, same
+    strategy as the default serializer.
+  - Propagates into nested `BaseData`, `#[DataCollection]`, and `#[Flatten]`
+    fields automatically.
+  - `HasLaravelIntegration::toResponse()` and `PaginatedDataCollection`
+    accept the same `context` parameter.
+  - Only the default context is written to the `.meta.php` warm cache; other
+    contexts compile lazily on first use.
+  - `only()`, `except()`, `jsonSerialize()` (and therefore `json_encode($dto)`)
+    stay context-free — the former to avoid a breaking variadic-signature
+    change, the latter because `JsonSerializable` is a fixed PHP interface.
+- **Documentation:** see [#[Hidden]](https://std-out.github.io/simple-data-objects/attributes/hidden).
 
 ### Changed
 - **Breaking (internal API only):** `Support\TypeResolver::resolve()` now
@@ -42,6 +59,11 @@ and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.
   instead of 2. This is `@internal` support code with a single call site
   (`ClassMetaFactory`), not part of `BaseData`'s public hydration contract
   — no change for consumers of `from()`/`toArray()`/etc.
+- **Breaking (internal API only):** `Support\SerializerCompiler::$serializers`
+  is now keyed by class **and** context (`array<class-string, array<string,
+  Closure>>` instead of `array<class-string, Closure>`). `@internal`, a
+  single external read site (`BaseData::toArray()`), already updated — no
+  change for consumers.
 
 ## [1.23.0] — 2026-08-08
 

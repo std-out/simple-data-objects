@@ -13,6 +13,7 @@ use StdOut\SimpleDataObjects\Support\ParameterMeta;
 use StdOut\SimpleDataObjects\Support\SerializerCompiler;
 use StdOut\SimpleDataObjects\Tests\Fixtures\AliasedUserData;
 use StdOut\SimpleDataObjects\Tests\Fixtures\ComputedNameData;
+use StdOut\SimpleDataObjects\Tests\Fixtures\ContextHiddenData;
 use StdOut\SimpleDataObjects\Tests\Fixtures\EventData;
 use StdOut\SimpleDataObjects\Tests\Fixtures\HybridData;
 use StdOut\SimpleDataObjects\Tests\Fixtures\InferredEnumData;
@@ -478,6 +479,24 @@ class MetadataCacheTest extends TestCase
             ['name' => 'Alice', 'email' => 'alice@example.com', 'phone' => null],
             $user->toArray(),
         );
+    }
+
+    public function test_only_the_default_context_serializer_is_persisted(): void
+    {
+        MetadataRegistry::setStoragePath($this->cacheDir);
+
+        ContextHiddenData::from(['name' => 'Alice', 'internalNote' => 'note', 'secret' => 'x']);
+        MetadataRegistry::flush();
+
+        MetadataRegistry::get(ContextHiddenData::class);
+        $this->assertArrayHasKey(ContextHiddenData::class, SerializerCompiler::$serializers);
+        $this->assertArrayNotHasKey(ContextHiddenData::class, SerializerCompiler::$contextualSerializers);
+
+        $data = ContextHiddenData::from(['name' => 'Bob', 'internalNote' => 'note', 'secret' => 'x']);
+        $this->assertSame(['name' => 'Bob'], $data->toArray());
+        $this->assertSame(['name' => 'Bob', 'internalNote' => 'note'], $data->toArray('admin'));
+
+        $this->assertArrayHasKey('admin', SerializerCompiler::$contextualSerializers[ContextHiddenData::class]);
     }
 
     public function test_legacy_plain_meta_cache_file_still_loads(): void

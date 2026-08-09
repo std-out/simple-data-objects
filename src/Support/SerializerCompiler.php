@@ -25,27 +25,48 @@ final class SerializerCompiler
      */
     public static array $serializers = [];
 
+    /**
+     * Non-default contexts only, compiled lazily and kept out of $serializers
+     * so the no-context path (the only one most classes ever use) never pays
+     * for a second array dimension.
+     *
+     * @internal Read directly by BaseData::toArray() for speed — do not mutate.
+     *
+     * @var array<class-string, array<string, Closure(object): array>>
+     */
+    public static array $contextualSerializers = [];
+
     /** @param class-string $class */
-    public static function compile(string $class): Closure
+    public static function compile(string $class, ?string $context = null): Closure
     {
         // get() may already have restored a persisted closure from the file cache
         $meta = MetadataRegistry::get($class);
 
-        if (isset(self::$serializers[$class])) {
-            return self::$serializers[$class];
+        if ($context === null) {
+            if (isset(self::$serializers[$class])) {
+                return self::$serializers[$class];
+            }
+
+            $p = $meta->parameters;
+
+            /** @var Closure(object): array $fn */
+            $fn = Closure::bind(eval('return '.self::generate($class, $meta).';'), null, $class);
+
+            return self::$serializers[$class] = $fn;
         }
 
         $p = $meta->parameters;
 
         /** @var Closure(object): array $fn */
-        $fn = Closure::bind(eval('return '.self::generate($class, $meta).';'), null, $class);
+        $fn = Closure::bind(eval('return '.self::generate($class, $meta, $context).';'), null, $class);
 
-        return self::$serializers[$class] = $fn;
+        return self::$contextualSerializers[$class][$context] = $fn;
     }
 
     public static function flush(): void
     {
         self::$serializers = [];
+        self::$contextualSerializers = [];
     }
 
     /**
@@ -55,12 +76,13 @@ final class SerializerCompiler
      *
      * @internal also used by MetadataRegistry to persist compiled code
      */
-    public static function generate(string $class, ClassMeta $meta): string
+    public static function generate(string $class, ClassMeta $meta, ?string $context = null): string
     {
+        $contextExport = var_export($context, true);
         $body = '';
 
         foreach ($meta->parameters as $i => $param) {
-            if ($param->isHidden) {
+            if ($param->isHidden && ! in_array($context, $param->hiddenExcept, true)) {
                 continue;
             }
 
@@ -69,13 +91,13 @@ final class SerializerCompiler
 
             $assign = match (true) {
                 $param->flatten => "if (\$v instanceof \\StdOut\\SimpleDataObjects\\BaseData) {\n"
-                    ."        \$r = \\array_merge(\$r, \$v->toArray());\n"
+                    ."        \$r = \\array_merge(\$r, \$v->toArray({$contextExport}));\n"
                     ."    } else {\n"
-                    ."        \$r[{$key}] = \\StdOut\\SimpleDataObjects\\Support\\ValueNormalizer::normalize(\$v);\n"
+                    ."        \$r[{$key}] = \\StdOut\\SimpleDataObjects\\Support\\ValueNormalizer::normalize(\$v, {$contextExport});\n"
                     .'    }',
                 $param->caster !== null => "\$r[{$key}] = \$p[{$i}]->caster->set(\$v);",
-                $param->isPlain => "\$r[{$key}] = \$v === null || \\is_scalar(\$v) ? \$v : \\StdOut\\SimpleDataObjects\\Support\\ValueNormalizer::normalize(\$v);",
-                default => "\$r[{$key}] = \\StdOut\\SimpleDataObjects\\Support\\ValueNormalizer::normalize(\$v);",
+                $param->isPlain => "\$r[{$key}] = \$v === null || \\is_scalar(\$v) ? \$v : \\StdOut\\SimpleDataObjects\\Support\\ValueNormalizer::normalize(\$v, {$contextExport});",
+                default => "\$r[{$key}] = \\StdOut\\SimpleDataObjects\\Support\\ValueNormalizer::normalize(\$v, {$contextExport});",
             };
 
             $body .= match (true) {
@@ -88,7 +110,7 @@ final class SerializerCompiler
 
         foreach ($meta->computed as $method => $key) {
             $keyExport = var_export($key, true);
-            $body .= "    \$r[{$keyExport}] = \\StdOut\\SimpleDataObjects\\Support\\ValueNormalizer::normalize(\$o->{$method}());\n";
+            $body .= "    \$r[{$keyExport}] = \\StdOut\\SimpleDataObjects\\Support\\ValueNormalizer::normalize(\$o->{$method}(), {$contextExport});\n";
         }
 
         return <<<PHP

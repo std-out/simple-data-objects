@@ -227,7 +227,7 @@ $model->update($data->definedOnly());
 | `#[Pipe(TrimValuePipe::class)]` | property | value-level preprocessing pipeline |
 | `#[Pipe(TrimStringsPipe::class)]` | class | array-level preprocessing pipeline |
 | `#[Flatten]` | property | inline nested DTO fields into parent |
-| `#[Hidden]` | property | exclude from `toArray()` / JSON |
+| `#[Hidden(except: ['admin'])]` | property | exclude from `toArray()` / JSON, optionally per `toArray(context:)` |
 | `#[IgnoreIfNull]` | property | omit from output when `null` |
 | `#[Computed]` | method | add a derived, method-backed field to `toArray()` |
 | `#[MapPropertyName('input_key', ...)]` | property | map input key(s) (aliases) → property, same name on output |

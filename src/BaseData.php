@@ -382,14 +382,18 @@ abstract class BaseData implements Arrayable, DataObject, JsonSerializable, Stri
         return $result;
     }
 
-    public function toArray(): array
+    public function toArray(?string $context = null): array
     {
-        return (SerializerCompiler::$serializers[static::class] ?? SerializerCompiler::compile(static::class))($this);
+        if ($context === null) {
+            return (SerializerCompiler::$serializers[static::class] ?? SerializerCompiler::compile(static::class))($this);
+        }
+
+        return (SerializerCompiler::$contextualSerializers[static::class][$context] ?? SerializerCompiler::compile(static::class, $context))($this);
     }
 
-    public function toJson(int $flags = 0): string
+    public function toJson(int $flags = 0, ?string $context = null): string
     {
-        return json_encode($this->toArray(), $flags | JSON_THROW_ON_ERROR);
+        return json_encode($this->toArray($context), $flags | JSON_THROW_ON_ERROR);
     }
 
     public function only(string ...$keys): array
@@ -402,9 +406,9 @@ abstract class BaseData implements Arrayable, DataObject, JsonSerializable, Stri
         return array_diff_key($this->toArray(), array_flip($keys));
     }
 
-    public function definedOnly(): array
+    public function definedOnly(?string $context = null): array
     {
-        return $this->toArray();
+        return $this->toArray($context);
     }
 
     public function jsonSerialize(): array

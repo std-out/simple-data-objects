@@ -15,7 +15,7 @@ trait HasLaravelIntegration
 {
     abstract public static function from(mixed $data): static;
 
-    abstract public function toArray(): array;
+    abstract public function toArray(?string $context = null): array;
 
     public static function fromRequest(Request $request): static
     {
@@ -41,10 +41,10 @@ trait HasLaravelIntegration
         return static::from($data);
     }
 
-    public function toResponse($request, int $status = 200, array $headers = []): JsonResponse
+    public function toResponse($request, int $status = 200, array $headers = [], ?string $context = null): JsonResponse
     {
         $wrapIn = MetadataRegistry::get(static::class)->wrapIn;
-        $data = $this->toArray();
+        $data = $this->toArray($context);
 
         return new JsonResponse($wrapIn !== null ? [$wrapIn => $data] : $data, $status, $headers);
     }

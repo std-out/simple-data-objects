@@ -310,6 +310,10 @@ final class ClassMetaFactory
 
         $whenLoadedAttrs = $parameter->getAttributes(WhenLoaded::class);
 
+        $hiddenAttrs = $parameter->getAttributes(Hidden::class);
+        $isHidden = $hiddenAttrs !== [];
+        $hiddenExcept = $isHidden ? $hiddenAttrs[0]->newInstance()->except : [];
+
         $allowsNull = $parameter instanceof ReflectionParameter
             ? $parameter->allowsNull()
             : ($parameter->getType()?->allowsNull() ?? true);
@@ -333,7 +337,7 @@ final class ClassMetaFactory
             nestedDataClass: $nestedDataClass,
             enumClass: $enumClass,
             dataCollectionClass: $dataCollectionClass,
-            isHidden: $parameter->getAttributes(Hidden::class) !== [],
+            isHidden: $isHidden,
             ignoreIfNull: $parameter->getAttributes(IgnoreIfNull::class) !== [],
             flatten: $parameter->getAttributes(Flatten::class) !== [],
             rules: $rules,
@@ -343,6 +347,7 @@ final class ClassMetaFactory
             whenLoadedRelation: $whenLoadedAttrs !== [] ? $whenLoadedAttrs[0]->newInstance()->relation : null,
             nestedRules: $inferRules ? RuleInferrer::cascade($nestedDataClass, $dataCollectionClass) : [],
             isOptional: $isOptional,
+            hiddenExcept: $hiddenExcept,
         );
     }
 
