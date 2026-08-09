@@ -18,6 +18,7 @@ use StdOut\SimpleDataObjects\Support\ClassMeta;
 use StdOut\SimpleDataObjects\Support\HydratorCompiler;
 use StdOut\SimpleDataObjects\Support\InputNormalizer;
 use StdOut\SimpleDataObjects\Support\MetadataRegistry;
+use StdOut\SimpleDataObjects\Support\SchemaGenerator;
 use StdOut\SimpleDataObjects\Support\SerializerCompiler;
 use StdOut\SimpleDataObjects\Support\ValueCaster;
 use Stringable;
@@ -145,6 +146,11 @@ abstract class BaseData implements Arrayable, DataObject, JsonSerializable, Stri
     public static function collection(iterable $items): TypedDataCollection
     {
         return TypedDataCollection::of(static::class, $items);
+    }
+
+    public static function jsonSchema(): array
+    {
+        return SchemaGenerator::generate(static::class);
     }
 
     /**

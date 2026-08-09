@@ -30,10 +30,10 @@
         "illuminate/http": "Required to use HasLaravelIntegration::fromRequest() and toResponse()",
         "illuminate/database": "Required to use HasLaravelIntegration::fromModel(), IsEloquentCastable, AsDataCollection, or make:data --from-model",
         "illuminate/pagination": "Required to use BaseData::paginatedCollection() / PaginatedDataCollection",
-        "illuminate/console": "Required to use the sdo:warm, sdo:clear, and make:data artisan commands",
+        "illuminate/console": "Required to use the sdo:warm, sdo:clear, sdo:typescript, and make:data artisan commands",
         "livewire/livewire": "Required to implement \\Livewire\\Wireable alongside the WireableData trait"
     },
-    "bin": ["bin/sdo-warm"],
+    "bin": ["bin/sdo-warm", "bin/sdo-typescript"],
     "autoload": {
         "psr-4": {
             "StdOut\\SimpleDataObjects\\": "src/"

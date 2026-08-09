@@ -348,6 +348,7 @@ final class ClassMetaFactory
             nestedRules: $inferRules ? RuleInferrer::cascade($nestedDataClass, $dataCollectionClass) : [],
             isOptional: $isOptional,
             hiddenExcept: $hiddenExcept,
+            phpType: RuleInferrer::phpTypeName($parameter),
         );
     }
 

@@ -85,6 +85,7 @@ export default defineConfig({
             { text: 'Validation', link: '/features/validation' },
             { text: 'fromResult() — Error Accumulation', link: '/features/error-accumulation' },
             { text: 'Optional — Absent vs Null', link: '/features/optional' },
+            { text: 'Schema Generation — JSON Schema & TypeScript', link: '/features/schema-generation' },
             { text: 'DataPipe — Preprocessing', link: '/features/pipes' },
             { text: 'Immutable Copies — with()', link: '/features/with' },
             { text: 'Comparison — equals() & diff()', link: '/features/comparison' },

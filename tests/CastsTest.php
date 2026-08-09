@@ -33,6 +33,22 @@ class CastsTest extends TestCase
         $this->assertSame('2024-06-01', $event->toArray()['startsAt']);
     }
 
+    public function test_datetime_cast_json_schema_with_default_atom_format(): void
+    {
+        $this->assertSame(
+            ['type' => 'string', 'format' => 'date-time'],
+            (new DateTimeCast)->jsonSchema(),
+        );
+    }
+
+    public function test_datetime_cast_json_schema_with_custom_format(): void
+    {
+        $this->assertSame(
+            ['type' => 'string'],
+            (new DateTimeCast('Y-m-d'))->jsonSchema(),
+        );
+    }
+
     public function test_datetime_cast_passes_through_existing_datetime(): void
     {
         $dt = new DateTime('2024-06-01');

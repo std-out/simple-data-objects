@@ -9,6 +9,7 @@ use LogicException;
 use RuntimeException;
 use SodiumException;
 use StdOut\SimpleDataObjects\Contracts\CastsValue;
+use StdOut\SimpleDataObjects\Contracts\ProvidesJsonSchema;
 
 /**
  * Authenticated encryption using XSalsa20-Poly1305 (libsodium).
@@ -21,7 +22,7 @@ use StdOut\SimpleDataObjects\Contracts\CastsValue;
  * Breaking change from previous AES-256-CBC version: existing ciphertext
  * produced by the old cast is not compatible and must be re-encrypted.
  */
-final class EncryptedCast implements CastsValue
+final class EncryptedCast implements CastsValue, ProvidesJsonSchema
 {
     private readonly string $secretKey;
 
@@ -102,5 +103,10 @@ final class EncryptedCast implements CastsValue
     public function __debugInfo(): array
     {
         return ['secretKey' => '[redacted]'];
+    }
+
+    public function jsonSchema(): array
+    {
+        return ['type' => 'string'];
     }
 }

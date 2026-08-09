@@ -45,6 +45,7 @@ final class ParameterMeta
         public readonly bool $isOptional = false,
         /** @var list<string> */
         public readonly array $hiddenExcept = [],
+        public readonly ?string $phpType = null,
     ) {
         $this->isPlain = $caster === null
             && $nestedDataClass === null
@@ -80,6 +81,7 @@ final class ParameterMeta
             nestedRules: $state['nestedRules'] ?? [],
             isOptional: $state['isOptional'] ?? false,
             hiddenExcept: $state['hiddenExcept'] ?? [],
+            phpType: $state['phpType'] ?? null,
         );
     }
 }

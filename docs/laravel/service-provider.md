@@ -100,6 +100,19 @@ Wraps `MetadataRegistry::clearCache()` — run whenever DTO classes or their att
 php artisan sdo:clear
 ```
 
+### `sdo:typescript`
+
+Wraps [`TypeScriptGenerator`](../features/schema-generation.md#typescript) — the same discovery logic as `sdo:warm` (`CacheWarmer::discover()`), wired to config instead of CLI arguments, matching the standalone `bin/sdo-typescript` binary:
+
+```sh
+php artisan sdo:typescript                                    # uses config('simple-data-objects.paths' / 'typescript_output')
+php artisan sdo:typescript app/Data --output=resources/js/types/data-objects.d.ts
+```
+
+Options:
+
+- `--output=<file>` — overrides `config('simple-data-objects.typescript_output')`.
+
 ### `make:data`
 
 Generates a DTO stub:

@@ -52,6 +52,33 @@ and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.
     stay context-free — the former to avoid a breaking variadic-signature
     change, the latter because `JsonSerializable` is a fixed PHP interface.
 - **Documentation:** see [#[Hidden]](https://std-out.github.io/simple-data-objects/attributes/hidden).
+- **`jsonSchema()` + TypeScript generation** — describe a class's shape (JSON
+  Schema draft 2020-12, or a `.d.ts` file) from the same `ClassMeta`/`ParameterMeta`
+  hydration/serialization already walk — no extra reflection.
+  - `OrderData::jsonSchema(): array` — scalars, nullable (`type: [T, 'null']`),
+    enums (`enum: [...]`, backed values or pure-case names), nested `BaseData`
+    (`$ref`/`$defs`), `#[DataCollection]` (`array` + `items`), `#[Flatten]`
+    (merged inline), `#[Hidden]` (omitted), `Optional` (excluded from
+    `required`, not treated as nullable), `#[Discriminator]` (`oneOf`,
+    including the `fallback` class).
+  - **`ProvidesJsonSchema`** — optional cast interface; every built-in cast
+    implements it (`DateTimeCast`/`DateTimeImmutableCast`, `UuidCast`,
+    `MoneyCast`, `CommaSeparatedCast`, `EncryptedCast`, `JsonCast`, and the
+    plain scalar casts).
+  - **`#[Rules]`/`#[InferRules]` best-effort mapping**: `email`, `url`,
+    `uuid`, `in:`, `max:`/`min:`/`size:` (context-sensitive: `maxLength` vs
+    `maximum` vs `maxItems`) — everything else is silently skipped.
+  - **`TypeScriptGenerator`** — one `export interface` per concrete class,
+    one `export type X = A | B;` union per `#[Discriminator]` parent. Built
+    directly on the JSON Schema per-field resolution; the one divergence is
+    optionality — a TS `?:` follows `Optional` specifically (the only thing
+    ever missing from `toArray()`/`toJson()` output), not the JSON Schema
+    `required` list (which describes hydration input requirements instead).
+  - **CLI `bin/sdo-typescript`** and **artisan `sdo:typescript`** — same
+    discovery (`CacheWarmer::discover()`) and config
+    (`simple-data-objects.paths`) as `sdo:warm`; new
+    `simple-data-objects.typescript_output` config key.
+- **Documentation:** see [Schema Generation](https://std-out.github.io/simple-data-objects/features/schema-generation).
 
 ### Changed
 - **Breaking (internal API only):** `Support\TypeResolver::resolve()` now
@@ -59,11 +86,12 @@ and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.
   instead of 2. This is `@internal` support code with a single call site
   (`ClassMetaFactory`), not part of `BaseData`'s public hydration contract
   — no change for consumers of `from()`/`toArray()`/etc.
-- **Breaking (internal API only):** `Support\SerializerCompiler::$serializers`
-  is now keyed by class **and** context (`array<class-string, array<string,
-  Closure>>` instead of `array<class-string, Closure>`). `@internal`, a
-  single external read site (`BaseData::toArray()`), already updated — no
-  change for consumers.
+- **Breaking (internal API only):** `Support\SerializerCompiler` gained
+  `$contextualSerializers` (`array<class-string, array<string, Closure>>`,
+  non-default contexts only) alongside the existing `$serializers`, which
+  keeps its original single-level shape — the default (no-context) path pays
+  no extra array-dimension cost. `@internal`, `BaseData::toArray()` already
+  updated — no change for consumers.
 
 ## [1.23.0] — 2026-08-08
 

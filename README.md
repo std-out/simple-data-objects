@@ -217,6 +217,29 @@ $model->update($data->definedOnly());
 
 ---
 
+### Schema generation — JSON Schema & TypeScript
+
+`jsonSchema()` walks the same metadata as `from()`/`toArray()` — no extra reflection — into a JSON Schema (draft 2020-12). `TypeScriptGenerator`/`bin/sdo-typescript` build on top of it for `.d.ts` output:
+
+```php
+OrderData::jsonSchema();
+// ['type' => 'object', 'properties' => [...], 'required' => [...], '$defs' => [...]]
+```
+
+```sh
+vendor/bin/sdo-typescript resources/js/types/data-objects.d.ts app/Data
+```
+
+```ts
+export interface OrderData {
+  id: number;
+  shippingAddress: AddressData;
+  status: 'pending' | 'shipped' | 'cancelled';
+}
+```
+
+---
+
 ## All Attributes
 
 | Attribute | Where | Effect |

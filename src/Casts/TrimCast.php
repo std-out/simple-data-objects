@@ -5,8 +5,9 @@ declare(strict_types=1);
 namespace StdOut\SimpleDataObjects\Casts;
 
 use StdOut\SimpleDataObjects\Contracts\CastsValue;
+use StdOut\SimpleDataObjects\Contracts\ProvidesJsonSchema;
 
-final class TrimCast implements CastsValue
+final class TrimCast implements CastsValue, ProvidesJsonSchema
 {
     public const string LOWERCASE = 'lowercase';
 
@@ -39,5 +40,10 @@ final class TrimCast implements CastsValue
     public function set(mixed $value): ?string
     {
         return $this->get($value);
+    }
+
+    public function jsonSchema(): array
+    {
+        return ['type' => 'string'];
     }
 }

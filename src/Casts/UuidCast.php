@@ -6,8 +6,9 @@ namespace StdOut\SimpleDataObjects\Casts;
 
 use InvalidArgumentException;
 use StdOut\SimpleDataObjects\Contracts\CastsValue;
+use StdOut\SimpleDataObjects\Contracts\ProvidesJsonSchema;
 
-final class UuidCast implements CastsValue
+final class UuidCast implements CastsValue, ProvidesJsonSchema
 {
     private const string PATTERN = '/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i';
 
@@ -34,5 +35,10 @@ final class UuidCast implements CastsValue
     public function set(mixed $value): ?string
     {
         return $this->get($value);
+    }
+
+    public function jsonSchema(): array
+    {
+        return ['type' => 'string', 'format' => 'uuid'];
     }
 }
