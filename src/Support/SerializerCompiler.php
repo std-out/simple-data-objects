@@ -78,9 +78,12 @@ final class SerializerCompiler
                 default => "\$r[{$key}] = \\StdOut\\SimpleDataObjects\\Support\\ValueNormalizer::normalize(\$v);",
             };
 
-            $body .= $param->ignoreIfNull
-                ? "    if (\$v !== null) {\n        {$assign}\n    }\n"
-                : "    {$assign}\n";
+            $body .= match (true) {
+                $param->isOptional && $param->ignoreIfNull => "    if (\$v !== null && ! (\$v instanceof \\StdOut\\SimpleDataObjects\\Optional)) {\n        {$assign}\n    }\n",
+                $param->isOptional => "    if (! (\$v instanceof \\StdOut\\SimpleDataObjects\\Optional)) {\n        {$assign}\n    }\n",
+                $param->ignoreIfNull => "    if (\$v !== null) {\n        {$assign}\n    }\n",
+                default => "    {$assign}\n",
+            };
         }
 
         foreach ($meta->computed as $method => $key) {

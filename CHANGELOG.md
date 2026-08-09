@@ -5,6 +5,44 @@ All notable changes to `std-out/simple-data-objects` are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.0.0] — 2026-08-09
+
+### Added
+- **`Optional`** — a sentinel distinguishing "key absent from input" from an
+  explicit `null`, for PATCH-style partial updates. Added as a union member
+  on the property type: `public readonly string|Optional $name`.
+  - A missing key resolves to `Optional::missing()` instead of a default,
+    `null`, or a thrown error. `Optional::isMissing($value)` checks it.
+  - **Nullable-optional** (`string|Optional|null $bio`): a present `null`
+    still clears the field; only an absent key resolves to missing.
+  - **Serialization**: a still-missing field is always omitted from
+    `toArray()` and everything built on it (`toJson()`, `only()`,
+    `except()`, `diff()`, `equals()`) — unconditional, not opt-in like
+    `#[IgnoreIfNull]`. Keeps `from($dto->toArray())` roundtrip-safe.
+  - **`definedOnly()`** — `toArray()` under a name that reads clearly at
+    PATCH call sites (`$model->update($data->definedOnly())`).
+  - **`with()`** copies a missing field through unchanged, and can
+    explicitly reset one back to missing via `with(field: Optional::missing())`.
+  - **`#[InferRules]`** infers a `sometimes` presence rule instead of
+    `required`/`nullable` for an `Optional` field (`sometimes` +
+    `nullable` for the nullable-optional case), so PATCH endpoints don't
+    end up requiring every field.
+  - Works on nested `BaseData` and `#[DataCollection]` fields, and on both
+    `from()`/`tryFrom()` and `fromResult()`/`fromValidatedResult()`.
+  - **`#[WhenLoaded]` synergy**: an unloaded Eloquent relation is already a
+    genuinely absent key, so it resolves to `Optional::missing()` with no
+    extra configuration.
+  - Cannot be combined with a declared default value or with `#[Flatten]`
+    — both throw at metadata-build time.
+- **Documentation:** see [Optional — Absent vs Null](https://std-out.github.io/simple-data-objects/features/optional).
+
+### Changed
+- **Breaking (internal API only):** `Support\TypeResolver::resolve()` now
+  returns a 3-element tuple (`[$nestedDataClass, $enumClass, $isOptional]`)
+  instead of 2. This is `@internal` support code with a single call site
+  (`ClassMetaFactory`), not part of `BaseData`'s public hydration contract
+  — no change for consumers of `from()`/`toArray()`/etc.
+
 ## [1.23.0] — 2026-08-08
 
 ### Added

@@ -402,6 +402,11 @@ abstract class BaseData implements Arrayable, DataObject, JsonSerializable, Stri
         return array_diff_key($this->toArray(), array_flip($keys));
     }
 
+    public function definedOnly(): array
+    {
+        return $this->toArray();
+    }
+
     public function jsonSerialize(): array
     {
         return $this->toArray();

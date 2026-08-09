@@ -314,7 +314,7 @@ final class HydratorCompiler
 
             // Missing key and explicit null both resolve to null — ?? is exact here,
             // but only for a single name: with aliases, $d[null] would read the "" key.
-            if (count($param->inputNames) === 1 && $param->isPlain && $param->allowsNull && (! $param->hasDefault || $param->defaultValue === null)) {
+            if (count($param->inputNames) === 1 && $param->isPlain && $param->allowsNull && ! $param->isOptional && (! $param->hasDefault || $param->defaultValue === null)) {
                 $args[] = "\$d[{$f['key']}] ?? null";
 
                 continue;
@@ -374,6 +374,7 @@ final class HydratorCompiler
         $missingKey = var_export($param->inputNames[0], true);
 
         $absent = match (true) {
+            $param->isOptional => '\\StdOut\\SimpleDataObjects\\Optional::missing()',
             $param->hasDefault => "\$p[{$i}]->defaultValue",
             $param->allowsNull => 'null',
             default => "throw \\StdOut\\SimpleDataObjects\\Exceptions\\DataHydrationException::missingField({$classExport}, {$missingKey})",
@@ -423,7 +424,7 @@ final class HydratorCompiler
 
             // Missing key and explicit null both resolve to null — ?? is exact here.
             // Only safe for a single accepted name; see resolveKeyExpr().
-            if (count($param->inputNames) === 1 && $param->isPlain && $param->allowsNull && (! $param->hasDefault || $param->defaultValue === null)) {
+            if (count($param->inputNames) === 1 && $param->isPlain && $param->allowsNull && ! $param->isOptional && (! $param->hasDefault || $param->defaultValue === null)) {
                 $body .= "    {$target} = \$d[{$f['key']}] ?? null;\n";
 
                 continue;
@@ -653,6 +654,7 @@ final class HydratorCompiler
         $missingKey = var_export($param->inputNames[0], true);
 
         $absent = match (true) {
+            $param->isOptional => "{$target} = \\StdOut\\SimpleDataObjects\\Optional::missing();",
             $param->hasDefault => "{$target} = \$p[{$i}]->defaultValue;",
             $param->allowsNull => "{$target} = null;",
             default => "\$errors[{$missingKey}] = \\StdOut\\SimpleDataObjects\\Exceptions\\DataHydrationException::missingField({$classExport}, {$missingKey})->getMessage();",
@@ -702,6 +704,7 @@ final class HydratorCompiler
         $missingKey = var_export($param->inputNames[0], true);
 
         $absent = match (true) {
+            $param->isOptional => "{$target} = \\StdOut\\SimpleDataObjects\\Optional::missing();",
             $param->hasDefault => "{$target} = \$p[{$i}]->defaultValue;",
             $param->allowsNull => "{$target} = null;",
             default => "\$errors[{$missingKey}] = \\StdOut\\SimpleDataObjects\\Exceptions\\DataHydrationException::missingField({$classExport}, {$missingKey})->getMessage();",

@@ -45,20 +45,26 @@ final class RuleInferrer
         ?string $nestedDataClass,
         ?string $enumClass,
         ?string $dataCollectionClass,
+        bool $isOptional = false,
     ): array {
-        $presence = $allowsNull ? 'nullable' : 'required';
+        $presence = match (true) {
+            $isOptional && $allowsNull => ['sometimes', 'nullable'],
+            $isOptional => ['sometimes'],
+            $allowsNull => ['nullable'],
+            default => ['required'],
+        };
 
         if ($enumClass !== null) {
-            return [$presence, Rule::enum($enumClass)];
+            return [...$presence, Rule::enum($enumClass)];
         }
 
         if ($nestedDataClass !== null || $dataCollectionClass !== null) {
-            return [$presence, 'array'];
+            return [...$presence, 'array'];
         }
 
         $scalarRule = self::scalarRule($parameter);
 
-        return $scalarRule !== null ? [$presence, $scalarRule] : [$presence];
+        return $scalarRule !== null ? [...$presence, $scalarRule] : $presence;
     }
 
     /** @return array<string, array<mixed>> */

@@ -77,6 +77,7 @@ export default defineConfig({
             { text: 'Serialization', link: '/features/serialization' },
             { text: 'Validation', link: '/features/validation' },
             { text: 'fromResult() — Error Accumulation', link: '/features/error-accumulation' },
+            { text: 'Optional — Absent vs Null', link: '/features/optional' },
             { text: 'DataPipe — Preprocessing', link: '/features/pipes' },
             { text: 'Immutable Copies — with()', link: '/features/with' },
             { text: 'Comparison — equals() & diff()', link: '/features/comparison' },

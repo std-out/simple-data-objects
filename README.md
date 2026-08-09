@@ -197,6 +197,26 @@ $result->value();    // CreateOrderData — throws if !ok()
 
 ---
 
+### Optional — PATCH semantics
+
+`Optional` distinguishes "key not sent" from "key sent as `null`" — an omitted field means leave it untouched, not clear it:
+
+```php
+class UpdateUserData extends BaseData
+{
+    public function __construct(
+        public readonly string|Optional $name,
+        public readonly string|Optional|null $bio,   // null = clear it, Optional = don't touch it
+    ) {}
+}
+
+$data = UpdateUserData::from(['bio' => null]);
+$data->definedOnly();   // ['bio' => null] — 'name' stays absent
+$model->update($data->definedOnly());
+```
+
+---
+
 ## All Attributes
 
 | Attribute | Where | Effect |
