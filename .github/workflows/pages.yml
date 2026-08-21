@@ -2,7 +2,7 @@ name: Deploy VitePress site to Pages
 
 on:
   push:
-    branches: [main, v2]
+    branches: [main, v1]
 
   workflow_dispatch:
 
@@ -26,11 +26,11 @@ jobs:
           path: main
           fetch-depth: 0
 
-      - name: Checkout v2
+      - name: Checkout v1
         uses: actions/checkout@v7
         with:
-          ref: v2
-          path: v2
+          ref: v1
+          path: v1
           fetch-depth: 0
 
       - name: Setup Node
@@ -43,14 +43,14 @@ jobs:
       - name: Setup Pages
         uses: actions/configure-pages@v6
 
-      - name: Build main docs (v1.x — stable)
+      - name: Build main docs (v2.0 — current)
         working-directory: main
         run: |
           npm ci
           npm run docs:build
 
-      - name: Build v2 docs (v2.0 — next)
-        working-directory: v2
+      - name: Build v1 docs (v1.x — stable)
+        working-directory: v1
         run: |
           npm ci
           npm run docs:build
@@ -59,8 +59,8 @@ jobs:
         run: |
           mkdir -p site
           cp -r main/docs/.vitepress/dist/. site/
-          mkdir -p site/v2
-          cp -r v2/docs/.vitepress/dist/. site/v2/
+          mkdir -p site/v1
+          cp -r v1/docs/.vitepress/dist/. site/v1/
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v5
@@ -68,7 +68,7 @@ jobs:
           path: site
 
   deploy:
-    # Every branch pushed above (main, v2) must also be listed in Settings >
+    # Every branch pushed above (main, v1) must also be listed in Settings >
     # Environments > github-pages > Deployment branches, or this job 403s.
     environment:
       name: github-pages
