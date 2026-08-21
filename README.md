@@ -8,8 +8,8 @@
 [![PHP](https://img.shields.io/badge/PHP-%5E8.4-777BB4?logo=php&logoColor=white)](https://packagist.org/packages/std-out/simple-data-objects)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
-**Lightweight, attribute-driven DTOs for PHP 8.4+.**  
-Works standalone or inside Laravel 12–13. No reflection in production.
+**Lightweight, attribute-driven DTOs for PHP 8.4+ — up to 37× faster hydration and serialization than the most popular alternative, zero reflection at runtime.**  
+Works standalone or inside Laravel 12–13.
 
 ```bash
 composer require std-out/simple-data-objects
@@ -43,6 +43,8 @@ Benchmarked against **the most popular full-featured data-object library in the 
 | Peak memory — streaming 50,000 rows | 0.26 MB with `lazyCollection()` | ~13 MB | **~50× less memory** |
 
 Absolute numbers vary with hardware; the ratios stay stable across runs. CPU time per operation follows the same ratios — less CPU burned per request means more headroom per server.
+
+Don't take the numbers on faith — **[run the benchmarks yourself](https://github.com/std-out/simple-data-objects-benchmark)**: clone the companion repo, `make bench`, or swap in your own payload shapes.
 
 ---
 
