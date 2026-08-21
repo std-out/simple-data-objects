@@ -16,17 +16,17 @@ use UnitEnum;
  */
 final class ValueNormalizer
 {
-    public static function normalize(mixed $value): mixed
+    public static function normalize(mixed $value, ?string $context = null): mixed
     {
         if ($value instanceof BaseData) {
-            return $value->toArray();
+            return $value->toArray($context);
         }
 
         // Plain foreach: no closure allocation or map() machinery per element
         if ($value instanceof Collection) {
             $items = [];
             foreach ($value as $key => $item) {
-                $items[$key] = self::normalize($item);
+                $items[$key] = self::normalize($item, $context);
             }
 
             return $items;
@@ -35,7 +35,7 @@ final class ValueNormalizer
         if (is_array($value)) {
             $items = [];
             foreach ($value as $key => $item) {
-                $items[$key] = self::normalize($item);
+                $items[$key] = self::normalize($item, $context);
             }
 
             return $items;

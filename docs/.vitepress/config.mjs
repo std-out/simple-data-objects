@@ -20,10 +20,10 @@ const blueprintCodeTheme = {
 export default defineConfig({
   title: 'Simple Data Objects',
   description: 'Lightweight, attribute-driven Data Transfer Objects for PHP 8.4+',
-  base: '/simple-data-objects/',
+  base: '/simple-data-objects/v2/',
 
   head: [
-    ['link', { rel: 'icon', href: '/simple-data-objects/favicon.ico' }],
+    ['link', { rel: 'icon', href: '/simple-data-objects/v2/favicon.ico' }],
     ['link', { rel: 'preconnect', href: 'https://fonts.googleapis.com' }],
     ['link', { rel: 'preconnect', href: 'https://fonts.gstatic.com', crossorigin: '' }],
     ['link', { rel: 'stylesheet', href: 'https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap' }],
@@ -40,10 +40,10 @@ export default defineConfig({
       { text: 'Laravel', link: '/laravel/' },
       { text: 'Casts', link: '/casts/' },
       {
-        text: 'v1.x (stable)',
+        text: 'v2.0 (next)',
         items: [
-          { text: 'v1.x (stable) — current', link: '/' },
-          { text: 'v2.0 (next)', link: 'https://std-out.github.io/simple-data-objects/v2/' },
+          { text: 'v2.0 (next) — current', link: '/' },
+          { text: 'v1.x (stable)', link: 'https://std-out.github.io/simple-data-objects/' },
         ],
       },
       {
@@ -84,6 +84,8 @@ export default defineConfig({
             { text: 'Serialization', link: '/features/serialization' },
             { text: 'Validation', link: '/features/validation' },
             { text: 'fromResult() — Error Accumulation', link: '/features/error-accumulation' },
+            { text: 'Optional — Absent vs Null', link: '/features/optional' },
+            { text: 'Schema Generation — JSON Schema & TypeScript', link: '/features/schema-generation' },
             { text: 'DataPipe — Preprocessing', link: '/features/pipes' },
             { text: 'Immutable Copies — with()', link: '/features/with' },
             { text: 'Comparison — equals() & diff()', link: '/features/comparison' },

@@ -283,11 +283,23 @@ final class ClassMetaFactory
             );
         }
 
-        [$nestedDataClass, $enumClass] = TypeResolver::resolve($parameter);
+        [$nestedDataClass, $enumClass, $isOptional] = TypeResolver::resolve($parameter);
 
         if ($flattenAttrs !== [] && $nestedDataClass === null) {
             throw new \InvalidArgumentException(
                 "Parameter \"{$phpName}\": #[Flatten] requires a nested BaseData type.",
+            );
+        }
+
+        if ($flattenAttrs !== [] && $isOptional) {
+            throw new \InvalidArgumentException(
+                "Parameter \"{$phpName}\": #[Flatten] and Optional cannot be combined — a flattened field has no single key to be absent.",
+            );
+        }
+
+        if ($isOptional && $hasDefault) {
+            throw new \InvalidArgumentException(
+                "Parameter \"{$phpName}\": Optional cannot be combined with a default value — a missing key already resolves to Optional::missing().",
             );
         }
 
@@ -298,6 +310,10 @@ final class ClassMetaFactory
 
         $whenLoadedAttrs = $parameter->getAttributes(WhenLoaded::class);
 
+        $hiddenAttrs = $parameter->getAttributes(Hidden::class);
+        $isHidden = $hiddenAttrs !== [];
+        $hiddenExcept = $isHidden ? $hiddenAttrs[0]->newInstance()->except : [];
+
         $allowsNull = $parameter instanceof ReflectionParameter
             ? $parameter->allowsNull()
             : ($parameter->getType()?->allowsNull() ?? true);
@@ -305,7 +321,7 @@ final class ClassMetaFactory
         $rules = match (true) {
             $explicitRules !== null && ! $explicitRules->merge => $explicitRules->rules,
             $inferRules => [
-                ...RuleInferrer::forParameter($parameter, $allowsNull, $nestedDataClass, $enumClass, $dataCollectionClass),
+                ...RuleInferrer::forParameter($parameter, $allowsNull, $nestedDataClass, $enumClass, $dataCollectionClass, $isOptional),
                 ...$explicitRules?->rules ?? [],
             ],
             default => $explicitRules?->rules ?? [],
@@ -321,7 +337,7 @@ final class ClassMetaFactory
             nestedDataClass: $nestedDataClass,
             enumClass: $enumClass,
             dataCollectionClass: $dataCollectionClass,
-            isHidden: $parameter->getAttributes(Hidden::class) !== [],
+            isHidden: $isHidden,
             ignoreIfNull: $parameter->getAttributes(IgnoreIfNull::class) !== [],
             flatten: $parameter->getAttributes(Flatten::class) !== [],
             rules: $rules,
@@ -330,6 +346,9 @@ final class ClassMetaFactory
             viaConstructor: $viaConstructor,
             whenLoadedRelation: $whenLoadedAttrs !== [] ? $whenLoadedAttrs[0]->newInstance()->relation : null,
             nestedRules: $inferRules ? RuleInferrer::cascade($nestedDataClass, $dataCollectionClass) : [],
+            isOptional: $isOptional,
+            hiddenExcept: $hiddenExcept,
+            phpType: RuleInferrer::phpTypeName($parameter),
         );
     }
 

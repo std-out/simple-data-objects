@@ -6,6 +6,7 @@ namespace StdOut\SimpleDataObjects\Tests;
 
 use PHPUnit\Framework\TestCase;
 use StdOut\SimpleDataObjects\Exceptions\DataHydrationException;
+use StdOut\SimpleDataObjects\Optional;
 use StdOut\SimpleDataObjects\Support\MetadataRegistry;
 use StdOut\SimpleDataObjects\Tests\Fixtures\ConflictCollectionCastData;
 use StdOut\SimpleDataObjects\Tests\Fixtures\ConflictCollectionFlattenData;
@@ -18,6 +19,7 @@ use StdOut\SimpleDataObjects\Tests\Fixtures\NoConstructorCollectionData;
 use StdOut\SimpleDataObjects\Tests\Fixtures\NoConstructorData;
 use StdOut\SimpleDataObjects\Tests\Fixtures\NoConstructorFlattenData;
 use StdOut\SimpleDataObjects\Tests\Fixtures\NoConstructorNestedData;
+use StdOut\SimpleDataObjects\Tests\Fixtures\OptionalUnionOrderData;
 use StdOut\SimpleDataObjects\Tests\Fixtures\Status;
 use StdOut\SimpleDataObjects\Tests\Fixtures\UnionTypeData;
 
@@ -73,6 +75,20 @@ class ClassMetaFactoryTest extends TestCase
         $data = UnionTypeData::from(['name' => 'Alice']);
 
         $this->assertNull($data->status);
+    }
+
+    public function test_optional_is_detected_regardless_of_union_declaration_order(): void
+    {
+        $data = OptionalUnionOrderData::from(['status' => 'active']);
+
+        $this->assertSame(Status::Active, $data->status);
+    }
+
+    public function test_optional_before_an_enum_in_the_union_still_resolves_to_missing_when_absent(): void
+    {
+        $data = OptionalUnionOrderData::from([]);
+
+        $this->assertTrue(Optional::isMissing($data->status));
     }
 
     public function test_class_without_constructor_hydrates_with_no_args(): void

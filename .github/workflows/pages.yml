@@ -68,6 +68,8 @@ jobs:
           path: site
 
   deploy:
+    # Every branch pushed above (main, v2) must also be listed in Settings >
+    # Environments > github-pages > Deployment branches, or this job 403s.
     environment:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}

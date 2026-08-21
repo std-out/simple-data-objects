@@ -8,8 +8,8 @@
 [![PHP](https://img.shields.io/badge/PHP-%5E8.4-777BB4?logo=php&logoColor=white)](https://packagist.org/packages/std-out/simple-data-objects)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
-**Lightweight, attribute-driven DTOs for PHP 8.4+.**  
-Works standalone or inside Laravel 12–13. No reflection in production.
+**Lightweight, attribute-driven DTOs for PHP 8.4+ — up to 37× faster hydration and serialization than the most popular alternative, zero reflection at runtime.**  
+Works standalone or inside Laravel 12–13.
 
 ```bash
 composer require std-out/simple-data-objects
@@ -43,6 +43,8 @@ Benchmarked against **the most popular full-featured data-object library in the 
 | Peak memory — streaming 50,000 rows | 0.26 MB with `lazyCollection()` | ~13 MB | **~50× less memory** |
 
 Absolute numbers vary with hardware; the ratios stay stable across runs. CPU time per operation follows the same ratios — less CPU burned per request means more headroom per server.
+
+Don't take the numbers on faith — **[run the benchmarks yourself](https://github.com/std-out/simple-data-objects-benchmark)**: clone the companion repo, `make bench`, or swap in your own payload shapes.
 
 ---
 
@@ -197,6 +199,49 @@ $result->value();    // CreateOrderData — throws if !ok()
 
 ---
 
+### Optional — PATCH semantics
+
+`Optional` distinguishes "key not sent" from "key sent as `null`" — an omitted field means leave it untouched, not clear it:
+
+```php
+class UpdateUserData extends BaseData
+{
+    public function __construct(
+        public readonly string|Optional $name,
+        public readonly string|Optional|null $bio,   // null = clear it, Optional = don't touch it
+    ) {}
+}
+
+$data = UpdateUserData::from(['bio' => null]);
+$data->definedOnly();   // ['bio' => null] — 'name' stays absent
+$model->update($data->definedOnly());
+```
+
+---
+
+### Schema generation — JSON Schema & TypeScript
+
+`jsonSchema()` walks the same metadata as `from()`/`toArray()` — no extra reflection — into a JSON Schema (draft 2020-12). `TypeScriptGenerator`/`bin/sdo-typescript` build on top of it for `.d.ts` output:
+
+```php
+OrderData::jsonSchema();
+// ['type' => 'object', 'properties' => [...], 'required' => [...], '$defs' => [...]]
+```
+
+```sh
+vendor/bin/sdo-typescript resources/js/types/data-objects.d.ts app/Data
+```
+
+```ts
+export interface OrderData {
+  id: number;
+  shippingAddress: AddressData;
+  status: 'pending' | 'shipped' | 'cancelled';
+}
+```
+
+---
+
 ## All Attributes
 
 | Attribute | Where | Effect |
@@ -207,7 +252,7 @@ $result->value();    // CreateOrderData — throws if !ok()
 | `#[Pipe(TrimValuePipe::class)]` | property | value-level preprocessing pipeline |
 | `#[Pipe(TrimStringsPipe::class)]` | class | array-level preprocessing pipeline |
 | `#[Flatten]` | property | inline nested DTO fields into parent |
-| `#[Hidden]` | property | exclude from `toArray()` / JSON |
+| `#[Hidden(except: ['admin'])]` | property | exclude from `toArray()` / JSON, optionally per `toArray(context:)` |
 | `#[IgnoreIfNull]` | property | omit from output when `null` |
 | `#[Computed]` | method | add a derived, method-backed field to `toArray()` |
 | `#[MapPropertyName('input_key', ...)]` | property | map input key(s) (aliases) → property, same name on output |

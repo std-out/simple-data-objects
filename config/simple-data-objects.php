@@ -22,13 +22,24 @@ return [
     | Data object source paths
     |--------------------------------------------------------------------
     |
-    | Scanned by `sdo:warm` when no paths are given on the command line, and
-    | used as the default output directory for `make:data`.
+    | Scanned by `sdo:warm`/`sdo:typescript` when no paths are given on the
+    | command line, and used as the default output directory for `make:data`.
     |
     */
     'paths' => [
         app_path('Data'),
     ],
+
+    /*
+    |--------------------------------------------------------------------
+    | TypeScript output file
+    |--------------------------------------------------------------------
+    |
+    | Where `sdo:typescript` writes the generated .d.ts file when --output
+    | isn't given. Must be set to use the command without --output.
+    |
+    */
+    'typescript_output' => null,
 
     /*
     |--------------------------------------------------------------------

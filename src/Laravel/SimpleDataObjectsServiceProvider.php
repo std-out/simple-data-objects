@@ -11,6 +11,7 @@ use ReflectionClass;
 use StdOut\SimpleDataObjects\BaseData;
 use StdOut\SimpleDataObjects\Laravel\Console\ClearCommand;
 use StdOut\SimpleDataObjects\Laravel\Console\MakeDataCommand;
+use StdOut\SimpleDataObjects\Laravel\Console\TypeScriptCommand;
 use StdOut\SimpleDataObjects\Laravel\Console\WarmCommand;
 use StdOut\SimpleDataObjects\Support\MetadataRegistry;
 
@@ -39,6 +40,7 @@ final class SimpleDataObjectsServiceProvider extends ServiceProvider
             WarmCommand::class,
             ClearCommand::class,
             MakeDataCommand::class,
+            TypeScriptCommand::class,
         ]);
 
         $this->optimizes(optimize: 'sdo:warm', clear: 'sdo:clear');

@@ -5,8 +5,9 @@ declare(strict_types=1);
 namespace StdOut\SimpleDataObjects\Casts;
 
 use StdOut\SimpleDataObjects\Contracts\CastsValue;
+use StdOut\SimpleDataObjects\Contracts\ProvidesJsonSchema;
 
-final class CommaSeparatedCast implements CastsValue
+final class CommaSeparatedCast implements CastsValue, ProvidesJsonSchema
 {
     public function __construct(
         private readonly string $separator = ',',
@@ -46,5 +47,10 @@ final class CommaSeparatedCast implements CastsValue
         }
 
         return implode($this->separator, $value);
+    }
+
+    public function jsonSchema(): array
+    {
+        return ['type' => 'string'];
     }
 }

@@ -42,6 +42,10 @@ final class ParameterMeta
         public readonly ?string $whenLoadedRelation = null,
         /** @var array<string, array<mixed>> */
         public readonly array $nestedRules = [],
+        public readonly bool $isOptional = false,
+        /** @var list<string> */
+        public readonly array $hiddenExcept = [],
+        public readonly ?string $phpType = null,
     ) {
         $this->isPlain = $caster === null
             && $nestedDataClass === null
@@ -75,6 +79,9 @@ final class ParameterMeta
             viaConstructor: $state['viaConstructor'] ?? true,
             whenLoadedRelation: $state['whenLoadedRelation'] ?? null,
             nestedRules: $state['nestedRules'] ?? [],
+            isOptional: $state['isOptional'] ?? false,
+            hiddenExcept: $state['hiddenExcept'] ?? [],
+            phpType: $state['phpType'] ?? null,
         );
     }
 }

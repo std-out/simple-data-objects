@@ -5,8 +5,9 @@ declare(strict_types=1);
 namespace StdOut\SimpleDataObjects\Casts;
 
 use StdOut\SimpleDataObjects\Contracts\CastsValue;
+use StdOut\SimpleDataObjects\Contracts\ProvidesJsonSchema;
 
-final class JsonCast implements CastsValue
+final class JsonCast implements CastsValue, ProvidesJsonSchema
 {
     public function __construct(
         private readonly bool $assoc = true,
@@ -38,5 +39,10 @@ final class JsonCast implements CastsValue
         }
 
         return json_encode($value, $this->encodeFlags | JSON_THROW_ON_ERROR);
+    }
+
+    public function jsonSchema(): array
+    {
+        return [];
     }
 }

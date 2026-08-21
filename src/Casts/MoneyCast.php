@@ -6,6 +6,7 @@ namespace StdOut\SimpleDataObjects\Casts;
 
 use InvalidArgumentException;
 use StdOut\SimpleDataObjects\Contracts\CastsValue;
+use StdOut\SimpleDataObjects\Contracts\ProvidesJsonSchema;
 use StdOut\SimpleDataObjects\ValueObjects\Money;
 
 /**
@@ -15,7 +16,7 @@ use StdOut\SimpleDataObjects\ValueObjects\Money;
  * serializes back to int minor units — the currency is fixed per field via
  * the constructor, so it isn't repeated in the serialized payload.
  */
-final class MoneyCast implements CastsValue
+final class MoneyCast implements CastsValue, ProvidesJsonSchema
 {
     public function __construct(
         private readonly string $currency,
@@ -114,5 +115,10 @@ final class MoneyCast implements CastsValue
                 "Expected currency \"{$this->currency}\", got \"{$currency}\".",
             );
         }
+    }
+
+    public function jsonSchema(): array
+    {
+        return ['type' => 'integer', 'description' => 'Amount in minor units (cents).'];
     }
 }

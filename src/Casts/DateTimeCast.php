@@ -10,8 +10,9 @@ use DateTimeInterface;
 use DateTimeZone;
 use InvalidArgumentException;
 use StdOut\SimpleDataObjects\Contracts\CastsValue;
+use StdOut\SimpleDataObjects\Contracts\ProvidesJsonSchema;
 
-final class DateTimeCast implements CastsValue
+final class DateTimeCast implements CastsValue, ProvidesJsonSchema
 {
     private readonly ?string $timezone;
 
@@ -68,6 +69,13 @@ final class DateTimeCast implements CastsValue
         $dt = $value instanceof DateTimeInterface ? $value : $this->get($value);
 
         return $dt?->format($this->outputFormat);
+    }
+
+    public function jsonSchema(): array
+    {
+        return $this->outputFormat === DateTimeInterface::ATOM
+            ? ['type' => 'string', 'format' => 'date-time']
+            : ['type' => 'string'];
     }
 
     private function resolveTimezone(): ?DateTimeZone

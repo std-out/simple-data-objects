@@ -5,8 +5,9 @@ declare(strict_types=1);
 namespace StdOut\SimpleDataObjects\Casts;
 
 use StdOut\SimpleDataObjects\Contracts\CastsValue;
+use StdOut\SimpleDataObjects\Contracts\ProvidesJsonSchema;
 
-final class FloatCast implements CastsValue
+final class FloatCast implements CastsValue, ProvidesJsonSchema
 {
     public function __construct(
         private readonly int $decimals = -1,
@@ -31,5 +32,10 @@ final class FloatCast implements CastsValue
     public function set(mixed $value): ?float
     {
         return $this->get($value);
+    }
+
+    public function jsonSchema(): array
+    {
+        return ['type' => 'number'];
     }
 }

@@ -30,12 +30,12 @@ final class PaginatedDataCollection implements JsonSerializable, Responsable
     }
 
     /** @return array{data: list<array<string, mixed>>, meta: array<string, mixed>, links: array<string, mixed>} */
-    public function toArray(): array
+    public function toArray(?string $context = null): array
     {
         $items = [];
 
         foreach ($this->data as $item) {
-            $items[] = $item->toArray();
+            $items[] = $item->toArray($context);
         }
 
         return [
@@ -50,9 +50,9 @@ final class PaginatedDataCollection implements JsonSerializable, Responsable
         return $this->toArray();
     }
 
-    public function toResponse($request, int $status = 200, array $headers = []): JsonResponse
+    public function toResponse($request, int $status = 200, array $headers = [], ?string $context = null): JsonResponse
     {
-        return new JsonResponse($this->toArray(), $status, $headers);
+        return new JsonResponse($this->toArray($context), $status, $headers);
     }
 
     /** @return array<string, mixed> */

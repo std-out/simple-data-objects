@@ -45,20 +45,26 @@ final class RuleInferrer
         ?string $nestedDataClass,
         ?string $enumClass,
         ?string $dataCollectionClass,
+        bool $isOptional = false,
     ): array {
-        $presence = $allowsNull ? 'nullable' : 'required';
+        $presence = match (true) {
+            $isOptional && $allowsNull => ['sometimes', 'nullable'],
+            $isOptional => ['sometimes'],
+            $allowsNull => ['nullable'],
+            default => ['required'],
+        };
 
         if ($enumClass !== null) {
-            return [$presence, Rule::enum($enumClass)];
+            return [...$presence, Rule::enum($enumClass)];
         }
 
         if ($nestedDataClass !== null || $dataCollectionClass !== null) {
-            return [$presence, 'array'];
+            return [...$presence, 'array'];
         }
 
         $scalarRule = self::scalarRule($parameter);
 
-        return $scalarRule !== null ? [$presence, $scalarRule] : [$presence];
+        return $scalarRule !== null ? [...$presence, $scalarRule] : $presence;
     }
 
     /** @return array<string, array<mixed>> */
@@ -81,17 +87,21 @@ final class RuleInferrer
         return [];
     }
 
-    private static function scalarRule(ReflectionParameter|ReflectionProperty $parameter): ?string
+    /** @internal also used by ClassMetaFactory to populate ParameterMeta::$phpType */
+    public static function phpTypeName(ReflectionParameter|ReflectionProperty $parameter): ?string
     {
         $type = $parameter->getType();
 
-        $name = match (true) {
+        return match (true) {
             $type instanceof ReflectionNamedType => $type->getName(),
             $type instanceof ReflectionUnionType => self::firstBuiltinUnionMember($type),
             default => null,
         };
+    }
 
-        return match ($name) {
+    private static function scalarRule(ReflectionParameter|ReflectionProperty $parameter): ?string
+    {
+        return match (self::phpTypeName($parameter)) {
             'int' => 'integer',
             'float' => 'numeric',
             'string' => 'string',

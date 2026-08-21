@@ -5,8 +5,9 @@ declare(strict_types=1);
 namespace StdOut\SimpleDataObjects\Casts;
 
 use StdOut\SimpleDataObjects\Contracts\CastsValue;
+use StdOut\SimpleDataObjects\Contracts\ProvidesJsonSchema;
 
-final class BooleanCast implements CastsValue
+final class BooleanCast implements CastsValue, ProvidesJsonSchema
 {
     private const array TRUTHY = ['true', '1', 'yes', 'on'];
 
@@ -31,5 +32,10 @@ final class BooleanCast implements CastsValue
     public function set(mixed $value): ?bool
     {
         return $value === null ? null : (bool) $value;
+    }
+
+    public function jsonSchema(): array
+    {
+        return ['type' => 'boolean'];
     }
 }
