@@ -8,7 +8,7 @@
 [![PHP](https://img.shields.io/badge/PHP-%5E8.4-777BB4?logo=php&logoColor=white)](https://packagist.org/packages/std-out/simple-data-objects)
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
-**Lightweight, attribute-driven DTOs for PHP 8.4+ — up to 60× faster hydration and serialization than the most popular alternative, zero reflection at runtime.**  
+**Lightweight, attribute-driven DTOs for PHP 8.4+ — compiled hydration and serialization, zero reflection at runtime.**  
 Works standalone or inside Laravel 12–13.
 
 ```bash
@@ -31,9 +31,9 @@ composer require std-out/simple-data-objects
 
 ### Performance
 
-Benchmarked against **the most popular full-featured data-object library in the PHP/Laravel ecosystem** — identical DTO shapes, 20,000 iterations per scenario, PHP 8.4, inside a fully booted Laravel app (not a synthetic standalone script). Medians of 5 runs:
+Benchmarked against **[spatie/laravel-data](https://github.com/spatie/laravel-data)** — the most widely used full-featured data-object library in the PHP/Laravel ecosystem, and one we have a lot of respect for; it's more feature-rich than this library in several areas (lazy properties, wrappers, partial data, transformers). Identical DTO shapes, 20,000 iterations per scenario, PHP 8.4, inside a fully booted Laravel app (not a synthetic standalone script). Medians of 5 runs:
 
-| Scenario | Simple Data Objects | Popular alternative | Advantage |
+| Scenario | Simple Data Objects | spatie/laravel-data | Advantage |
 |---|---|---|---|
 | Hydration — flat DTO | ~6,550,000 ops/s | ~132,000 ops/s | **~50× faster** |
 | Hydration — nested DTO | ~3,390,000 ops/s | ~95,000 ops/s | **~36× faster** |
@@ -42,9 +42,11 @@ Benchmarked against **the most popular full-featured data-object library in the 
 | Serialization — nested DTO | ~7,500,000 ops/s | ~166,000 ops/s | **~47× faster** |
 | Streaming — 100k-row CSV import | ~67,200 rows/s | ~35,800 rows/s | **~87% faster**, same flat ~12 KB memory footprint |
 
-Absolute numbers vary with hardware; the ratios stay stable across runs. CPU time per operation follows the same ratios — less CPU burned per request means more headroom per server. Streaming a large import with `lazyCollection()` keeps memory flat regardless of row count — the win there is architectural (no full materialization), not a per-row memory difference from the alternative, which also streams comparably once both sides are measured on equal footing.
+Absolute numbers vary with hardware; the ratios stay stable across runs. CPU time per operation follows the same ratios — less CPU burned per request means more headroom per server. Streaming a large import with `lazyCollection()` keeps memory flat regardless of row count — the win there is architectural (no full materialization), not a per-row memory difference from spatie/laravel-data, which also streams comparably once both sides are measured on equal footing.
 
 Don't take the numbers on faith — **[run the benchmarks yourself](https://github.com/std-out/simple-data-objects-benchmark)**: clone the companion repo, `make bench`, or swap in your own payload shapes.
+
+**Where spatie/laravel-data is the better fit:** it has years more production mileage, a larger community, and a broader feature set — lazy properties, wrappers, partial data, transformers, and deep integration with the rest of the Spatie ecosystem. This library trades some of that breadth for a narrower, compiled hot path. If those features matter more to you than raw hydration/serialization speed, spatie/laravel-data is the right choice.
 
 ---
 
@@ -269,6 +271,10 @@ export interface OrderData {
 ---
 
 ## Contributing
+
+This library is actively developed. Missing a feature you need? Open a
+[feature request](https://github.com/std-out/simple-data-objects/issues) or start a
+[discussion](https://github.com/std-out/simple-data-objects/discussions) — happy to add it.
 
 Bug reports, feature ideas, and PRs are welcome — see [CONTRIBUTING.md](CONTRIBUTING.md)
 for the dev setup (one `make build` away) and the quality bar (100% coverage, enforced in CI).
