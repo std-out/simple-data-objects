@@ -9,7 +9,7 @@
 [![License](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
 
 **Lightweight, attribute-driven DTOs for PHP 8.4+ — compiled hydration and serialization, zero reflection at runtime.**  
-Works standalone or inside Laravel 12–13.
+Built for bulk imports that need to stay memory-flat, Octane/Swoole/FrankenPHP APIs where every allocation costs RPS, and standalone PHP projects that don't want a Laravel app just for validation. Works standalone or inside Laravel 12–13.
 
 ```bash
 composer require std-out/simple-data-objects
@@ -23,10 +23,11 @@ composer require std-out/simple-data-objects
 
 | | Simple Data Objects |
 |---|---|
-| Hot path | Compiled per-class closures — zero reflection, zero dispatch overhead |
+| Bulk import / ETL | `lazyCollection()` keeps memory flat regardless of row count |
+| Octane / Swoole / FrankenPHP | Compiled per-class closures — zero reflection, zero dispatch overhead per request |
+| Non-Laravel projects | Validation and casting work without a Laravel app |
 | Boilerplate | None — constructor props + attributes |
 | Roundtrip | `from(toArray())` always works, mapped keys included |
-| Standalone | Validation works without a Laravel app |
 | Pipelines | Middleware-style input preprocessing, class or property level |
 
 ### Performance
