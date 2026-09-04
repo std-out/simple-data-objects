@@ -686,12 +686,74 @@ body {
 .vp-doc th,
 .vp-doc td {
   padding: 13px 16px !important;
+  overflow-wrap: break-word !important;
+  word-break: break-word !important;
 }
 
 .vp-doc :not(pre) > code {
   border: 1px solid var(--vp-c-divider) !important;
   background: var(--vp-code-bg) !important;
   font-family: var(--vp-font-family-mono) !important;
+}
+
+.vp-doc td code,
+.vp-doc th code {
+  white-space: normal !important;
+  overflow-wrap: break-word !important;
+  word-break: break-word !important;
+}
+
+.migrate-list {
+  margin: 24px 0 !important;
+  border: 1px solid var(--vp-c-divider) !important;
+  border-radius: 8px !important;
+  overflow: hidden !important;
+}
+
+.migrate-item {
+  padding: 16px 20px !important;
+}
+
+.migrate-item:nth-child(even) {
+  background: var(--vp-c-bg-soft) !important;
+}
+
+.migrate-item + .migrate-item {
+  border-top: 1px solid var(--vp-c-divider) !important;
+}
+
+.migrate-item > p {
+  margin: 0 !important;
+  overflow-wrap: normal !important;
+  word-break: normal !important;
+}
+
+.migrate-item code {
+  white-space: nowrap !important;
+}
+
+.migrate-item > p:first-child {
+  font-family: var(--vp-font-family-mono) !important;
+  font-size: 13.5px !important;
+  line-height: 1.7 !important;
+  color: var(--vp-c-text-1) !important;
+}
+
+.migrate-item > p + p {
+  margin-top: 10px !important;
+  padding-top: 10px !important;
+  border-top: 1px dashed var(--vp-c-divider) !important;
+  color: var(--vp-c-text-2) !important;
+  font-family: var(--vp-font-family-base) !important;
+  font-size: 13.5px !important;
+  line-height: 1.7 !important;
+}
+
+.migrate-arrow {
+  display: inline-block !important;
+  color: var(--bp-orange) !important;
+  font-weight: 700 !important;
+  margin: 0 4px !important;
 }
 
 .vp-doc div[class*='language-'] {

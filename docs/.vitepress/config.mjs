@@ -75,6 +75,7 @@ export default defineConfig({
             { text: 'Installation', link: '/guide/installation' },
             { text: 'Quick Start', link: '/guide/quick-start' },
             { text: 'Performance', link: '/guide/performance' },
+            { text: 'Migrating from spatie/laravel-data', link: '/guide/migrating-from-laravel-data' },
           ],
         },
         {
