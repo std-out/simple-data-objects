@@ -154,6 +154,14 @@ foreach (UserData::lazyCollection($csvRows) as $user) {
 }
 ```
 
+`lazyXml()` does the same straight from a large XML file — the DTO describes the element, and only the current one is ever in memory:
+
+```php
+OfferData::lazyXml('feed.xml', 'catalog/shop/offers/offer')
+    ->filter(fn (OfferData $offer) => $offer->available)
+    ->each(fn (OfferData $offer) => $importer->process($offer));
+```
+
 ### Immutable copies with `with()`
 
 ```php

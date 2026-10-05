@@ -5,6 +5,27 @@ All notable changes to `std-out/simple-data-objects` are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.1.0] — Unreleased
+
+### Added
+- **`lazyXml()`** — stream a large XML file into DTOs one element at a time:
+  `OfferData::lazyXml($file, 'catalog/shop/offers/offer')` returns a
+  `LazyCollection` that never holds more than the current element in memory.
+  - One element, one DTO: a property reads the child element with its own
+    name, and a child with structure of its own is a nested DTO.
+  - **`#[XmlAttribute]`**, **`#[XmlElement('name')]`** and **`#[XmlText]`**
+    point a property at an XML attribute, a differently named child element,
+    or the element's own text. They only affect `lazyXml()` — array
+    hydration and serialization of the same class are unchanged.
+  - `int`/`float`/`bool` properties and int-backed enums are converted from
+    the declared type; nested `BaseData`, `#[DataCollection]`, `#[Flatten]`,
+    `#[Discriminator]` and `array` lists of repeated elements are supported.
+  - Elements the DTO doesn't declare are skipped without being materialized.
+  - Malformed or unreadable XML throws `DataHydrationException`.
+  - Requires `ext-xmlreader` (bundled with PHP by default); nothing changes
+    for code that doesn't call it.
+- **Documentation:** see [Streaming XML](https://std-out.github.io/simple-data-objects/features/xml).
+
 ## [2.0.0] — 2026-08-09
 
 ### Added

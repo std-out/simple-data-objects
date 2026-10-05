@@ -25,6 +25,9 @@ use StdOut\SimpleDataObjects\Attributes\Rules;
 use StdOut\SimpleDataObjects\Attributes\TransformKeys;
 use StdOut\SimpleDataObjects\Attributes\WhenLoaded;
 use StdOut\SimpleDataObjects\Attributes\WrapIn;
+use StdOut\SimpleDataObjects\Attributes\XmlAttribute;
+use StdOut\SimpleDataObjects\Attributes\XmlElement;
+use StdOut\SimpleDataObjects\Attributes\XmlText;
 use StdOut\SimpleDataObjects\Contracts\DataObject;
 use StdOut\SimpleDataObjects\Exceptions\DataHydrationException;
 
@@ -349,7 +352,28 @@ final class ClassMetaFactory
             isOptional: $isOptional,
             hiddenExcept: $hiddenExcept,
             phpType: RuleInferrer::phpTypeName($parameter),
+            xmlSource: self::xmlSource($parameter, $phpName, (string) $inputNames[0]),
         );
+    }
+
+    private static function xmlSource(ReflectionParameter|ReflectionProperty $parameter, string $phpName, string $defaultName): ?string
+    {
+        $attribute = $parameter->getAttributes(XmlAttribute::class);
+        $element = $parameter->getAttributes(XmlElement::class);
+        $text = $parameter->getAttributes(XmlText::class);
+
+        if (count($attribute) + count($element) + count($text) > 1) {
+            throw new \InvalidArgumentException(
+                "Parameter \"{$phpName}\": #[XmlAttribute], #[XmlElement] and #[XmlText] cannot be combined — a field reads from one place.",
+            );
+        }
+
+        return match (true) {
+            $attribute !== [] => '@'.($attribute[0]->newInstance()->name ?? $defaultName),
+            $element !== [] => $element[0]->newInstance()->name,
+            $text !== [] => '#text',
+            default => null,
+        };
     }
 
     /**

@@ -91,6 +91,7 @@ export default defineConfig({
             { text: 'Immutable Copies — with()', link: '/features/with' },
             { text: 'Comparison — equals() & diff()', link: '/features/comparison' },
             { text: 'Collections', link: '/features/collections' },
+            { text: 'Streaming XML', link: '/features/xml' },
             { text: 'Metadata Cache', link: '/features/cache' },
           ],
         },
@@ -123,6 +124,7 @@ export default defineConfig({
             { text: '#[WhenLoaded]', link: '/attributes/when-loaded' },
             { text: '#[RejectUnknownKeys]', link: '/attributes/reject-unknown-keys' },
             { text: '#[WrapIn]', link: '/attributes/wrap-in' },
+            { text: '#[XmlAttribute] / #[XmlElement] / #[XmlText]', link: '/attributes/xml' },
           ],
         },
         {

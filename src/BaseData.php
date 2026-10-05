@@ -21,6 +21,7 @@ use StdOut\SimpleDataObjects\Support\MetadataRegistry;
 use StdOut\SimpleDataObjects\Support\SchemaGenerator;
 use StdOut\SimpleDataObjects\Support\SerializerCompiler;
 use StdOut\SimpleDataObjects\Support\ValueCaster;
+use StdOut\SimpleDataObjects\Support\XmlStream;
 use Stringable;
 
 abstract class BaseData implements Arrayable, DataObject, JsonSerializable, Stringable
@@ -172,6 +173,25 @@ abstract class BaseData implements Arrayable, DataObject, JsonSerializable, Stri
                 yield $item instanceof $class
                     ? $item
                     : $hydrate(is_array($item) ? $item : InputNormalizer::normalize($class, $item));
+            }
+        });
+    }
+
+    /**
+     * Streams the elements at `$path` (slash-separated element names from the
+     * root) of an XML file, hydrating one at a time. Requires ext-xmlreader.
+     *
+     * @return LazyCollection<int, static>
+     */
+    public static function lazyXml(string $uri, string $path): LazyCollection
+    {
+        $class = static::class;
+
+        return LazyCollection::make(static function () use ($class, $uri, $path): \Generator {
+            $hydrate = HydratorCompiler::$hydrators[$class] ?? HydratorCompiler::compile($class);
+
+            foreach (XmlStream::read($class, $uri, $path) as $row) {
+                yield $hydrate($row);
             }
         });
     }

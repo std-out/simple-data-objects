@@ -34,6 +34,11 @@ final class DataHydrationException extends RuntimeException
         return new self("Cannot decode JSON string for {$class}.");
     }
 
+    public static function unreadableXml(string $uri, string $reason): self
+    {
+        return new self("Cannot read XML from '{$uri}': {$reason}.");
+    }
+
     public static function invalidEnumValue(string $enumClass, string $field, mixed $value): self
     {
         $given = is_scalar($value) ? "'".$value."'" : get_debug_type($value);

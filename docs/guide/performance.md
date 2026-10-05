@@ -121,7 +121,7 @@ breadcrumb: false
       <span class="bm-note">lower is better</span>
     </div>
     <p class="bm-note bm-note--block">Rows from a generator, consumed one by one.</p>
-    <div class="bm-chart bm-chart--last">
+    <div class="bm-chart">
       <div class="bm-row bm-row--tall">
         <div class="bm-row-head">
           <span class="bm-row-label">lazyCollection()</span>
@@ -139,9 +139,48 @@ breadcrumb: false
         </div>
       </div>
     </div>
+    <div class="bm-section-head bm-rise">
+      <h2 class="bm-h2">Streaming XML — 100,000 elements, 52 MB file</h2>
+      <span class="bm-note">each scenario in its own process</span>
+    </div>
+    <p class="bm-note bm-note--block">The alternative has no XML support, so it is measured with what a consumer writes by hand: an XMLReader loop mapping each element to an array (throughput), or loading the document with SimpleXML (memory). The hand-written loop stays as flat on memory as lazyXml() — at a fifth of the speed.</p>
+    <div class="bm-chart bm-chart--last">
+      <div class="bm-row">
+        <div class="bm-row-head">
+          <span class="bm-row-label">Throughput — lazyXml() vs hand-written XMLReader loop</span>
+          <span class="bm-row-x">5× faster</span>
+        </div>
+        <div class="bm-line">
+          <span class="bm-series bm-series--us">Simple Data Objects</span>
+          <span class="bm-track"><span class="bm-fill bm-fill--us" style="width:100%"></span></span>
+          <span class="bm-value bm-value--us">69K nodes/s</span>
+        </div>
+        <div class="bm-line">
+          <span class="bm-series">Popular alternative</span>
+          <span class="bm-track"><span class="bm-fill bm-fill--them" style="width:18.5%"></span></span>
+          <span class="bm-value">13K nodes/s</span>
+        </div>
+      </div>
+      <div class="bm-row bm-row--tall">
+        <div class="bm-row-head">
+          <span class="bm-row-label">Peak process memory — lazyXml() vs SimpleXML + collection</span>
+          <span class="bm-row-x">57× less memory</span>
+        </div>
+        <div class="bm-line">
+          <span class="bm-series bm-series--us">Simple Data Objects</span>
+          <span class="bm-track"><span class="bm-fill bm-fill--us" style="width:1.8%"></span></span>
+          <span class="bm-value bm-value--us">19 MB</span>
+        </div>
+        <div class="bm-line">
+          <span class="bm-series">Popular alternative</span>
+          <span class="bm-track"><span class="bm-fill bm-fill--them" style="width:100%"></span></span>
+          <span class="bm-value">1,096 MB</span>
+        </div>
+      </div>
+    </div>
 <div class="bm-prose">
 
-CPU time per operation follows the same ratios — less CPU burned per request means more headroom per server. The `from()`/`toArray()` hot paths execute [compiled per-class closures](../features/cache.md), and [`lazyCollection()`](../features/collections.md#lazy-collections) keeps peak memory flat on any dataset size.
+CPU time per operation follows the same ratios — less CPU burned per request means more headroom per server. The `from()`/`toArray()` hot paths execute [compiled per-class closures](../features/cache.md), and [`lazyCollection()`](../features/collections.md#lazy-collections) keeps peak memory flat on any dataset size. [`lazyXml()`](../features/xml.md) does the same straight from a file: only the fields the DTO declares are read, so the PHP heap stays at about 2.5 MB whether the document holds a hundred elements or a hundred thousand.
 
 </div>
     <h2 class="bm-h2 bm-h2--table">The numbers</h2>
@@ -190,6 +229,18 @@ CPU time per operation follows the same ratios — less CPU burned per request m
           <td class="bm-td bm-td--num">0.26 MB</td>
           <td class="bm-td bm-td--num bm-td--muted">~13 MB</td>
           <td class="bm-td bm-td--num bm-td--adv">~50×</td>
+        </tr>
+        <tr>
+          <td class="bm-td">XML — 100,000 elements, streamed</td>
+          <td class="bm-td bm-td--num">~69,000 nodes/s</td>
+          <td class="bm-td bm-td--num bm-td--muted">~13,000 nodes/s</td>
+          <td class="bm-td bm-td--num bm-td--adv">~5×</td>
+        </tr>
+        <tr>
+          <td class="bm-td">XML — peak process memory vs SimpleXML</td>
+          <td class="bm-td bm-td--num">19 MB</td>
+          <td class="bm-td bm-td--num bm-td--muted">~1,096 MB</td>
+          <td class="bm-td bm-td--num bm-td--adv">~57×</td>
         </tr>
       </tbody>
     </table>

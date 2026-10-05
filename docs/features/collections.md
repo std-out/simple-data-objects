@@ -49,6 +49,8 @@ $names = UserData::lazyCollection($csvRowGenerator)
 
 Like `collection()`, already-hydrated instances pass through unchanged.
 
+For large XML files, [`lazyXml()`](./xml.md) streams and hydrates one element at a time straight from the file.
+
 ## Nested Collections in DTOs
 
 Use `#[DataCollection(ClassName::class)]` to declare a property as a typed collection:

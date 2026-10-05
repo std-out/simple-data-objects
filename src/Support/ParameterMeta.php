@@ -46,6 +46,8 @@ final class ParameterMeta
         /** @var list<string> */
         public readonly array $hiddenExcept = [],
         public readonly ?string $phpType = null,
+        /** `@name` for an attribute, `#text` for the element's text, otherwise a child element name. */
+        public readonly ?string $xmlSource = null,
     ) {
         $this->isPlain = $caster === null
             && $nestedDataClass === null
@@ -82,6 +84,7 @@ final class ParameterMeta
             isOptional: $state['isOptional'] ?? false,
             hiddenExcept: $state['hiddenExcept'] ?? [],
             phpType: $state['phpType'] ?? null,
+            xmlSource: $state['xmlSource'] ?? null,
         );
     }
 }
