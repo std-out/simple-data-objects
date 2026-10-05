@@ -5,7 +5,37 @@ All notable changes to `std-out/simple-data-objects` are documented here.
 The format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [2.1.0] — Unreleased
+## [Unreleased]
+
+### Changed
+- **Documentation:** the XML figures in the README and on the
+  [Performance](https://std-out.github.io/simple-data-objects/guide/performance)
+  page now come from the public benchmark (`make bench-xml`), and memory is
+  compared with SimpleXML twice — a loop that accumulates nothing (692 MB)
+  and every row collected first (998 MB), against 55 MB for `lazyXml()`.
+
+## [2.2.0] — 2026-10-05
+
+### Added
+- **`migrate-from-laravel-data` agent skill** (`.claude/skills/`) — a Claude
+  Code skill that migrates a codebase from `spatie/laravel-data` class by
+  class: attributes, casts, validation, call sites and Laravel integration
+  points, running the tests after each class and stopping to ask wherever a
+  feature has no equivalent. Also covers replacing hand-written XML import
+  loops with `lazyXml()`.
+
+### Changed
+- **Documentation:** the
+  [migration guide](https://std-out.github.io/simple-data-objects/guide/migrating-from-laravel-data)
+  is rewritten to match the skill — call-site changes (`collect()`,
+  `validateAndCreate()`, the `with()` name clash), the fact that `from()`
+  never validates, a Laravel integration section, XML imports, and a longer
+  list of what doesn't map over.
+- **Documentation:** streaming XML benchmark figures added to the README.
+
+No library code changed in this release.
+
+## [2.1.0] — 2026-10-05
 
 ### Added
 - **`lazyXml()`** — stream a large XML file into DTOs one element at a time:
@@ -25,6 +55,18 @@ and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.
   - Requires `ext-xmlreader` (bundled with PHP by default); nothing changes
     for code that doesn't call it.
 - **Documentation:** see [Streaming XML](https://std-out.github.io/simple-data-objects/features/xml).
+
+### Changed
+- `ParameterMeta` gains an `xmlSource` field, defaulted in `__set_state()`,
+  so `.meta.php` caches written by earlier versions keep loading.
+
+## [2.0.1] — 2026-09-04
+
+### Changed
+- **Documentation only:** v2 became the default docs with v1 moved under
+  `/v1/`, a migration guide from `spatie/laravel-data` was added, and the
+  README's use cases and benchmark context were clarified. No library code
+  changed.
 
 ## [2.0.0] — 2026-08-09
 
