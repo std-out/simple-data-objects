@@ -43,9 +43,9 @@ Benchmarked against **[spatie/laravel-data](https://github.com/spatie/laravel-da
 | Serialization — flat DTO | ~14,900,000 ops/s | ~249,000 ops/s | **~60× faster** |
 | Serialization — nested DTO | ~7,500,000 ops/s | ~166,000 ops/s | **~47× faster** |
 | Streaming — 100k-row CSV import | ~67,200 rows/s | ~35,800 rows/s | **~87% faster**, same flat ~12 KB memory footprint |
-| Streaming — 100k-element XML file¹ | ~69,000 elements/s | ~13,000 elements/s | **~5× faster**, same flat memory footprint |
+| Streaming — 100k-element XML file¹ | ~80,000 elements/s | ~15,000 elements/s | **~5× faster**, same flat memory footprint |
 
-¹ Measured standalone (outside the Laravel app, single run): `lazyXml()` against a hand-written `XMLReader` loop feeding spatie/laravel-data, which has no XML support of its own.
+¹ `benchmark:xml` in the same benchmark app, one process per scenario, median of 3 runs: `lazyXml()` against a hand-written `XMLReader` loop feeding spatie/laravel-data, which has no XML support of its own.
 
 Absolute numbers vary with hardware; the ratios stay stable across runs. CPU time per operation follows the same ratios — less CPU burned per request means more headroom per server. Streaming a large import with `lazyCollection()` keeps memory flat regardless of row count — the win there is architectural (no full materialization), not a per-row memory difference from spatie/laravel-data, which also streams comparably once both sides are measured on equal footing.
 
@@ -190,7 +190,7 @@ OfferData::lazyXml('feed.xml', 'catalog/shop/offers/offer')
     ->each(fn (OfferData $offer) => $importer->process($offer));
 ```
 
-On a 52 MB file with 100,000 elements (PHP 8.4): **~69,000 elements/s at ~2.5 MB of PHP heap and 19 MB peak process memory**. Loading the same file with SimpleXML first peaks above 1 GB; a hand-written `XMLReader` loop feeding spatie/laravel-data stays just as flat on memory, at ~13,000 elements/s. Measured standalone, one process per scenario — not part of the Laravel-app table above. → [Streaming XML](https://std-out.github.io/simple-data-objects/features/xml)
+On a 52 MB file with 100,000 elements (PHP 8.4, booted Laravel app, one process per scenario): **~80,000 elements/s, with the process peaking at 55 MB — 1 MB above the same app sitting idle**. A SimpleXML loop that handles one element at a time and accumulates nothing peaks at **692 MB**, while `memory_get_peak_usage()` reports ~10 MB for both: the libxml tree lives outside PHP's memory manager, so neither that function nor `memory_limit` sees it. A hand-written `XMLReader` loop is just as flat on memory as `lazyXml()`, at ~35,000 elements/s with this library and ~15,000 with spatie/laravel-data. Reproduce with `make bench-xml` in the [benchmark repo](https://github.com/std-out/simple-data-objects-benchmark). → [Streaming XML](https://std-out.github.io/simple-data-objects/features/xml)
 
 ### Immutable copies with `with()`
 
