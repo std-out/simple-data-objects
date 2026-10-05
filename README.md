@@ -43,6 +43,9 @@ Benchmarked against **[spatie/laravel-data](https://github.com/spatie/laravel-da
 | Serialization — flat DTO | ~14,900,000 ops/s | ~249,000 ops/s | **~60× faster** |
 | Serialization — nested DTO | ~7,500,000 ops/s | ~166,000 ops/s | **~47× faster** |
 | Streaming — 100k-row CSV import | ~67,200 rows/s | ~35,800 rows/s | **~87% faster**, same flat ~12 KB memory footprint |
+| Streaming — 100k-element XML file¹ | ~69,000 elements/s | ~13,000 elements/s | **~5× faster**, same flat memory footprint |
+
+¹ Measured standalone (outside the Laravel app, single run): `lazyXml()` against a hand-written `XMLReader` loop feeding spatie/laravel-data, which has no XML support of its own.
 
 Absolute numbers vary with hardware; the ratios stay stable across runs. CPU time per operation follows the same ratios — less CPU burned per request means more headroom per server. Streaming a large import with `lazyCollection()` keeps memory flat regardless of row count — the win there is architectural (no full materialization), not a per-row memory difference from spatie/laravel-data, which also streams comparably once both sides are measured on equal footing.
 
