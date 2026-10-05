@@ -24,6 +24,7 @@ composer require std-out/simple-data-objects
 | | Simple Data Objects |
 |---|---|
 | Bulk import / ETL | `lazyCollection()` keeps memory flat regardless of row count |
+| Large XML feeds | `lazyXml()` streams a file one element at a time — the DTO describes the element |
 | Octane / Swoole / FrankenPHP | Compiled per-class closures — zero reflection, zero dispatch overhead per request |
 | Non-Laravel projects | Validation and casting work without a Laravel app |
 | Boilerplate | None — constructor props + attributes |
@@ -154,13 +155,39 @@ foreach (UserData::lazyCollection($csvRows) as $user) {
 }
 ```
 
-`lazyXml()` does the same straight from a large XML file — the DTO describes the element, and only the current one is ever in memory:
+### Streaming large XML files
+
+`lazyXml()` reads a file one element at a time and hydrates each into a DTO — the document is never loaded as a whole. One element is one DTO: a property reads the child element with its own name, a structured child is a nested DTO, and three attributes cover the rest:
 
 ```php
+class OfferData extends BaseData   // <offer id="42"><name>…</name><price currency="UAH">499.90</price><picture>…</picture>…</offer>
+{
+    public function __construct(
+        #[XmlAttribute]
+        public readonly int $id,
+        public readonly string $name,
+        public readonly PriceData $price,
+        #[XmlElement('picture')]
+        public readonly array $pictures,
+    ) {}
+}
+
+class PriceData extends BaseData
+{
+    public function __construct(
+        #[XmlText]
+        public readonly float $amount,
+        #[XmlAttribute]
+        public readonly string $currency,
+    ) {}
+}
+
 OfferData::lazyXml('feed.xml', 'catalog/shop/offers/offer')
-    ->filter(fn (OfferData $offer) => $offer->available)
+    ->filter(fn (OfferData $offer) => $offer->price->amount > 100)
     ->each(fn (OfferData $offer) => $importer->process($offer));
 ```
+
+On a 52 MB file with 100,000 elements (PHP 8.4): **~69,000 elements/s at ~2.5 MB of PHP heap and 19 MB peak process memory**. Loading the same file with SimpleXML first peaks above 1 GB; a hand-written `XMLReader` loop feeding spatie/laravel-data stays just as flat on memory, at ~13,000 elements/s. Measured standalone, one process per scenario — not part of the Laravel-app table above. → [Streaming XML](https://std-out.github.io/simple-data-objects/features/xml)
 
 ### Immutable copies with `with()`
 
@@ -272,6 +299,7 @@ export interface OrderData {
 | `#[DataCollection(ItemData::class)]` | property | typed collection of DTOs |
 | `#[Discriminator('type', ['card' => CardData::class])]` | abstract class | polymorphic hydration — `from()` picks the subclass by field value |
 | `#[WrapIn('data')]` | class | wrap `toResponse()`'s payload under a key |
+| `#[XmlAttribute]` / `#[XmlElement('name')]` / `#[XmlText]` | property | where `lazyXml()` reads the property from: an XML attribute, a differently named child element, or the element's text |
 
 ## Built-in Casts
 
