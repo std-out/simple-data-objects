@@ -4,40 +4,44 @@ import { useData } from 'vitepress'
 
 const { page, theme, frontmatter } = useData()
 
+const sections = {
+  guide: 'Guide',
+  features: 'Guide',
+  attributes: 'Reference · Attributes',
+  casts: 'Reference · Casts',
+  laravel: 'Frameworks',
+  integrations: 'Frameworks',
+}
+
 const trail = computed(() => {
   if (frontmatter.value.breadcrumb === false) {
     return null
   }
 
   const path = page.value.relativePath
-  if (!path.includes('/')) {
+  const segment = path.split('/')[0]
+  const section = sections[segment]
+
+  if (!section) {
     return null
   }
 
-  const segment = path.split('/')[0]
-  const section = segment.charAt(0).toUpperCase() + segment.slice(1)
-
   const link = '/' + path.replace(/(index)?\.md$/, '')
-
-  // sidebar may be a flat array or a multi-sidebar object keyed by path
-  // prefix — resolve it the same way VitePress does: the most specific
-  // (longest) matching prefix wins.
-  const rawSidebar = theme.value.sidebar
-  const groups = Array.isArray(rawSidebar)
-    ? rawSidebar
-    : Object.keys(rawSidebar ?? {})
-        .filter((prefix) => link.startsWith(prefix))
-        .sort((a, b) => b.length - a.length)
-        .flatMap((prefix) => rawSidebar[prefix] ?? [])
+  const groups = theme.value.sidebar?.[`/${segment}/`] ?? []
 
   const group = groups.find((g) =>
     g.items?.some((item) => item.link === link || item.link + '/' === link),
   )?.text
 
-  return !group || group === section ? section : `${section} / ${group}`
+  return [section, group].filter((part, i, all) => part && all.indexOf(part) === i)
 })
 </script>
 
 <template>
-  <nav v-if="trail" class="bp-breadcrumb" aria-label="Breadcrumb">{{ trail }}</nav>
+  <nav v-if="trail" class="sdo-breadcrumb" aria-label="Breadcrumb">
+    <template v-for="(part, i) in trail" :key="part">
+      <span v-if="i > 0" class="sdo-breadcrumb-sep" aria-hidden="true">/</span>
+      <span>{{ part }}</span>
+    </template>
+  </nav>
 </template>

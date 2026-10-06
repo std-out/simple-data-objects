@@ -7,139 +7,171 @@ breadcrumb: false
 
 <section class="bm">
   <div class="bm-inner">
-    <div class="bm-kicker bm-rise">
+    <div class="bm-kicker">
       <span class="bm-kicker-label">Performance</span>
       <span class="bm-kicker-rule"></span>
     </div>
-    <h1 class="bm-title bm-rise bm-d1">35× faster than the field-leading PHP data-object library — without changing how you write DTOs.</h1>
-    <p class="bm-method bm-rise bm-d2">Benchmarked against the most popular full-featured data-object library in the PHP/Laravel ecosystem — identical DTO shapes and attributes, 20,000 iterations per scenario after a 2,000-iteration warmup, PHP 8.4. Absolute numbers vary with hardware; the ratios stay stable across runs.</p>
-    <div class="bm-stats bm-rise bm-d3">
+    <h1 class="bm-title">50× faster hydration and 60× faster serialization than the field-leading PHP data-object library — without changing how you write DTOs.</h1>
+    <p class="bm-method">Benchmarked against the most popular full-featured data-object library in the PHP/Laravel ecosystem — identical DTO shapes and attributes, inside a fully booted Laravel app with both libraries' caches warmed, 20,000 iterations per scenario after a 2,000-iteration warmup, PHP 8.4. Medians of 7 runs (5 for XML). Absolute numbers vary with hardware; the ratios stay stable across runs.</p>
+    <div class="bm-stats">
       <div class="bm-stat">
-        <div class="bm-stat-value">35×</div>
+        <div class="bm-stat-value">51×</div>
         <div class="bm-stat-title">Hydration throughput</div>
         <div class="bm-stat-detail">faster on a flat DTO</div>
       </div>
       <div class="bm-stat">
-        <div class="bm-stat-value">37×</div>
+        <div class="bm-stat-value">60×</div>
         <div class="bm-stat-title">Serialization throughput</div>
         <div class="bm-stat-detail">faster on a flat DTO</div>
       </div>
       <div class="bm-stat">
-        <div class="bm-stat-value">50×</div>
-        <div class="bm-stat-title">Peak memory, streaming 50k rows</div>
-        <div class="bm-stat-detail">less with lazyCollection()</div>
+        <div class="bm-stat-value">12×</div>
+        <div class="bm-stat-title">Process memory, 52 MB XML feed</div>
+        <div class="bm-stat-detail">less than a SimpleXML loop</div>
       </div>
     </div>
-    <div class="bm-section-head bm-rise bm-d4">
+    <div class="bm-section-head">
       <h2 class="bm-h2">Throughput</h2>
       <span class="bm-note">higher is better · each scenario scaled to its own leader</span>
     </div>
     <div class="bm-chart">
-      <div class="bm-row bm-rise">
+      <div class="bm-row">
         <div class="bm-row-head">
           <span class="bm-row-label">Hydration — flat DTO</span>
-          <span class="bm-row-x">35× faster</span>
+          <span class="bm-row-x">51× faster</span>
         </div>
         <div class="bm-line">
           <span class="bm-series bm-series--us">Simple Data Objects</span>
           <span class="bm-track"><span class="bm-fill bm-fill--us" style="width:100%"></span></span>
-          <span class="bm-value bm-value--us">4.5M ops/s</span>
+          <span class="bm-value bm-value--us">6.3M ops/s</span>
         </div>
         <div class="bm-line">
           <span class="bm-series">Popular alternative</span>
-          <span class="bm-track"><span class="bm-fill bm-fill--them" style="width:2.9%"></span></span>
-          <span class="bm-value">130K ops/s</span>
+          <span class="bm-track"><span class="bm-fill bm-fill--them" style="width:2.0%"></span></span>
+          <span class="bm-value">125K ops/s</span>
         </div>
       </div>
-      <div class="bm-row bm-rise">
+      <div class="bm-row">
         <div class="bm-row-head">
           <span class="bm-row-label">Hydration — nested DTO</span>
-          <span class="bm-row-x">30× faster</span>
-        </div>
-        <div class="bm-line">
-          <span class="bm-series bm-series--us">Simple Data Objects</span>
-          <span class="bm-track"><span class="bm-fill bm-fill--us" style="width:100%"></span></span>
-          <span class="bm-value bm-value--us">2.2M ops/s</span>
-        </div>
-        <div class="bm-line">
-          <span class="bm-series">Popular alternative</span>
-          <span class="bm-track"><span class="bm-fill bm-fill--them" style="width:3.4%"></span></span>
-          <span class="bm-value">74K ops/s</span>
-        </div>
-      </div>
-      <div class="bm-row bm-rise">
-        <div class="bm-row-head">
-          <span class="bm-row-label">Hydration — collection of 20</span>
           <span class="bm-row-x">36× faster</span>
         </div>
         <div class="bm-line">
           <span class="bm-series bm-series--us">Simple Data Objects</span>
           <span class="bm-track"><span class="bm-fill bm-fill--us" style="width:100%"></span></span>
-          <span class="bm-value bm-value--us">270K ops/s</span>
-        </div>
-        <div class="bm-line">
-          <span class="bm-series">Popular alternative</span>
-          <span class="bm-track"><span class="bm-fill bm-fill--them" style="width:2.8%"></span></span>
-          <span class="bm-value">7.5K ops/s</span>
-        </div>
-      </div>
-      <div class="bm-row bm-rise">
-        <div class="bm-row-head">
-          <span class="bm-row-label">Serialization — flat DTO</span>
-          <span class="bm-row-x">37× faster</span>
-        </div>
-        <div class="bm-line">
-          <span class="bm-series bm-series--us">Simple Data Objects</span>
-          <span class="bm-track"><span class="bm-fill bm-fill--us" style="width:100%"></span></span>
-          <span class="bm-value bm-value--us">7.4M ops/s</span>
+          <span class="bm-value bm-value--us">3.4M ops/s</span>
         </div>
         <div class="bm-line">
           <span class="bm-series">Popular alternative</span>
           <span class="bm-track"><span class="bm-fill bm-fill--them" style="width:2.7%"></span></span>
-          <span class="bm-value">200K ops/s</span>
+          <span class="bm-value">93K ops/s</span>
         </div>
       </div>
-      <div class="bm-row bm-rise">
+      <div class="bm-row">
         <div class="bm-row-head">
-          <span class="bm-row-label">Serialization — nested DTO</span>
-          <span class="bm-row-x">34× faster</span>
+          <span class="bm-row-label">Hydration — collection of 20</span>
+          <span class="bm-row-x">21× faster</span>
         </div>
         <div class="bm-line">
           <span class="bm-series bm-series--us">Simple Data Objects</span>
           <span class="bm-track"><span class="bm-fill bm-fill--us" style="width:100%"></span></span>
-          <span class="bm-value bm-value--us">4.0M ops/s</span>
+          <span class="bm-value bm-value--us">211K ops/s</span>
         </div>
         <div class="bm-line">
           <span class="bm-series">Popular alternative</span>
-          <span class="bm-track"><span class="bm-fill bm-fill--them" style="width:2.9%"></span></span>
-          <span class="bm-value">117K ops/s</span>
+          <span class="bm-track"><span class="bm-fill bm-fill--them" style="width:4.9%"></span></span>
+          <span class="bm-value">10K ops/s</span>
         </div>
       </div>
-    </div>
-    <div class="bm-section-head bm-rise">
-      <h2 class="bm-h2">Peak memory — streaming 50,000 hydrated rows</h2>
-      <span class="bm-note">lower is better</span>
-    </div>
-    <p class="bm-note bm-note--block">Rows from a generator, consumed one by one.</p>
-    <div class="bm-chart">
-      <div class="bm-row bm-row--tall">
+      <div class="bm-row">
         <div class="bm-row-head">
-          <span class="bm-row-label">lazyCollection()</span>
-          <span class="bm-row-x">50× less memory</span>
+          <span class="bm-row-label">Hydration — with a date cast</span>
+          <span class="bm-row-x">12× faster</span>
         </div>
         <div class="bm-line">
           <span class="bm-series bm-series--us">Simple Data Objects</span>
-          <span class="bm-track"><span class="bm-fill bm-fill--us" style="width:2%"></span></span>
-          <span class="bm-value bm-value--us">0.26 MB</span>
+          <span class="bm-track"><span class="bm-fill bm-fill--us" style="width:100%"></span></span>
+          <span class="bm-value bm-value--us">1.4M ops/s</span>
         </div>
         <div class="bm-line">
           <span class="bm-series">Popular alternative</span>
-          <span class="bm-track"><span class="bm-fill bm-fill--them" style="width:100%"></span></span>
-          <span class="bm-value">13 MB</span>
+          <span class="bm-track"><span class="bm-fill bm-fill--them" style="width:8.4%"></span></span>
+          <span class="bm-value">118K ops/s</span>
+        </div>
+      </div>
+      <div class="bm-row">
+        <div class="bm-row-head">
+          <span class="bm-row-label">Serialization — flat DTO</span>
+          <span class="bm-row-x">60× faster</span>
+        </div>
+        <div class="bm-line">
+          <span class="bm-series bm-series--us">Simple Data Objects</span>
+          <span class="bm-track"><span class="bm-fill bm-fill--us" style="width:100%"></span></span>
+          <span class="bm-value bm-value--us">14.5M ops/s</span>
+        </div>
+        <div class="bm-line">
+          <span class="bm-series">Popular alternative</span>
+          <span class="bm-track"><span class="bm-fill bm-fill--them" style="width:1.7%"></span></span>
+          <span class="bm-value">241K ops/s</span>
+        </div>
+      </div>
+      <div class="bm-row">
+        <div class="bm-row-head">
+          <span class="bm-row-label">Serialization — nested DTO</span>
+          <span class="bm-row-x">48× faster</span>
+        </div>
+        <div class="bm-line">
+          <span class="bm-series bm-series--us">Simple Data Objects</span>
+          <span class="bm-track"><span class="bm-fill bm-fill--us" style="width:100%"></span></span>
+          <span class="bm-value bm-value--us">7.7M ops/s</span>
+        </div>
+        <div class="bm-line">
+          <span class="bm-series">Popular alternative</span>
+          <span class="bm-track"><span class="bm-fill bm-fill--them" style="width:2.1%"></span></span>
+          <span class="bm-value">162K ops/s</span>
+        </div>
+      </div>
+      <div class="bm-row">
+        <div class="bm-row-head">
+          <span class="bm-row-label">Serialization — collection of 20</span>
+          <span class="bm-row-x">15× faster</span>
+        </div>
+        <div class="bm-line">
+          <span class="bm-series bm-series--us">Simple Data Objects</span>
+          <span class="bm-track"><span class="bm-fill bm-fill--us" style="width:100%"></span></span>
+          <span class="bm-value bm-value--us">415K ops/s</span>
+        </div>
+        <div class="bm-line">
+          <span class="bm-series">Popular alternative</span>
+          <span class="bm-track"><span class="bm-fill bm-fill--them" style="width:6.6%"></span></span>
+          <span class="bm-value">27K ops/s</span>
         </div>
       </div>
     </div>
-    <div class="bm-section-head bm-rise">
+    <div class="bm-section-head">
+      <h2 class="bm-h2">Streaming a 100,000-row CSV import</h2>
+      <span class="bm-note">higher is better</span>
+    </div>
+    <p class="bm-note bm-note--block">Rows from a generator, hydrated one by one. Both libraries stream here and hold the same flat 12 KB — the difference is speed, not memory.</p>
+    <div class="bm-chart">
+      <div class="bm-row bm-row--tall">
+        <div class="bm-row-head">
+          <span class="bm-row-label">lazyCollection() — rows hydrated per second</span>
+          <span class="bm-row-x">85% faster</span>
+        </div>
+        <div class="bm-line">
+          <span class="bm-series bm-series--us">Simple Data Objects</span>
+          <span class="bm-track"><span class="bm-fill bm-fill--us" style="width:100%"></span></span>
+          <span class="bm-value bm-value--us">67K rows/s</span>
+        </div>
+        <div class="bm-line">
+          <span class="bm-series">Popular alternative</span>
+          <span class="bm-track"><span class="bm-fill bm-fill--them" style="width:54.2%"></span></span>
+          <span class="bm-value">36K rows/s</span>
+        </div>
+      </div>
+    </div>
+    <div class="bm-section-head">
       <h2 class="bm-h2">Streaming XML — 100,000 elements, 52 MB file</h2>
       <span class="bm-note">each scenario in its own process</span>
     </div>
@@ -157,7 +189,7 @@ breadcrumb: false
         </div>
         <div class="bm-line">
           <span class="bm-series">Popular alternative</span>
-          <span class="bm-track"><span class="bm-fill bm-fill--them" style="width:18.8%"></span></span>
+          <span class="bm-track"><span class="bm-fill bm-fill--them" style="width:18.1%"></span></span>
           <span class="bm-value">15K nodes/s</span>
         </div>
       </div>
@@ -190,13 +222,13 @@ breadcrumb: false
         <div class="bm-line">
           <span class="bm-series">SimpleXML, collected</span>
           <span class="bm-track"><span class="bm-fill bm-fill--them" style="width:100%"></span></span>
-          <span class="bm-value">998 MB</span>
+          <span class="bm-value">997 MB</span>
         </div>
       </div>
     </div>
 <div class="bm-prose">
 
-CPU time per operation follows the same ratios — less CPU burned per request means more headroom per server. The `from()`/`toArray()` hot paths execute [compiled per-class closures](../features/cache.md), and [`lazyCollection()`](../features/collections.md#lazy-collections) keeps peak memory flat on any dataset size. [`lazyXml()`](../features/xml.md) does the same straight from a file: only the fields the DTO declares are read, so a 100,000-element document adds about 1 MB to the process. The SimpleXML figure is process memory (RSS), not the PHP heap — libxml builds the whole document outside PHP's memory manager, so `memory_get_peak_usage()` reports roughly 10 MB for `lazyXml()` and for the SimpleXML loop alike; only the collected variant shows up in the heap, at about 420 MB.
+CPU time per operation follows the same ratios — less CPU burned per request means more headroom per server. The advantage is largest where the object itself is cheap and shrinks as real work (a date cast, twenty nested objects) takes a bigger share of each call. The `from()`/`toArray()` hot paths execute [compiled per-class closures](../features/cache.md), and [`lazyCollection()`](../features/collections.md#lazy-collections) keeps peak memory flat on any dataset size. [`lazyXml()`](../features/xml.md) does the same straight from a file: only the fields the DTO declares are read, so a 100,000-element document adds about 1 MB to the process. The SimpleXML figure is process memory (RSS), not the PHP heap — libxml builds the whole document outside PHP's memory manager, so `memory_get_peak_usage()` reports roughly 10 MB for `lazyXml()` and for the SimpleXML loop alike; only the collected variant shows up in the heap, at about 420 MB.
 
 </div>
     <h2 class="bm-h2 bm-h2--table">The numbers</h2>
@@ -212,39 +244,57 @@ CPU time per operation follows the same ratios — less CPU burned per request m
       <tbody>
         <tr>
           <td class="bm-td">Hydration — flat DTO</td>
-          <td class="bm-td bm-td--num">~4,500,000 ops/s</td>
-          <td class="bm-td bm-td--num bm-td--muted">~130,000 ops/s</td>
-          <td class="bm-td bm-td--num bm-td--adv">~35×</td>
+          <td class="bm-td bm-td--num">~6,300,000 ops/s</td>
+          <td class="bm-td bm-td--num bm-td--muted">~125,000 ops/s</td>
+          <td class="bm-td bm-td--num bm-td--adv">~51×</td>
         </tr>
         <tr>
           <td class="bm-td">Hydration — nested DTO</td>
-          <td class="bm-td bm-td--num">~2,200,000 ops/s</td>
-          <td class="bm-td bm-td--num bm-td--muted">~74,000 ops/s</td>
-          <td class="bm-td bm-td--num bm-td--adv">~30×</td>
-        </tr>
-        <tr>
-          <td class="bm-td">Hydration — collection of 20</td>
-          <td class="bm-td bm-td--num">~270,000 ops/s</td>
-          <td class="bm-td bm-td--num bm-td--muted">~7,500 ops/s</td>
+          <td class="bm-td bm-td--num">~3,400,000 ops/s</td>
+          <td class="bm-td bm-td--num bm-td--muted">~93,000 ops/s</td>
           <td class="bm-td bm-td--num bm-td--adv">~36×</td>
         </tr>
         <tr>
+          <td class="bm-td">Hydration — collection of 20</td>
+          <td class="bm-td bm-td--num">~211,000 ops/s</td>
+          <td class="bm-td bm-td--num bm-td--muted">~10,200 ops/s</td>
+          <td class="bm-td bm-td--num bm-td--adv">~21×</td>
+        </tr>
+        <tr>
+          <td class="bm-td">Hydration — with a date cast</td>
+          <td class="bm-td bm-td--num">~1,400,000 ops/s</td>
+          <td class="bm-td bm-td--num bm-td--muted">~118,000 ops/s</td>
+          <td class="bm-td bm-td--num bm-td--adv">~12×</td>
+        </tr>
+        <tr>
           <td class="bm-td">Serialization — flat DTO</td>
-          <td class="bm-td bm-td--num">~7,400,000 ops/s</td>
-          <td class="bm-td bm-td--num bm-td--muted">~200,000 ops/s</td>
-          <td class="bm-td bm-td--num bm-td--adv">~37×</td>
+          <td class="bm-td bm-td--num">~14,500,000 ops/s</td>
+          <td class="bm-td bm-td--num bm-td--muted">~241,000 ops/s</td>
+          <td class="bm-td bm-td--num bm-td--adv">~60×</td>
         </tr>
         <tr>
           <td class="bm-td">Serialization — nested DTO</td>
-          <td class="bm-td bm-td--num">~4,000,000 ops/s</td>
-          <td class="bm-td bm-td--num bm-td--muted">~117,000 ops/s</td>
-          <td class="bm-td bm-td--num bm-td--adv">~34×</td>
+          <td class="bm-td bm-td--num">~7,700,000 ops/s</td>
+          <td class="bm-td bm-td--num bm-td--muted">~162,000 ops/s</td>
+          <td class="bm-td bm-td--num bm-td--adv">~48×</td>
         </tr>
         <tr>
-          <td class="bm-td">Peak memory — streaming 50,000 rows</td>
-          <td class="bm-td bm-td--num">0.26 MB</td>
-          <td class="bm-td bm-td--num bm-td--muted">~13 MB</td>
-          <td class="bm-td bm-td--num bm-td--adv">~50×</td>
+          <td class="bm-td">Serialization — collection of 20</td>
+          <td class="bm-td bm-td--num">~415,000 ops/s</td>
+          <td class="bm-td bm-td--num bm-td--muted">~27,500 ops/s</td>
+          <td class="bm-td bm-td--num bm-td--adv">~15×</td>
+        </tr>
+        <tr>
+          <td class="bm-td">CSV — 100,000 rows, streamed</td>
+          <td class="bm-td bm-td--num">~67,000 rows/s</td>
+          <td class="bm-td bm-td--num bm-td--muted">~36,000 rows/s</td>
+          <td class="bm-td bm-td--num bm-td--adv">~1.85×</td>
+        </tr>
+        <tr>
+          <td class="bm-td">CSV — peak memory while streaming</td>
+          <td class="bm-td bm-td--num">12 KB</td>
+          <td class="bm-td bm-td--num bm-td--muted">12 KB</td>
+          <td class="bm-td bm-td--num bm-td--adv">equal</td>
         </tr>
         <tr>
           <td class="bm-td">XML — 100,000 elements, streamed</td>
@@ -261,24 +311,28 @@ CPU time per operation follows the same ratios — less CPU burned per request m
         <tr>
           <td class="bm-td">XML — peak process memory vs SimpleXML, all rows collected</td>
           <td class="bm-td bm-td--num">55 MB</td>
-          <td class="bm-td bm-td--num bm-td--muted">998 MB (SimpleXML)</td>
+          <td class="bm-td bm-td--num bm-td--muted">997 MB (SimpleXML)</td>
           <td class="bm-td bm-td--num bm-td--adv">~18×</td>
         </tr>
       </tbody>
     </table>
+    <div class="bm-cta">
+      <div class="bm-cta-text">
+        <h2 class="bm-h2">Don't take these numbers on faith — run them</h2>
+        <p>Every figure on this page comes from a public, runnable benchmark project: identical DTO shapes for both libraries, inside a booted Laravel app, with each library's cache warmed first. Clone it, read the code, swap in your own payloads. Your absolute numbers will differ with hardware — the ratios are what to compare.</p>
+        <a class="bm-cta-link" href="https://github.com/std-out/simple-data-objects-benchmark" target="_blank" rel="noreferrer">Open the benchmark repository →</a>
+      </div>
+      <pre class="bm-cta-code"><code>git clone https://github.com/std-out/simple-data-objects-benchmark
+cd simple-data-objects-benchmark
+make bench       # everything, in Docker (PHP 8.4)
+make bench-xml   # only the XML feed comparison</code></pre>
+    </div>
   </div>
 </section>
 
 <style>
 .bm-page .content-container { max-width: none !important; }
 .bm-page .VPDoc .content { max-width: 1104px !important; }
-@keyframes bm-rise-in {
-  from { opacity: 0; transform: translateY(14px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-@keyframes bm-grow-bar {
-  from { width: 0; }
-}
 .bm {
   --bm-paper: var(--vp-c-bg);
   --bm-ink: var(--vp-c-text-1);
@@ -300,11 +354,6 @@ CPU time per operation follows the same ratios — less CPU burned per request m
   max-width: 1120px;
   margin: 0 auto;
 }
-.bm-rise { animation: bm-rise-in .6s ease both; }
-.bm-d1 { animation-delay: .05s; }
-.bm-d2 { animation-delay: .1s; }
-.bm-d3 { animation-delay: .15s; }
-.bm-d4 { animation-delay: .2s; }
 .bm-kicker {
   display: flex;
   align-items: baseline;
@@ -452,7 +501,6 @@ CPU time per operation follows the same ratios — less CPU burned per request m
   display: block;
   height: 100%;
   border-radius: 2px;
-  animation: bm-grow-bar .8s ease both;
 }
 .bm-fill--us { background: var(--bm-accent); }
 .bm-fill--them { background: var(--bm-context); }
@@ -491,6 +539,53 @@ CPU time per operation follows the same ratios — less CPU burned per request m
   color: var(--bm-accent);
   text-decoration: underline;
   text-underline-offset: 2px;
+}
+.bm-cta {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 24px;
+  margin-top: 56px;
+  padding: 32px;
+  border: 1px solid var(--bm-accent);
+  border-radius: 12px;
+  background: var(--vp-c-brand-soft);
+}
+.bm-cta-text p {
+  margin: 12px 0 18px;
+  font-size: 15px;
+  line-height: 1.7;
+  color: var(--bm-ink-soft);
+}
+.bm .bm-cta-link {
+  display: inline-block;
+  padding: 10px 18px;
+  border-radius: 20px;
+  background: var(--vp-button-brand-bg);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 600;
+  text-decoration: none;
+}
+.bm .bm-cta-link:hover { background: var(--vp-button-brand-hover-bg); }
+.bm pre.bm-cta-code {
+  margin: 0;
+  padding: 20px 22px;
+  border: 1px solid var(--bm-rule);
+  border-radius: 10px;
+  background: var(--bm-paper);
+  overflow-x: auto;
+}
+.bm pre.bm-cta-code code {
+  padding: 0;
+  background: none;
+  font-family: var(--bm-mono), monospace;
+  font-size: 13px;
+  line-height: 1.8;
+  color: var(--bm-ink);
+}
+.bm-cta-text p { max-width: 720px; }
+@media (max-width: 860px) {
+  .bm-cta { padding: 24px; }
 }
 .bm h2.bm-h2--table {
   font-size: 20px;
@@ -543,8 +638,5 @@ CPU time per operation follows the same ratios — less CPU burned per request m
   .bm-series { width: 100%; }
   .bm-stat-value { font-size: 44px; }
   .bm-table { font-size: 11.5px; }
-}
-@media (prefers-reduced-motion: reduce) {
-  .bm-rise, .bm-fill { animation: none; }
 }
 </style>

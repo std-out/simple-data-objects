@@ -8,6 +8,12 @@ and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.
 ## [Unreleased]
 
 ### Changed
+- **Documentation:** every figure on the Performance page now comes from the
+  public benchmark project (booted Laravel app, medians of 7 runs), replacing
+  the earlier standalone-script numbers. The "50× less memory with
+  `lazyCollection()`" claim is gone: with both libraries streaming, peak
+  memory is equal and the difference is throughput (~1.85×).
+- **Documentation:** new navigation by section, home page and theme.
 - **Documentation:** the XML figures in the README and on the
   [Performance](https://std-out.github.io/simple-data-objects/guide/performance)
   page now come from the public benchmark (`make bench-xml`), and memory is
