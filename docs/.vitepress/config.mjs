@@ -80,6 +80,7 @@ const attributes = [
     text: 'Output',
     items: [
       { text: '#[Hidden]', link: '/attributes/hidden' },
+      { text: '#[Sensitive]', link: '/attributes/sensitive' },
       { text: '#[IgnoreIfNull]', link: '/attributes/ignore-if-null' },
       { text: '#[Computed]', link: '/attributes/computed' },
       { text: '#[WrapIn]', link: '/attributes/wrap-in' },

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace StdOut\SimpleDataObjects\Exceptions;
 
 use RuntimeException;
+use StdOut\SimpleDataObjects\Support\Redactor;
 
 final class DataHydrationException extends RuntimeException
 {
@@ -41,7 +42,7 @@ final class DataHydrationException extends RuntimeException
 
     public static function invalidEnumValue(string $enumClass, string $field, mixed $value): self
     {
-        $given = is_scalar($value) ? "'".self::escape((string) $value)."'" : get_debug_type($value);
+        $given = is_scalar($value) ? "'".Redactor::forMessage((string) $value)."'" : get_debug_type($value);
 
         return new self("Invalid value {$given} for field '{$field}'; expected a case of {$enumClass}.");
     }
@@ -52,9 +53,14 @@ final class DataHydrationException extends RuntimeException
             return new self("Missing discriminator field '{$field}' for {$class}.");
         }
 
-        $given = is_scalar($value) ? "'".self::escape((string) $value)."'" : get_debug_type($value);
+        $given = is_scalar($value) ? "'".Redactor::forMessage((string) $value)."'" : get_debug_type($value);
 
         return new self("Unknown discriminator value {$given} in field '{$field}' for {$class}.");
+    }
+
+    public static function invalidSensitiveValue(string $class, string $field): self
+    {
+        return new self("Invalid value for sensitive field '{$field}' of {$class}.");
     }
 
     public static function notADataObject(string $dataClass): self
@@ -65,16 +71,11 @@ final class DataHydrationException extends RuntimeException
     /** @param list<string> $unknownKeys */
     public static function unknownKeys(string $class, array $unknownKeys): self
     {
-        $list = implode(', ', array_map(static fn (string $key): string => "'".self::escape($key)."'", $unknownKeys));
+        $list = implode(', ', array_map(static fn (string $key): string => "'".Redactor::forMessage($key)."'", $unknownKeys));
 
         return new self(
             sprintf('Unknown key%s [%s] for %s.', count($unknownKeys) === 1 ? '' : 's', $list, $class),
             $unknownKeys,
         );
-    }
-
-    private static function escape(string $value): string
-    {
-        return addcslashes($value, "\0..\37\177");
     }
 }

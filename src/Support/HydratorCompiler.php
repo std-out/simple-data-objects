@@ -367,9 +367,11 @@ final class HydratorCompiler
     {
         [$key, $presence] = self::resolveKeyExpr($i, $param->inputNames, $body);
 
-        $present = $param->isPlain
-            ? "\$d[{$key}]"
-            : "\\StdOut\\SimpleDataObjects\\Support\\ValueCaster::cast(\$p[{$i}], \$d[{$key}])";
+        $present = match (true) {
+            $param->isPlain => "\$d[{$key}]",
+            $param->isSensitive => "\\StdOut\\SimpleDataObjects\\Support\\ValueCaster::castSensitive(\$p[{$i}], \$d[{$key}], {$classExport})",
+            default => "\\StdOut\\SimpleDataObjects\\Support\\ValueCaster::cast(\$p[{$i}], \$d[{$key}])",
+        };
 
         $missingKey = var_export($param->inputNames[0], true);
 

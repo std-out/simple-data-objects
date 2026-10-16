@@ -52,6 +52,7 @@ All behaviour is declared on the constructor parameters:
 - **`#[Cast(...)]`** — type conversion for dates, booleans, JSON, encryption, …
 - **`#[Rules([...])]`** — Laravel validation rules
 - **`#[Hidden]`** — exclude from `toArray()` output
+- **`#[Sensitive]`** — keep a value (PAN, CVV, tokens) out of exception messages, `serialize()` and `var_dump()`
 - **`#[IgnoreIfNull]`** — omit null fields from output
 - **`#[Flatten]`** — inline nested DTO fields into the parent array
 - **`#[MapPropertyName]`** / **`#[MapInputName]`** / **`#[MapOutputName]`** / **`#[TransformKeys]`** — key remapping

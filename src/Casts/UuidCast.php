@@ -7,6 +7,7 @@ namespace StdOut\SimpleDataObjects\Casts;
 use InvalidArgumentException;
 use StdOut\SimpleDataObjects\Contracts\CastsValue;
 use StdOut\SimpleDataObjects\Contracts\ProvidesJsonSchema;
+use StdOut\SimpleDataObjects\Support\Redactor;
 
 final class UuidCast implements CastsValue, ProvidesJsonSchema
 {
@@ -26,7 +27,7 @@ final class UuidCast implements CastsValue, ProvidesJsonSchema
         $uuid = (string) $value;
 
         if (! preg_match(self::PATTERN, $uuid)) {
-            throw new InvalidArgumentException("\"{$uuid}\" is not a valid RFC 4122 UUID.");
+            throw new InvalidArgumentException('"'.Redactor::forMessage($uuid).'" is not a valid RFC 4122 UUID.');
         }
 
         return strtolower($uuid);
