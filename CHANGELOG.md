@@ -7,6 +7,21 @@ and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## [2.8.0] — 2026-10-16
+
+### Added
+- `vendor/bin/sdo-generate <sample.json|sample.xml|-> <dir>` generates data
+  object classes from a sample document: one class per object shape, with
+  property types, nested DTOs, `#[DataCollection]` lists and key mapping
+  (`#[TransformKeys]`, `#[MapPropertyName]`, XML attributes/text/elements)
+  inferred from the values. `--optional` makes keys missing from some objects
+  `T|Optional`, so the sample round-trips exactly.
+- `DataClassGenerator::fromValue()` and `write()` do the same for any PHP
+  array or object.
+- `make:data --from-json`, `--from-xml` and `--from-model=... --id=...
+  [--with=...]`: the last one generates from a real record, with loaded
+  relations as nested classes.
+
 ## [2.7.0] — 2026-10-16
 
 ### Added
@@ -655,7 +670,8 @@ Initial release.
   `toResponse()`).
 - CI pipeline: tests across Laravel 10–13 and a scheduled `composer audit`.
 
-[Unreleased]: https://github.com/std-out/simple-data-objects/compare/v2.7.0...HEAD
+[Unreleased]: https://github.com/std-out/simple-data-objects/compare/v2.8.0...HEAD
+[2.8.0]: https://github.com/std-out/simple-data-objects/compare/v2.7.0...v2.8.0
 [2.7.0]: https://github.com/std-out/simple-data-objects/compare/v2.6.0...v2.7.0
 [2.6.0]: https://github.com/std-out/simple-data-objects/compare/v2.5.0...v2.6.0
 [2.5.0]: https://github.com/std-out/simple-data-objects/compare/v2.4.0...v2.5.0
