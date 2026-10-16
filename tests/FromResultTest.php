@@ -4,7 +4,11 @@ declare(strict_types=1);
 
 namespace StdOut\SimpleDataObjects\Tests;
 
+use Illuminate\Translation\ArrayLoader;
+use Illuminate\Translation\Translator;
+use Illuminate\Validation\Factory as ValidatorFactory;
 use PHPUnit\Framework\TestCase;
+use StdOut\SimpleDataObjects\BaseData;
 use StdOut\SimpleDataObjects\Support\HydratorCompiler;
 use StdOut\SimpleDataObjects\Tests\Fixtures\AddressData;
 use StdOut\SimpleDataObjects\Tests\Fixtures\AliasedUserData;
@@ -20,12 +24,12 @@ use StdOut\SimpleDataObjects\Tests\Fixtures\PaymentMethodData;
 use StdOut\SimpleDataObjects\Tests\Fixtures\PersonData;
 use StdOut\SimpleDataObjects\Tests\Fixtures\PipedNestedFieldData;
 use StdOut\SimpleDataObjects\Tests\Fixtures\ProductData;
-use StdOut\SimpleDataObjects\Tests\Fixtures\SchemaRulesData;
 use StdOut\SimpleDataObjects\Tests\Fixtures\StrictUserData;
 use StdOut\SimpleDataObjects\Tests\Fixtures\TeamData;
 use StdOut\SimpleDataObjects\Tests\Fixtures\ThrowingPipeData;
 use StdOut\SimpleDataObjects\Tests\Fixtures\ThrowingPipeHybridData;
 use StdOut\SimpleDataObjects\Tests\Fixtures\ThrowingPipeNoConstructorData;
+use StdOut\SimpleDataObjects\Tests\Fixtures\UnevaluableRuleData;
 use StdOut\SimpleDataObjects\Tests\Fixtures\UserData;
 use StdOut\SimpleDataObjects\Tests\Fixtures\WhenLoadedOrderData;
 
@@ -470,7 +474,11 @@ class FromResultTest extends TestCase
 
     public function test_from_validated_result_never_throws_when_a_rule_cannot_evaluate_the_input(): void
     {
-        $result = SchemaRulesData::fromValidatedResult(json_decode('{"age":1e400}', true));
+        $factory = new ValidatorFactory(new Translator(new ArrayLoader, 'en'));
+        $factory->extend('unevaluable', static fn (): bool => throw new \RuntimeException('rule failed'));
+        BaseData::setValidatorFactory($factory);
+
+        $result = UnevaluableRuleData::fromValidatedResult(['name' => 'Alice']);
 
         $this->assertFalse($result->ok());
         $this->assertSame('Input could not be validated.', $result->errors()['$input']);
