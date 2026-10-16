@@ -32,6 +32,9 @@ final class ClassMeta
 
     public readonly bool $cascadesNestedRules;
 
+    /** @var array<string, true> */
+    public readonly array $sensitiveFields;
+
     /**
      * @param  list<ParameterMeta>  $parameters
      * @param  list<class-string<DataPipe>>  $pipes
@@ -54,9 +57,14 @@ final class ClassMeta
         $validationRules = [];
         $validationAliases = [];
         $cascadesNestedRules = false;
+        $sensitiveFields = [];
 
         foreach ($parameters as $meta) {
             $inputName = $meta->inputNames[0];
+
+            if ($meta->isSensitive) {
+                $sensitiveFields[$meta->phpName] = true;
+            }
 
             if ($meta->rules !== []) {
                 $validationRules[$inputName] = $meta->rules;
@@ -79,6 +87,7 @@ final class ClassMeta
         $this->validationRules = $validationRules;
         $this->validationAliases = $validationAliases;
         $this->cascadesNestedRules = $cascadesNestedRules;
+        $this->sensitiveFields = $sensitiveFields;
         $this->pipes = $pipes;
         $this->hasConstructor = $hasConstructor;
         $this->hasExtraProperties = $hasConstructor && array_any($parameters, static fn (ParameterMeta $p): bool => ! $p->viaConstructor);

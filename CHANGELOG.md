@@ -7,7 +7,23 @@ and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## [2.3.0] — 2026-10-16
+
+### Added
+- `#[Sensitive]` with the `HasSensitiveFields` trait: the value is kept out of
+  hydration error messages, `serialize()` throws while it is set, and
+  `var_dump()` / `print_r()` show `[redacted]`. `toArray()` is unchanged.
+
+### Security
+- Card numbers (13–19 digits) are masked to the last four digits in every
+  library exception message and in `HydrationResult::errors()`.
+- `UuidCast`, `MoneyCast`, `DateTimeCast` and `DateTimeImmutableCast` escape
+  control characters in their messages.
+
 ### Changed
+- Messages that contain a 13–19 digit number now show it masked.
+- Documentation: `EncryptedCast` page corrected (format, tamper error, key
+  requirements, a working key-rotation procedure).
 - Releases ship with a source archive, a CycloneDX SBOM and a build
   provenance attestation (`gh attestation verify`). Security reports go
   through GitHub private vulnerability reporting; 2.x is the supported line.
@@ -552,7 +568,8 @@ Initial release.
   `toResponse()`).
 - CI pipeline: tests across Laravel 10–13 and a scheduled `composer audit`.
 
-[Unreleased]: https://github.com/std-out/simple-data-objects/compare/v2.2.1...HEAD
+[Unreleased]: https://github.com/std-out/simple-data-objects/compare/v2.3.0...HEAD
+[2.3.0]: https://github.com/std-out/simple-data-objects/compare/v2.2.1...v2.3.0
 [2.2.1]: https://github.com/std-out/simple-data-objects/compare/v2.2.0...v2.2.1
 [1.8.0]: https://github.com/std-out/simple-data-objects/compare/v1.7.2...v1.8.0
 [1.7.2]: https://github.com/std-out/simple-data-objects/compare/v1.4.3...v1.7.2

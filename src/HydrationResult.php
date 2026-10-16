@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace StdOut\SimpleDataObjects;
 
+use StdOut\SimpleDataObjects\Support\Redactor;
+
 /**
  * @template T
  */
@@ -36,6 +38,10 @@ final class HydrationResult
      */
     public static function failure(array $errors): self
     {
+        foreach ($errors as $key => $message) {
+            $errors[$key] = Redactor::maskPan($message);
+        }
+
         return new self(false, null, $errors);
     }
 

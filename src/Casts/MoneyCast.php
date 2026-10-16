@@ -7,6 +7,7 @@ namespace StdOut\SimpleDataObjects\Casts;
 use InvalidArgumentException;
 use StdOut\SimpleDataObjects\Contracts\CastsValue;
 use StdOut\SimpleDataObjects\Contracts\ProvidesJsonSchema;
+use StdOut\SimpleDataObjects\Support\Redactor;
 use StdOut\SimpleDataObjects\ValueObjects\Money;
 
 /**
@@ -91,7 +92,7 @@ final class MoneyCast implements CastsValue, ProvidesJsonSchema
         $amount = trim($amount);
 
         if (! preg_match('/^[+-]?+(?:\d++\.?+\d*+|\.\d++)$/', $amount)) {
-            throw new InvalidArgumentException("\"{$amount}\" is not a valid decimal amount.");
+            throw new InvalidArgumentException('"'.Redactor::forMessage($amount).'" is not a valid decimal amount.');
         }
 
         $negative = $amount[0] === '-';

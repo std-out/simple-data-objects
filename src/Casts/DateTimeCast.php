@@ -11,6 +11,7 @@ use DateTimeZone;
 use InvalidArgumentException;
 use StdOut\SimpleDataObjects\Contracts\CastsValue;
 use StdOut\SimpleDataObjects\Contracts\ProvidesJsonSchema;
+use StdOut\SimpleDataObjects\Support\Redactor;
 
 final class DateTimeCast implements CastsValue, ProvidesJsonSchema
 {
@@ -50,7 +51,7 @@ final class DateTimeCast implements CastsValue, ProvidesJsonSchema
 
             if ($dt === false) {
                 throw new InvalidArgumentException(
-                    "Cannot parse \"{$value}\" using format \"{$this->inputFormat}\".",
+                    'Cannot parse "'.Redactor::forMessage((string) $value)."\" using format \"{$this->inputFormat}\".",
                 );
             }
 

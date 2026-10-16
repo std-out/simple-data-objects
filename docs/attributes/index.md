@@ -9,6 +9,7 @@ All behaviour in Simple Data Objects is declared via PHP attributes on construct
 | [`#[InferRules]`](./infer-rules.md) | Class | Auto-generate validation rules from property types |
 | [`#[Flatten]`](./flatten.md) | Parameter or property | Inline nested DTO fields into the parent array |
 | [`#[Hidden]`](./hidden.md) | Parameter or property | Exclude from `toArray()` / JSON output |
+| [`#[Sensitive]`](./sensitive.md) | Parameter or property | Keep a value out of exception messages, `serialize()` and `var_dump()` |
 | [`#[IgnoreIfNull]`](./ignore-if-null.md) | Parameter or property | Omit from output when value is `null` |
 | [`#[Computed]`](./computed.md) | Method | Add a derived, method-backed field to serialization output |
 | [`#[MapPropertyName]`](./map-property-name.md) | Parameter or property | Map a different input key (or several aliases) to this property |

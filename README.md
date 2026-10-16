@@ -294,6 +294,7 @@ export interface OrderData {
 | `#[Pipe(TrimStringsPipe::class)]` | class | array-level preprocessing pipeline |
 | `#[Flatten]` | property | inline nested DTO fields into parent |
 | `#[Hidden(except: ['admin'])]` | property | exclude from `toArray()` / JSON, optionally per `toArray(context:)` |
+| `#[Sensitive]` | property | keep the value out of exception messages, `errors()`, `serialize()` and `var_dump()` (with `use HasSensitiveFields`) |
 | `#[IgnoreIfNull]` | property | omit from output when `null` |
 | `#[Computed]` | method | add a derived, method-backed field to `toArray()` |
 | `#[MapPropertyName('input_key', ...)]` | property | map input key(s) (aliases) → property, same name on output |

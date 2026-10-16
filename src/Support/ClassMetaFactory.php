@@ -22,12 +22,14 @@ use StdOut\SimpleDataObjects\Attributes\MapPropertyName;
 use StdOut\SimpleDataObjects\Attributes\Pipe;
 use StdOut\SimpleDataObjects\Attributes\RejectUnknownKeys;
 use StdOut\SimpleDataObjects\Attributes\Rules;
+use StdOut\SimpleDataObjects\Attributes\Sensitive;
 use StdOut\SimpleDataObjects\Attributes\TransformKeys;
 use StdOut\SimpleDataObjects\Attributes\WhenLoaded;
 use StdOut\SimpleDataObjects\Attributes\WrapIn;
 use StdOut\SimpleDataObjects\Attributes\XmlAttribute;
 use StdOut\SimpleDataObjects\Attributes\XmlElement;
 use StdOut\SimpleDataObjects\Attributes\XmlText;
+use StdOut\SimpleDataObjects\Concerns\HasSensitiveFields;
 use StdOut\SimpleDataObjects\Contracts\DataObject;
 use StdOut\SimpleDataObjects\Exceptions\DataHydrationException;
 
@@ -82,6 +84,7 @@ final class ClassMetaFactory
             );
 
             self::assertNoFlattenWithRejectUnknownKeys($class, $params, $rejectUnknownKeys);
+            self::assertSensitiveFieldsProtected($reflection, $params);
 
             return new ClassMeta(
                 $params,
@@ -116,6 +119,7 @@ final class ClassMetaFactory
         $allParams = array_merge($ctorParams, $extraParams);
 
         self::assertNoFlattenWithRejectUnknownKeys($class, $allParams, $rejectUnknownKeys);
+        self::assertSensitiveFieldsProtected($reflection, $allParams);
 
         return new ClassMeta(
             $allParams,
@@ -127,6 +131,24 @@ final class ClassMetaFactory
             wrapIn: $wrapIn,
             computed: $computed,
             inferRules: $inferRules,
+        );
+    }
+
+    /** @param list<ParameterMeta> $params */
+    private static function assertSensitiveFieldsProtected(ReflectionClass $reflection, array $params): void
+    {
+        if (! array_any($params, static fn (ParameterMeta $p): bool => $p->isSensitive)) {
+            return;
+        }
+
+        for ($r = $reflection; $r !== false; $r = $r->getParentClass()) {
+            if (in_array(HasSensitiveFields::class, $r->getTraitNames(), true)) {
+                return;
+            }
+        }
+
+        throw new \InvalidArgumentException(
+            "{$reflection->name}: #[Sensitive] fields require `use ".HasSensitiveFields::class.';` so serialize() and var_dump() cannot expose them.',
         );
     }
 
@@ -355,6 +377,7 @@ final class ClassMetaFactory
             hiddenExcept: $hiddenExcept,
             phpType: RuleInferrer::phpTypeName($parameter),
             xmlSource: self::xmlSource($parameter, $phpName, (string) $inputNames[0]),
+            isSensitive: $parameter->getAttributes(Sensitive::class) !== [],
         );
     }
 

@@ -49,7 +49,6 @@ final class EncryptedCast implements CastsValue, ProvidesJsonSchema
             }
         }
 
-        // BLAKE2b: a secure, fast KDF — no brute-force shortcut unlike raw sha256
         $this->secretKey = sodium_crypto_generichash($key, '', SODIUM_CRYPTO_SECRETBOX_KEYBYTES);
     }
 

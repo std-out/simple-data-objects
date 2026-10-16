@@ -40,6 +40,15 @@ final class ValueCaster
         return $value;
     }
 
+    public static function castSensitive(ParameterMeta $meta, mixed $value, string $class): mixed
+    {
+        try {
+            return self::cast($meta, $value);
+        } catch (\Throwable) {
+            throw DataHydrationException::invalidSensitiveValue($class, (string) $meta->inputNames[0]);
+        }
+    }
+
     private static function castEnum(ParameterMeta $meta, mixed $value): ?UnitEnum
     {
         $enum = null;
