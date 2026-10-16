@@ -18,7 +18,7 @@ final class DataCollectionCast implements CastsAttributes
     /** @param class-string<BaseData> $dataClass */
     public function __construct(private readonly string $dataClass) {}
 
-    public function get(Model $model, string $key, mixed $value, array $attributes): ?TypedDataCollection
+    public function get(Model $model, string $key, #[\SensitiveParameter] mixed $value, #[\SensitiveParameter] array $attributes): ?TypedDataCollection
     {
         if ($value === null) {
             return null;
@@ -39,7 +39,7 @@ final class DataCollectionCast implements CastsAttributes
         return $this->dataClass::collection($items);
     }
 
-    public function set(Model $model, string $key, mixed $value, array $attributes): ?string
+    public function set(Model $model, string $key, #[\SensitiveParameter] mixed $value, #[\SensitiveParameter] array $attributes): ?string
     {
         if ($value === null) {
             return null;
@@ -51,7 +51,7 @@ final class DataCollectionCast implements CastsAttributes
     }
 
     /** See DataObjectCast::compare() for why this exists. */
-    public function compare(Model $model, string $key, mixed $firstValue, mixed $secondValue): bool
+    public function compare(Model $model, string $key, #[\SensitiveParameter] mixed $firstValue, #[\SensitiveParameter] mixed $secondValue): bool
     {
         if ($firstValue === $secondValue) {
             return true;

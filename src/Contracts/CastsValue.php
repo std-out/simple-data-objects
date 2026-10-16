@@ -6,7 +6,7 @@ namespace StdOut\SimpleDataObjects\Contracts;
 
 interface CastsValue
 {
-    public function get(mixed $value): mixed;
+    public function get(#[\SensitiveParameter] mixed $value): mixed;
 
-    public function set(mixed $value): mixed;
+    public function set(#[\SensitiveParameter] mixed $value): mixed;
 }

@@ -10,7 +10,7 @@ final class Redactor
 
     private const string PAN_PATTERN = '/(?<!\d)\d(?:[ -]?\d){12,18}(?!\d)/';
 
-    public static function maskPan(string $value): string
+    public static function maskPan(#[\SensitiveParameter] string $value): string
     {
         if (strlen($value) < 13) {
             return $value;
@@ -19,7 +19,7 @@ final class Redactor
         return preg_replace_callback(self::PAN_PATTERN, self::maskDigits(...), $value) ?? $value;
     }
 
-    public static function forMessage(string $value): string
+    public static function forMessage(#[\SensitiveParameter] string $value): string
     {
         return addcslashes(self::maskPan($value), "\0..\37\177");
     }

@@ -16,7 +16,7 @@ final class BooleanCast implements CastsValue, ProvidesJsonSchema
         return new self;
     }
 
-    public function get(mixed $value): ?bool
+    public function get(#[\SensitiveParameter] mixed $value): ?bool
     {
         if ($value === null) {
             return null;
@@ -29,7 +29,7 @@ final class BooleanCast implements CastsValue, ProvidesJsonSchema
         return in_array(strtolower((string) $value), self::TRUTHY, true);
     }
 
-    public function set(mixed $value): ?bool
+    public function set(#[\SensitiveParameter] mixed $value): ?bool
     {
         return $value === null ? null : (bool) $value;
     }

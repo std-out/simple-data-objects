@@ -7,7 +7,9 @@ namespace StdOut\SimpleDataObjects\Tests;
 use Illuminate\Database\Eloquent\Model;
 use PHPUnit\Framework\TestCase;
 use StdOut\SimpleDataObjects\Laravel\DataObjectCast;
+use StdOut\SimpleDataObjects\Tests\Fixtures\CastableAccountData;
 use StdOut\SimpleDataObjects\Tests\Fixtures\CastableAddressData;
+use StdOut\SimpleDataObjects\Tests\Fixtures\CastablePaymentData;
 
 /**
  * Direct, isolated tests of the cast class itself — $model is unused by
@@ -94,5 +96,36 @@ class DataObjectCastTest extends TestCase
         $b = '{"street":"2 Other St","city":"Lviv"}';
 
         $this->assertFalse($this->cast()->compare($this->model(), 'address', $a, $b));
+    }
+
+    public function test_set_drops_hidden_fields_without_a_context(): void
+    {
+        $json = (new DataObjectCast(CastableAccountData::class))->set($this->model(), 'account', new CastableAccountData('alice', 'secret'), []);
+
+        $this->assertJsonStringEqualsJsonString('{"login":"alice"}', $json);
+    }
+
+    public function test_set_keeps_hidden_fields_visible_in_the_context(): void
+    {
+        $cast = CastableAccountData::castUsing(['storage']);
+
+        $json = $cast->set($this->model(), 'account', new CastableAccountData('alice', 'secret'), []);
+
+        $this->assertJsonStringEqualsJsonString('{"login":"alice","token":"secret"}', $json);
+    }
+
+    public function test_compare_with_a_context_detects_a_hidden_field_change(): void
+    {
+        $cast = CastableAccountData::castUsing(['storage']);
+
+        $this->assertFalse($cast->compare($this->model(), 'account', '{"login":"alice","token":"a"}', '{"login":"alice","token":"b"}'));
+        $this->assertTrue($cast->compare($this->model(), 'account', '{"login":"alice","token":"a"}', '{"token":"a","login":"alice"}'));
+    }
+
+    public function test_compare_rejects_instances_of_different_classes(): void
+    {
+        $cast = new DataObjectCast(CastablePaymentData::class);
+
+        $this->assertFalse($cast->compare($this->model(), 'payment', '{"type":"card","last4":"4242"}', '{"type":"bank","iban":"UA00"}'));
     }
 }

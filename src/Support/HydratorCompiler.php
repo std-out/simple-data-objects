@@ -169,7 +169,7 @@ final class HydratorCompiler
             $field = var_export($meta->discriminatorField, true);
 
             return <<<PHP
-            static function (array \$d) use (\$meta): \\{$class} {
+            static function (#[\\SensitiveParameter] array \$d) use (\$meta): \\{$class} {
                 \$c = \$meta->resolveDiscriminatedClass(\$d) ?? throw \\StdOut\\SimpleDataObjects\\Exceptions\\DataHydrationException::unresolvedDiscriminator({$classExport}, {$field}, \$d[{$field}] ?? null);
                 return \$c::from(\$d);
             }
@@ -181,7 +181,7 @@ final class HydratorCompiler
             $body = self::buildPropertyAssignments($class, $meta);
 
             return <<<PHP
-            static function (array \$d) use (\$p, \$pipes): \\{$class} {
+            static function (#[\\SensitiveParameter] array \$d) use (\$p, \$pipes): \\{$class} {
             {$unknownCheck}    \$o = new \\{$class}();
             {$body}    return \$o;
             }
@@ -195,7 +195,7 @@ final class HydratorCompiler
             $extraBody = self::buildPropertyAssignments($class, $meta, includePipesPrelude: false);
 
             return <<<PHP
-            static function (array \$d) use (\$p, \$pipes): \\{$class} {
+            static function (#[\\SensitiveParameter] array \$d) use (\$p, \$pipes): \\{$class} {
             {$unknownCheck}{$body}    \$o = new \\{$class}({$argList});
             {$extraBody}    return \$o;
             }
@@ -203,7 +203,7 @@ final class HydratorCompiler
         }
 
         return <<<PHP
-        static function (array \$d) use (\$p, \$pipes): \\{$class} {
+        static function (#[\\SensitiveParameter] array \$d) use (\$p, \$pipes): \\{$class} {
         {$unknownCheck}{$body}    return new \\{$class}({$argList});
         }
         PHP;
@@ -220,7 +220,7 @@ final class HydratorCompiler
         [$body, $argList] = self::buildParts($class, $meta);
 
         return <<<PHP
-        static function (array \$d) use (\$p, \$pipes): array {
+        static function (#[\\SensitiveParameter] array \$d) use (\$p, \$pipes): array {
         {$unknownCheck}{$body}    return [{$argList}];
         }
         PHP;
@@ -238,7 +238,7 @@ final class HydratorCompiler
         $body = self::buildPropertyAssignments($class, $meta);
 
         return <<<PHP
-        static function (array \$d, \\{$class} \$o) use (\$p, \$pipes): void {
+        static function (#[\\SensitiveParameter] array \$d, \\{$class} \$o) use (\$p, \$pipes): void {
         {$unknownCheck}{$body}}
         PHP;
     }
@@ -454,7 +454,7 @@ final class HydratorCompiler
             $field = var_export($meta->discriminatorField, true);
 
             return <<<PHP
-            static function (array \$d) use (\$meta): {$resultClass} {
+            static function (#[\\SensitiveParameter] array \$d) use (\$meta): {$resultClass} {
                 \$c = \$meta->resolveDiscriminatedClass(\$d);
                 if (\$c === null) {
                     return {$resultClass}::failure([{$field} => \\StdOut\\SimpleDataObjects\\Exceptions\\DataHydrationException::unresolvedDiscriminator({$classExport}, {$field}, \$d[{$field}] ?? null)->getMessage()]);
@@ -470,7 +470,7 @@ final class HydratorCompiler
             $fields = self::buildCollectingPropertyAssignments($class, $meta);
 
             return <<<PHP
-            static function (array \$d) use (\$p, \$pipes): {$resultClass} {
+            static function (#[\\SensitiveParameter] array \$d) use (\$p, \$pipes): {$resultClass} {
                 \$errors = [];
             {$unknownCheck}    \$o = new \\{$class}();
             {$fields}    return \$errors === [] ? {$resultClass}::success(\$o) : {$resultClass}::failure(\$errors);
@@ -484,7 +484,7 @@ final class HydratorCompiler
             $extraFields = self::buildCollectingPropertyAssignments($class, $meta, includePipesPrelude: false);
 
             return <<<PHP
-            static function (array \$d) use (\$p, \$pipes): {$resultClass} {
+            static function (#[\\SensitiveParameter] array \$d) use (\$p, \$pipes): {$resultClass} {
                 \$errors = [];
             {$unknownCheck}{$pipelineBlock}{$guardedFieldBody}    \$o = null;
                 if (\$errors === []) {
@@ -502,7 +502,7 @@ final class HydratorCompiler
         }
 
         return <<<PHP
-        static function (array \$d) use (\$p, \$pipes): {$resultClass} {
+        static function (#[\\SensitiveParameter] array \$d) use (\$p, \$pipes): {$resultClass} {
             \$errors = [];
         {$unknownCheck}{$pipelineBlock}{$guardedFieldBody}    if (\$errors !== []) {
                 return {$resultClass}::failure(\$errors);

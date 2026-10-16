@@ -18,7 +18,7 @@ final class FloatCast implements CastsValue, ProvidesJsonSchema
         return new self($state['decimals']);
     }
 
-    public function get(mixed $value): ?float
+    public function get(#[\SensitiveParameter] mixed $value): ?float
     {
         if ($value === null) {
             return null;
@@ -29,7 +29,7 @@ final class FloatCast implements CastsValue, ProvidesJsonSchema
         return $this->decimals >= 0 ? round($float, $this->decimals) : $float;
     }
 
-    public function set(mixed $value): ?float
+    public function set(#[\SensitiveParameter] mixed $value): ?float
     {
         return $this->get($value);
     }

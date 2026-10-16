@@ -19,7 +19,7 @@ final class CommaSeparatedCast implements CastsValue, ProvidesJsonSchema
         return new self($state['separator'], $state['trim']);
     }
 
-    public function get(mixed $value): ?array
+    public function get(#[\SensitiveParameter] mixed $value): ?array
     {
         if ($value === null) {
             return null;
@@ -40,7 +40,7 @@ final class CommaSeparatedCast implements CastsValue, ProvidesJsonSchema
         return $this->trim ? array_map('trim', $parts) : $parts;
     }
 
-    public function set(mixed $value): ?string
+    public function set(#[\SensitiveParameter] mixed $value): ?string
     {
         if ($value === null) {
             return null;

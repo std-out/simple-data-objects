@@ -9,13 +9,15 @@ namespace StdOut\SimpleDataObjects\Contracts;
 
 interface CastsValue
 {
-    public function get(mixed $value): mixed;
-    public function set(mixed $value): mixed;
+    public function get(#[\SensitiveParameter] mixed $value): mixed;
+    public function set(#[\SensitiveParameter] mixed $value): mixed;
 }
 ```
 
 - `get()` — called during **hydration** (raw input → PHP value)
 - `set()` — called during **serialization** (PHP value → serializable form)
+
+PHP does not inherit `#[\SensitiveParameter]` from the interface. Add it to your own `get()` / `set()` so the value stays out of stack traces.
 
 ## Example: Money Cast
 

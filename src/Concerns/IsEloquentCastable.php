@@ -20,6 +20,6 @@ trait IsEloquentCastable
 {
     public static function castUsing(array $arguments): DataObjectCast
     {
-        return new DataObjectCast(static::class);
+        return new DataObjectCast(static::class, $arguments[0] ?? null);
     }
 }

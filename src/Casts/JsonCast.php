@@ -19,7 +19,7 @@ final class JsonCast implements CastsValue, ProvidesJsonSchema
         return new self($state['assoc'], $state['encodeFlags']);
     }
 
-    public function get(mixed $value): mixed
+    public function get(#[\SensitiveParameter] mixed $value): mixed
     {
         if ($value === null) {
             return null;
@@ -32,7 +32,7 @@ final class JsonCast implements CastsValue, ProvidesJsonSchema
         return json_decode((string) $value, $this->assoc, 64, JSON_THROW_ON_ERROR);
     }
 
-    public function set(mixed $value): ?string
+    public function set(#[\SensitiveParameter] mixed $value): ?string
     {
         if ($value === null) {
             return null;

@@ -14,12 +14,12 @@ final class IntegerCast implements CastsValue, ProvidesJsonSchema
         return new self;
     }
 
-    public function get(mixed $value): ?int
+    public function get(#[\SensitiveParameter] mixed $value): ?int
     {
         return $value === null ? null : (int) $value;
     }
 
-    public function set(mixed $value): ?int
+    public function set(#[\SensitiveParameter] mixed $value): ?int
     {
         return $value === null ? null : (int) $value;
     }

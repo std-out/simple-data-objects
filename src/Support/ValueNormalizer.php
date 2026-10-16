@@ -16,7 +16,7 @@ use UnitEnum;
  */
 final class ValueNormalizer
 {
-    public static function normalize(mixed $value, ?string $context = null): mixed
+    public static function normalize(#[\SensitiveParameter] mixed $value, ?string $context = null): mixed
     {
         if ($value instanceof BaseData) {
             return $value->toArray($context);

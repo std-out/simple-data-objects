@@ -6,5 +6,5 @@ namespace StdOut\SimpleDataObjects\Contracts;
 
 interface ValuePipe
 {
-    public function handle(mixed $value, string $paramName, callable $next): mixed;
+    public function handle(#[\SensitiveParameter] mixed $value, string $paramName, callable $next): mixed;
 }

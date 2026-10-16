@@ -22,7 +22,7 @@ final class TrimCast implements CastsValue, ProvidesJsonSchema
         return new self($state['transform']);
     }
 
-    public function get(mixed $value): ?string
+    public function get(#[\SensitiveParameter] mixed $value): ?string
     {
         if ($value === null) {
             return null;
@@ -37,7 +37,7 @@ final class TrimCast implements CastsValue, ProvidesJsonSchema
         };
     }
 
-    public function set(mixed $value): ?string
+    public function set(#[\SensitiveParameter] mixed $value): ?string
     {
         return $this->get($value);
     }

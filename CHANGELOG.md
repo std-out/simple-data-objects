@@ -7,6 +7,25 @@ and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## [2.4.0] — 2026-10-16
+
+### Added
+- `EncryptedCast(provider: ...)` with the `EncryptionKeyProvider` contract
+  loads the key from a KMS, Vault or HSM instead of the environment.
+- `IsEloquentCastable` accepts an output context (`AccountData::class.':storage'`),
+  so `#[Hidden(except: ['storage'])]` fields are stored and survive the
+  next load. Without a context nothing changes.
+
+### Security
+- Input is marked `#[\SensitiveParameter]` in every entry point, compiled
+  hydrator, pipe, cast and Eloquent cast, so stack traces no longer carry
+  card numbers when `zend.exception_ignore_args` is off.
+- The `EncryptedCast` derived key no longer shows up in `var_export()`,
+  `(array)` casts or `json_encode()` of the cast or its metadata.
+- `DateTimeCast` and `DateTimeImmutableCast` without `inputFormat` mask card
+  numbers in PHP's own `DateMalformedStringException`; the exception type
+  is unchanged.
+
 ## [2.3.0] — 2026-10-16
 
 ### Added
@@ -568,7 +587,8 @@ Initial release.
   `toResponse()`).
 - CI pipeline: tests across Laravel 10–13 and a scheduled `composer audit`.
 
-[Unreleased]: https://github.com/std-out/simple-data-objects/compare/v2.3.0...HEAD
+[Unreleased]: https://github.com/std-out/simple-data-objects/compare/v2.4.0...HEAD
+[2.4.0]: https://github.com/std-out/simple-data-objects/compare/v2.3.0...v2.4.0
 [2.3.0]: https://github.com/std-out/simple-data-objects/compare/v2.2.1...v2.3.0
 [2.2.1]: https://github.com/std-out/simple-data-objects/compare/v2.2.0...v2.2.1
 [1.8.0]: https://github.com/std-out/simple-data-objects/compare/v1.7.2...v1.8.0

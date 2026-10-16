@@ -13,7 +13,7 @@ use StdOut\SimpleDataObjects\Support\MetadataRegistry;
 
 trait HasLaravelIntegration
 {
-    abstract public static function from(mixed $data): static;
+    abstract public static function from(#[\SensitiveParameter] mixed $data): static;
 
     abstract public function toArray(?string $context = null): array;
 

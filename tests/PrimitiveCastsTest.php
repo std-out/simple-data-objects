@@ -16,11 +16,13 @@ use StdOut\SimpleDataObjects\Casts\IntegerCast;
 use StdOut\SimpleDataObjects\Casts\JsonCast;
 use StdOut\SimpleDataObjects\Casts\TrimCast;
 use StdOut\SimpleDataObjects\Casts\UuidCast;
+use StdOut\SimpleDataObjects\Tests\Fixtures\EmptyKeyProvider;
 use StdOut\SimpleDataObjects\Tests\Fixtures\FilterData;
 use StdOut\SimpleDataObjects\Tests\Fixtures\OrderWithUuidData;
 use StdOut\SimpleDataObjects\Tests\Fixtures\Priority;
 use StdOut\SimpleDataObjects\Tests\Fixtures\ProductData;
 use StdOut\SimpleDataObjects\Tests\Fixtures\SecretData;
+use StdOut\SimpleDataObjects\Tests\Fixtures\StaticKeyProvider;
 use StdOut\SimpleDataObjects\Tests\Fixtures\Status;
 
 class PrimitiveCastsTest extends TestCase
@@ -310,6 +312,49 @@ class PrimitiveCastsTest extends TestCase
         $this->expectException(InvalidArgumentException::class);
 
         new EncryptedCast;
+    }
+
+    public function test_encrypted_cast_rejects_more_than_one_key_source(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('Provide exactly one of $key, $env or $provider.');
+
+        new EncryptedCast('my-key', provider: StaticKeyProvider::class);
+    }
+
+    public function test_encrypted_cast_resolves_key_from_provider(): void
+    {
+        $encrypted = (new EncryptedCast(provider: StaticKeyProvider::class))->set('secret');
+
+        $this->assertSame('secret', (new EncryptedCast('provider-key'))->get($encrypted));
+    }
+
+    public function test_encrypted_cast_rejects_a_class_that_is_not_a_key_provider(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage("Key provider 'stdClass' must implement");
+
+        new EncryptedCast(provider: \stdClass::class);
+    }
+
+    public function test_encrypted_cast_rejects_an_empty_key_from_provider(): void
+    {
+        $this->expectException(\RuntimeException::class);
+        $this->expectExceptionMessage('returned an empty key');
+
+        new EncryptedCast(provider: EmptyKeyProvider::class);
+    }
+
+    public function test_encrypted_cast_hides_the_derived_key_from_every_dump(): void
+    {
+        $cast = new EncryptedCast('dump-test-key');
+        $key = sodium_crypto_generichash('dump-test-key', '', SODIUM_CRYPTO_SECRETBOX_KEYBYTES);
+        $dumps = [var_export($cast, true), print_r((array) $cast, true), (string) json_encode((array) $cast), print_r($cast, true)];
+
+        foreach ($dumps as $dump) {
+            $this->assertStringNotContainsString($key, $dump);
+            $this->assertStringNotContainsString(bin2hex($key), $dump);
+        }
     }
 
     public function test_encrypted_cast_rejects_both_key_and_env(): void

@@ -9,6 +9,7 @@ use LogicException;
 use RuntimeException;
 use SodiumException;
 use StdOut\SimpleDataObjects\Contracts\CastsValue;
+use StdOut\SimpleDataObjects\Contracts\EncryptionKeyProvider;
 use StdOut\SimpleDataObjects\Contracts\ProvidesJsonSchema;
 
 /**
@@ -24,35 +25,35 @@ use StdOut\SimpleDataObjects\Contracts\ProvidesJsonSchema;
  */
 final class EncryptedCast implements CastsValue, ProvidesJsonSchema
 {
-    private readonly string $secretKey;
+    private readonly \SensitiveParameterValue $secretKey;
 
     /**
      * Attribute arguments only allow constant expressions — env() or config()
      * calls are a compile error there. Pass the NAME of an environment
-     * variable via $env to keep the key itself out of source code:
+     * variable via $env, or an EncryptionKeyProvider class via $provider, to
+     * keep the key itself out of source code:
      *
      *     #[Cast(new EncryptedCast(env: 'DATA_ENCRYPTION_KEY'))]
+     *     #[Cast(new EncryptedCast(provider: KmsKeyProvider::class))]
+     *
+     * @param  class-string<EncryptionKeyProvider>|null  $provider
      */
     public function __construct(
         #[\SensitiveParameter] ?string $key = null,
         ?string $env = null,
+        ?string $provider = null,
     ) {
-        if (($key === null) === ($env === null)) {
-            throw new InvalidArgumentException('Provide exactly one of $key or $env.');
-        }
+        $key = match (true) {
+            ($key !== null) + ($env !== null) + ($provider !== null) !== 1 => throw new InvalidArgumentException('Provide exactly one of $key, $env or $provider.'),
+            $env !== null => self::keyFromEnvironment($env),
+            $provider !== null => self::keyFromProvider($provider),
+            default => $key,
+        };
 
-        if ($env !== null) {
-            $key = $_ENV[$env] ?? getenv($env);
-
-            if (! is_string($key) || $key === '') {
-                throw new RuntimeException("Environment variable '{$env}' is not set or empty.");
-            }
-        }
-
-        $this->secretKey = sodium_crypto_generichash($key, '', SODIUM_CRYPTO_SECRETBOX_KEYBYTES);
+        $this->secretKey = new \SensitiveParameterValue(sodium_crypto_generichash($key, '', SODIUM_CRYPTO_SECRETBOX_KEYBYTES));
     }
 
-    public function get(mixed $value): ?string
+    public function get(#[\SensitiveParameter] mixed $value): ?string
     {
         if ($value === null) {
             return null;
@@ -71,7 +72,7 @@ final class EncryptedCast implements CastsValue, ProvidesJsonSchema
         $nonce = substr($decoded, 0, SODIUM_CRYPTO_SECRETBOX_NONCEBYTES);
         $ciphertext = substr($decoded, SODIUM_CRYPTO_SECRETBOX_NONCEBYTES);
 
-        $plaintext = sodium_crypto_secretbox_open($ciphertext, $nonce, $this->secretKey);
+        $plaintext = sodium_crypto_secretbox_open($ciphertext, $nonce, $this->secretKey->getValue());
 
         if ($plaintext === false) {
             throw new RuntimeException('Decryption failed: authentication tag mismatch.');
@@ -80,7 +81,7 @@ final class EncryptedCast implements CastsValue, ProvidesJsonSchema
         return $plaintext;
     }
 
-    public function set(mixed $value): ?string
+    public function set(#[\SensitiveParameter] mixed $value): ?string
     {
         if ($value === null) {
             return null;
@@ -91,7 +92,7 @@ final class EncryptedCast implements CastsValue, ProvidesJsonSchema
         }
 
         $nonce = random_bytes(SODIUM_CRYPTO_SECRETBOX_NONCEBYTES);
-        $ciphertext = sodium_crypto_secretbox((string) $value, $nonce, $this->secretKey);
+        $ciphertext = sodium_crypto_secretbox((string) $value, $nonce, $this->secretKey->getValue());
 
         return sodium_bin2base64($nonce.$ciphertext, SODIUM_BASE64_VARIANT_URLSAFE_NO_PADDING);
     }
@@ -111,5 +112,31 @@ final class EncryptedCast implements CastsValue, ProvidesJsonSchema
     public function jsonSchema(): array
     {
         return ['type' => 'string'];
+    }
+
+    private static function keyFromEnvironment(string $env): string
+    {
+        $key = $_ENV[$env] ?? getenv($env);
+
+        if (! is_string($key) || $key === '') {
+            throw new RuntimeException("Environment variable '{$env}' is not set or empty.");
+        }
+
+        return $key;
+    }
+
+    private static function keyFromProvider(string $provider): string
+    {
+        if (! is_subclass_of($provider, EncryptionKeyProvider::class)) {
+            throw new InvalidArgumentException("Key provider '{$provider}' must implement ".EncryptionKeyProvider::class.'.');
+        }
+
+        $key = (new $provider)->key();
+
+        if ($key === '') {
+            throw new RuntimeException("Key provider '{$provider}' returned an empty key.");
+        }
+
+        return $key;
     }
 }

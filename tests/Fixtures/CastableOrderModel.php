@@ -17,5 +17,6 @@ class CastableOrderModel extends Model
         'address' => CastableAddressData::class,
         'items' => AsDataCollection::class.':'.CastableItemData::class,
         'payment' => CastablePaymentData::class,
+        'account' => CastableAccountData::class.':storage',
     ];
 }
