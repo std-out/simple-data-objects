@@ -8,7 +8,7 @@ use StdOut\SimpleDataObjects\Contracts\DataPipe;
 
 final class ThrowingPipe implements DataPipe
 {
-    public function handle(array $data, string $dataClass, callable $next): array
+    public function handle(#[\SensitiveParameter] array $data, string $dataClass, callable $next): array
     {
         throw new \RuntimeException('pipe exploded');
     }

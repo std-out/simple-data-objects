@@ -18,7 +18,7 @@ final class UuidCast implements CastsValue, ProvidesJsonSchema
         return new self;
     }
 
-    public function get(mixed $value): ?string
+    public function get(#[\SensitiveParameter] mixed $value): ?string
     {
         if ($value === null) {
             return null;
@@ -33,7 +33,7 @@ final class UuidCast implements CastsValue, ProvidesJsonSchema
         return strtolower($uuid);
     }
 
-    public function set(mixed $value): ?string
+    public function set(#[\SensitiveParameter] mixed $value): ?string
     {
         return $this->get($value);
     }

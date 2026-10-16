@@ -8,7 +8,7 @@ use StdOut\SimpleDataObjects\Contracts\ValuePipe;
 
 final class NullifyEmptyStringValuePipe implements ValuePipe
 {
-    public function handle(mixed $value, string $paramName, callable $next): mixed
+    public function handle(#[\SensitiveParameter] mixed $value, string $paramName, callable $next): mixed
     {
         return $next($value === '' ? null : $value);
     }

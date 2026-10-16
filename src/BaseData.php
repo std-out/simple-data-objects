@@ -37,7 +37,7 @@ abstract class BaseData implements Arrayable, DataObject, JsonSerializable, Stri
      * a plain object (public properties), or an existing instance of the
      * same class (returned as-is — instances are immutable).
      */
-    public static function from(mixed $data): static
+    public static function from(#[\SensitiveParameter] mixed $data): static
     {
         $hydrate = HydratorCompiler::$hydrators[static::class] ?? HydratorCompiler::compile(static::class);
 
@@ -60,7 +60,7 @@ abstract class BaseData implements Arrayable, DataObject, JsonSerializable, Stri
      * created but only some are ever read. Note that invalid input therefore
      * throws on first access, not here.
      */
-    public static function fromLazy(mixed $data): static
+    public static function fromLazy(#[\SensitiveParameter] mixed $data): static
     {
         $class = static::class;
         $reflector = self::$reflectors[$class] ??= new \ReflectionClass($class);
@@ -103,7 +103,7 @@ abstract class BaseData implements Arrayable, DataObject, JsonSerializable, Stri
         });
     }
 
-    public static function tryFrom(mixed $data): ?static
+    public static function tryFrom(#[\SensitiveParameter] mixed $data): ?static
     {
         try {
             return static::from($data);
@@ -118,7 +118,7 @@ abstract class BaseData implements Arrayable, DataObject, JsonSerializable, Stri
      *
      * @return HydrationResult<static>
      */
-    public static function fromResult(mixed $data): HydrationResult
+    public static function fromResult(#[\SensitiveParameter] mixed $data): HydrationResult
     {
         $collect = HydratorCompiler::$collectingHydrators[static::class] ?? HydratorCompiler::compileCollecting(static::class);
 
@@ -146,7 +146,7 @@ abstract class BaseData implements Arrayable, DataObject, JsonSerializable, Stri
     /**
      * @return TypedDataCollection<static>
      */
-    public static function collection(iterable $items): TypedDataCollection
+    public static function collection(#[\SensitiveParameter] iterable $items): TypedDataCollection
     {
         return TypedDataCollection::of(static::class, $items);
     }
@@ -164,7 +164,7 @@ abstract class BaseData implements Arrayable, DataObject, JsonSerializable, Stri
      *
      * @return LazyCollection<int, static>
      */
-    public static function lazyCollection(iterable $items): LazyCollection
+    public static function lazyCollection(#[\SensitiveParameter] iterable $items): LazyCollection
     {
         $class = static::class;
 
@@ -199,12 +199,12 @@ abstract class BaseData implements Arrayable, DataObject, JsonSerializable, Stri
     }
 
     /** Explicit alias of from() for JSON input — same decoding and errors. */
-    public static function fromJson(string $json): static
+    public static function fromJson(#[\SensitiveParameter] string $json): static
     {
         return static::from($json);
     }
 
-    public function with(mixed ...$overrides): static
+    public function with(#[\SensitiveParameter] mixed ...$overrides): static
     {
         $meta = MetadataRegistry::get(static::class);
         $current = get_object_vars($this);
@@ -250,7 +250,7 @@ abstract class BaseData implements Arrayable, DataObject, JsonSerializable, Stri
         return $instance;
     }
 
-    public static function fromValidated(mixed $data): static
+    public static function fromValidated(#[\SensitiveParameter] mixed $data): static
     {
         $array = is_array($data) ? $data : InputNormalizer::normalize(static::class, $data);
         $meta = MetadataRegistry::get(static::class);
@@ -276,7 +276,7 @@ abstract class BaseData implements Arrayable, DataObject, JsonSerializable, Stri
      *
      * @return HydrationResult<static>
      */
-    public static function fromValidatedResult(mixed $data): HydrationResult
+    public static function fromValidatedResult(#[\SensitiveParameter] mixed $data): HydrationResult
     {
         if (! is_array($data)) {
             try {
@@ -329,7 +329,7 @@ abstract class BaseData implements Arrayable, DataObject, JsonSerializable, Stri
     }
 
     /** @throws ValidationException */
-    public static function validate(mixed $data): void
+    public static function validate(#[\SensitiveParameter] mixed $data): void
     {
         $meta = MetadataRegistry::get(static::class);
 
@@ -358,7 +358,7 @@ abstract class BaseData implements Arrayable, DataObject, JsonSerializable, Stri
      *
      * @throws DataHydrationException
      */
-    private static function resolveDiscriminated(ClassMeta $meta, array $data): string
+    private static function resolveDiscriminated(ClassMeta $meta, #[\SensitiveParameter] array $data): string
     {
         /** @var class-string<static>|null $target */
         $target = $meta->resolveDiscriminatedClass($data);

@@ -99,7 +99,7 @@ final class ClassMeta
      *
      * @return class-string|null
      */
-    public function resolveDiscriminatedClass(array $data): ?string
+    public function resolveDiscriminatedClass(#[\SensitiveParameter] array $data): ?string
     {
         $value = $data[$this->discriminatorField] ?? null;
 
@@ -118,7 +118,7 @@ final class ClassMeta
      * @param  array<mixed>  $data
      * @return array{0: array<mixed>, 1: array<string, array<mixed>>}
      */
-    public function validationInput(array $data): array
+    public function validationInput(#[\SensitiveParameter] array $data): array
     {
         if ($this->validationAliases === [] && ! $this->cascadesNestedRules) {
             return [$data, $this->validationRules];
@@ -134,7 +134,7 @@ final class ClassMeta
      * @param  array<string, array<mixed>>  $rules
      * @return array<mixed>
      */
-    private function prepareValidation(array $data, string $prefix, array &$rules): array
+    private function prepareValidation(#[\SensitiveParameter] array $data, string $prefix, array &$rules): array
     {
         foreach ($this->validationAliases as $primary => $aliases) {
             if (array_key_exists($primary, $data)) {
@@ -180,7 +180,7 @@ final class ClassMeta
      * @param  array<string, array<mixed>>  $rules
      * @return array<mixed>
      */
-    private static function prepareNestedValidation(string $class, array $data, string $prefix, array &$rules): array
+    private static function prepareNestedValidation(string $class, #[\SensitiveParameter] array $data, string $prefix, array &$rules): array
     {
         $meta = MetadataRegistry::get($class);
 

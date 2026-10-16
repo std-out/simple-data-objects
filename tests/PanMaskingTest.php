@@ -92,6 +92,20 @@ class PanMaskingTest extends TestCase
         }
     }
 
+    public function test_native_date_parse_errors_mask_pans_and_keep_their_type(): void
+    {
+        foreach ([new DateTimeCast, new DateTimeImmutableCast] as $cast) {
+            try {
+                $cast->get(self::PAN);
+                $this->fail('Expected DateMalformedStringException.');
+            } catch (\DateMalformedStringException $e) {
+                $this->assertStringContainsString(self::MASKED, $e->getMessage());
+                $this->assertStringNotContainsString(self::PAN, $e->getMessage());
+                $this->assertNull($e->getPrevious());
+            }
+        }
+    }
+
     public function test_failure_masks_every_collected_message(): void
     {
         $result = HydrationResult::failure(['pan' => 'Rejected '.self::PAN.'.', 'name' => 'Required.']);

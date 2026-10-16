@@ -41,6 +41,32 @@ If you prefer the older `$casts` property style, the mapping is identical either
 protected $casts = ['address' => AddressData::class];
 ```
 
+### Keeping `#[Hidden]` fields in storage
+
+The column is written with `toJson()`, so `#[Hidden]` fields are dropped and a required hidden field makes the next load fail. Pass an output [context](../attributes/hidden.md#context-groups) after the class name and list it in `except` to store such a field while keeping it out of API responses:
+
+```php
+class AccountData extends BaseData implements Castable
+{
+    use IsEloquentCastable;
+
+    public function __construct(
+        public readonly string $login,
+        #[Hidden(except: ['storage'])]
+        public readonly string $apiToken,
+    ) {}
+}
+
+protected function casts(): array
+{
+    return ['account' => AccountData::class.':storage'];
+}
+
+$user->account->toArray(); // ['login' => '...'] — apiToken stays hidden everywhere else
+```
+
+Dirty-tracking compares the same context, so a change to a stored hidden field marks the attribute dirty.
+
 ## Collections
 
 `AsDataCollection::of()` casts a JSON array column to a `TypedDataCollection`, mirroring Laravel's own `AsCollection::using()` idiom. The item class needs no trait or interface — only `AsDataCollection` itself is `Castable`:

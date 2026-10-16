@@ -28,7 +28,28 @@ class UserData extends BaseData
 }
 ```
 
-A literal key is also accepted (`new EncryptedCast(key: '...')`) — useful in tests, but **avoid it in application code**: the key would live in your source tree. Exactly one of `key` / `env` must be provided; a missing or empty environment variable throws a `RuntimeException` immediately rather than silently encrypting with an empty key.
+A literal key is also accepted (`new EncryptedCast(key: '...')`) — useful in tests, but **avoid it in application code**: the key would live in your source tree. Exactly one of `key` / `env` / `provider` must be provided; a missing or empty environment variable throws a `RuntimeException` immediately rather than silently encrypting with an empty key.
+
+### Key provider (KMS, Vault, HSM)
+
+To keep the key out of the process environment, pass a class implementing `EncryptionKeyProvider`. It is instantiated without arguments when the cast is built, and its `key()` is called once:
+
+```php
+use StdOut\SimpleDataObjects\Contracts\EncryptionKeyProvider;
+
+final class KmsKeyProvider implements EncryptionKeyProvider
+{
+    public function key(): string
+    {
+        return KmsClient::default()->decrypt(file_get_contents('/run/secrets/data-key.enc'));
+    }
+}
+
+#[Cast(new EncryptedCast(provider: KmsKeyProvider::class))]
+public readonly string $taxId,
+```
+
+A class that does not implement the interface throws `InvalidArgumentException`; an empty key throws `RuntimeException`.
 
 ### Hydration (decrypt)
 
@@ -67,9 +88,9 @@ The cast keeps key material out of the places the library controls:
 
 - **Never written to the metadata file cache.** `EncryptedCast` deliberately does not implement `__set_state()`, so classes using it are excluded from [file-based metadata persistence](../features/cache.md) — only the in-memory cache applies. Exporting the cast would write the key to disk in plaintext.
 - **Not serializable.** `serialize()` on the cast throws a `LogicException`.
-- **Redacted in debug output.** `var_dump()` / `print_r()` show `[redacted]` instead of the derived key, and the constructor parameter is marked `#[\SensitiveParameter]`, so the raw key does not appear in stack traces.
+- **Hidden from every dump.** The derived key is held in a `\SensitiveParameterValue`, so `var_dump()`, `print_r()`, `var_export()`, `(array)` casts and `json_encode()` of the cast, or of metadata that contains it, never show it. The constructor parameter and the values passed to `get()` / `set()` are marked `#[\SensitiveParameter]`, so neither the key nor the plaintext appears in stack traces.
 
-It cannot protect the key everywhere: a key read with `env:` stays in the process environment, and `var_export()` of the cast shows the derived key.
+It cannot protect the key everywhere: a key read with `env:` stays in the process environment — use a [key provider](#key-provider-kms-vault-hsm) to avoid that.
 
 ## Tamper Detection
 

@@ -9,6 +9,7 @@ use Illuminate\Database\Capsule\Manager as Capsule;
 use Illuminate\Database\Schema\Blueprint;
 use PHPUnit\Framework\TestCase;
 use StdOut\SimpleDataObjects\Exceptions\DataHydrationException;
+use StdOut\SimpleDataObjects\Tests\Fixtures\CastableAccountData;
 use StdOut\SimpleDataObjects\Tests\Fixtures\CastableAddressData;
 use StdOut\SimpleDataObjects\Tests\Fixtures\CastableBankPaymentData;
 use StdOut\SimpleDataObjects\Tests\Fixtures\CastableCardPaymentData;
@@ -37,6 +38,7 @@ class EloquentCastTest extends TestCase
             $table->string('address')->nullable();
             $table->string('items')->nullable();
             $table->string('payment')->nullable();
+            $table->string('account')->nullable();
         });
 
         self::$capsule = $capsule;
@@ -66,6 +68,18 @@ class EloquentCastTest extends TestCase
         $this->assertInstanceOf(CastableAddressData::class, $reloaded->address);
         $this->assertSame('123 Main St', $reloaded->address->street);
         $this->assertSame('Kyiv', $reloaded->address->city);
+    }
+
+    public function test_storage_context_keeps_hidden_fields_through_save_and_fresh_load(): void
+    {
+        $model = CastableOrderModel::create([
+            'account' => new CastableAccountData('alice', 'secret-token'),
+        ]);
+
+        $reloaded = CastableOrderModel::find($model->id)->fresh();
+
+        $this->assertSame('secret-token', $reloaded->account->token);
+        $this->assertSame(['login' => 'alice'], $reloaded->account->toArray());
     }
 
     public function test_single_data_object_accepts_a_plain_array_on_set(): void

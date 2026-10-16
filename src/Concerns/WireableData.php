@@ -16,7 +16,7 @@ namespace StdOut\SimpleDataObjects\Concerns;
  */
 trait WireableData
 {
-    abstract public static function from(mixed $data): static;
+    abstract public static function from(#[\SensitiveParameter] mixed $data): static;
 
     abstract public function toArray(): array;
 
@@ -25,7 +25,7 @@ trait WireableData
         return $this->toArray();
     }
 
-    public static function fromLivewire(mixed $value): static
+    public static function fromLivewire(#[\SensitiveParameter] mixed $value): static
     {
         return static::from($value);
     }

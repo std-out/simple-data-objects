@@ -18,7 +18,7 @@ use StdOut\SimpleDataObjects\Exceptions\DataHydrationException;
  */
 final class InputNormalizer
 {
-    public static function normalize(string $class, mixed $data): array
+    public static function normalize(string $class, #[\SensitiveParameter] mixed $data): array
     {
         if ($data instanceof Arrayable) {
             return $data->toArray();

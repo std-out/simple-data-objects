@@ -33,7 +33,7 @@ final class MoneyCast implements CastsValue, ProvidesJsonSchema
         return new self($state['currency'], $state['decimals']);
     }
 
-    public function get(mixed $value): ?Money
+    public function get(#[\SensitiveParameter] mixed $value): ?Money
     {
         if ($value === null) {
             return null;
@@ -55,7 +55,7 @@ final class MoneyCast implements CastsValue, ProvidesJsonSchema
         return new Money($this->resolveAmount($value), $this->currency);
     }
 
-    public function set(mixed $value): ?int
+    public function set(#[\SensitiveParameter] mixed $value): ?int
     {
         if ($value === null) {
             return null;
@@ -66,7 +66,7 @@ final class MoneyCast implements CastsValue, ProvidesJsonSchema
         return $value->amount;
     }
 
-    private function resolveAmount(mixed $amount): int
+    private function resolveAmount(#[\SensitiveParameter] mixed $amount): int
     {
         if (is_int($amount)) {
             return $amount;
@@ -87,7 +87,7 @@ final class MoneyCast implements CastsValue, ProvidesJsonSchema
      * representation (float gives 100 for "1.005" but 201 for "2.005",
      * despite both being an equally "exact" half-cent).
      */
-    private function parseDecimalString(string $amount): int
+    private function parseDecimalString(#[\SensitiveParameter] string $amount): int
     {
         $amount = trim($amount);
 

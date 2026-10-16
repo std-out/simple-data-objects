@@ -84,6 +84,6 @@ Casts transform values in both directions. On `toArray()`, the `set()` method of
 | `DateTimeCast('Y-m-d')` | `DateTime` object | `'2025-06-15'` |
 | `BooleanCast` | `true` | `true` |
 | `JsonCast` | `['key' => 'val']` | `'{"key":"val"}'` |
-| `EncryptedCast('key')` | plaintext string | AES ciphertext |
+| `EncryptedCast('key')` | plaintext string | XSalsa20-Poly1305 ciphertext |
 
 See [Casts →](../casts/index.md) for the full reference.

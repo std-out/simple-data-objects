@@ -119,7 +119,7 @@ final class XmlStream
      * Expects the reader on an element; leaves it either on that same element
      * or on its end tag, so the caller always advances with next().
      */
-    private static function fill(XMLReader $xml, array $shape, array &$row): void
+    private static function fill(XMLReader $xml, array $shape, #[\SensitiveParameter] array &$row): void
     {
         foreach ($shape[0] as $attribute => [$key, $type]) {
             $value = $xml->getAttribute($attribute);
@@ -174,7 +174,7 @@ final class XmlStream
         }
     }
 
-    private static function coerce(string $value, int $type): mixed
+    private static function coerce(#[\SensitiveParameter] string $value, int $type): mixed
     {
         if ($type >= self::NULLABLE) {
             if ($value === '') {

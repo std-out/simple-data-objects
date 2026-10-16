@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace StdOut\SimpleDataObjects\Casts;
 
+use DateMalformedStringException;
 use DateTime;
 use DateTimeImmutable;
 use DateTimeInterface;
@@ -30,7 +31,7 @@ final class DateTimeImmutableCast implements CastsValue, ProvidesJsonSchema
         return new self($state['outputFormat'], $state['inputFormat'], $state['timezone']);
     }
 
-    public function get(mixed $value): ?DateTimeImmutable
+    public function get(#[\SensitiveParameter] mixed $value): ?DateTimeImmutable
     {
         if ($value === null) {
             return null;
@@ -58,10 +59,14 @@ final class DateTimeImmutableCast implements CastsValue, ProvidesJsonSchema
             return $dt;
         }
 
-        return new DateTimeImmutable((string) $value, $tz);
+        try {
+            return new DateTimeImmutable((string) $value, $tz);
+        } catch (DateMalformedStringException $e) {
+            throw new DateMalformedStringException(Redactor::forMessage($e->getMessage()));
+        }
     }
 
-    public function set(mixed $value): ?string
+    public function set(#[\SensitiveParameter] mixed $value): ?string
     {
         if ($value === null) {
             return null;

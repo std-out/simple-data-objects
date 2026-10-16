@@ -20,7 +20,7 @@ final class EnumCast implements CastsValue
         return new self($state['enumClass'], $state['default']);
     }
 
-    public function get(mixed $value): ?UnitEnum
+    public function get(#[\SensitiveParameter] mixed $value): ?UnitEnum
     {
         if ($value === null) {
             return $this->default;
@@ -37,7 +37,7 @@ final class EnumCast implements CastsValue
         return $this->default;
     }
 
-    public function set(mixed $value): mixed
+    public function set(#[\SensitiveParameter] mixed $value): mixed
     {
         if ($value === null) {
             return null;

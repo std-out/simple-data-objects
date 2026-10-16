@@ -23,7 +23,7 @@ final class PipelineRunner
      * @param  list<class-string<DataPipe>>  $pipes
      * @param  class-string  $dataClass
      */
-    public static function run(array $data, string $dataClass, array $pipes): array
+    public static function run(#[\SensitiveParameter] array $data, string $dataClass, array $pipes): array
     {
         if ($pipes === []) {
             return $data;
@@ -31,8 +31,8 @@ final class PipelineRunner
 
         $pipeline = array_reduce(
             array_reverse($pipes),
-            static fn (callable $next, string $pipeClass): \Closure => static fn (array $d): array => self::instance($pipeClass)->handle($d, $dataClass, $next),
-            static fn (array $d): array => $d,
+            static fn (callable $next, string $pipeClass): \Closure => static fn (#[\SensitiveParameter] array $d): array => self::instance($pipeClass)->handle($d, $dataClass, $next),
+            static fn (#[\SensitiveParameter] array $d): array => $d,
         );
 
         return $pipeline($data);
@@ -43,7 +43,7 @@ final class PipelineRunner
      *
      * @param  list<class-string<ValuePipe>>  $pipes
      */
-    public static function runOnValue(mixed $value, string $paramName, array $pipes): mixed
+    public static function runOnValue(#[\SensitiveParameter] mixed $value, string $paramName, array $pipes): mixed
     {
         if ($pipes === []) {
             return $value;
@@ -51,8 +51,8 @@ final class PipelineRunner
 
         $pipeline = array_reduce(
             array_reverse($pipes),
-            static fn (callable $next, string $pipeClass): \Closure => static fn (mixed $v): mixed => self::instance($pipeClass)->handle($v, $paramName, $next),
-            static fn (mixed $v): mixed => $v,
+            static fn (callable $next, string $pipeClass): \Closure => static fn (#[\SensitiveParameter] mixed $v): mixed => self::instance($pipeClass)->handle($v, $paramName, $next),
+            static fn (#[\SensitiveParameter] mixed $v): mixed => $v,
         );
 
         return $pipeline($value);

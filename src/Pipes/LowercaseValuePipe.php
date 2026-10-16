@@ -8,7 +8,7 @@ use StdOut\SimpleDataObjects\Contracts\ValuePipe;
 
 final class LowercaseValuePipe implements ValuePipe
 {
-    public function handle(mixed $value, string $paramName, callable $next): mixed
+    public function handle(#[\SensitiveParameter] mixed $value, string $paramName, callable $next): mixed
     {
         return $next(is_string($value) ? mb_strtolower($value) : $value);
     }

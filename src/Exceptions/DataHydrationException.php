@@ -40,14 +40,14 @@ final class DataHydrationException extends RuntimeException
         return new self("Cannot read XML from '{$uri}': {$reason}.");
     }
 
-    public static function invalidEnumValue(string $enumClass, string $field, mixed $value): self
+    public static function invalidEnumValue(string $enumClass, string $field, #[\SensitiveParameter] mixed $value): self
     {
         $given = is_scalar($value) ? "'".Redactor::forMessage((string) $value)."'" : get_debug_type($value);
 
         return new self("Invalid value {$given} for field '{$field}'; expected a case of {$enumClass}.");
     }
 
-    public static function unresolvedDiscriminator(string $class, string $field, mixed $value): self
+    public static function unresolvedDiscriminator(string $class, string $field, #[\SensitiveParameter] mixed $value): self
     {
         if ($value === null) {
             return new self("Missing discriminator field '{$field}' for {$class}.");

@@ -19,7 +19,7 @@ final class TypedDataCollection extends Collection
      * @param  class-string<T>  $dataClass
      * @return static<T>
      */
-    public static function of(string $dataClass, iterable $items = []): static
+    public static function of(string $dataClass, #[\SensitiveParameter] iterable $items = []): static
     {
         // Resolved once — the per-item loop pays only instanceof + one call
         $hydrate = HydratorCompiler::$hydrators[$dataClass] ?? HydratorCompiler::compile($dataClass);

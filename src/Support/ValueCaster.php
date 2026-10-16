@@ -11,7 +11,7 @@ use UnitEnum;
 
 final class ValueCaster
 {
-    public static function cast(ParameterMeta $meta, mixed $value): mixed
+    public static function cast(ParameterMeta $meta, #[\SensitiveParameter] mixed $value): mixed
     {
         if ($meta->pipes !== []) {
             $value = PipelineRunner::runOnValue($value, $meta->phpName, $meta->pipes);
@@ -40,7 +40,7 @@ final class ValueCaster
         return $value;
     }
 
-    public static function castSensitive(ParameterMeta $meta, mixed $value, string $class): mixed
+    public static function castSensitive(ParameterMeta $meta, #[\SensitiveParameter] mixed $value, string $class): mixed
     {
         try {
             return self::cast($meta, $value);
@@ -49,7 +49,7 @@ final class ValueCaster
         }
     }
 
-    private static function castEnum(ParameterMeta $meta, mixed $value): ?UnitEnum
+    private static function castEnum(ParameterMeta $meta, #[\SensitiveParameter] mixed $value): ?UnitEnum
     {
         $enum = null;
 
