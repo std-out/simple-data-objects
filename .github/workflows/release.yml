@@ -1,0 +1,64 @@
+name: Release artifacts
+
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: Release tag
+        required: true
+
+permissions:
+  contents: write
+  id-token: write
+  attestations: write
+
+jobs:
+  attest:
+    name: Provenance and SBOM
+    runs-on: ubuntu-latest
+    env:
+      TAG: ${{ github.event.release.tag_name || inputs.tag }}
+      GH_TOKEN: ${{ github.token }}
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: ${{ env.TAG }}
+          persist-credentials: false
+
+      - name: Set up PHP
+        uses: shivammathur/setup-php@eb7c497e18156a6bbabfef1d3a82760b9eda3962
+        with:
+          php-version: "8.4"
+          coverage: none
+
+      - name: Build source archive
+        run: git archive --format=tar.gz --prefix="simple-data-objects-$TAG/" -o "simple-data-objects-$TAG.tar.gz" "$TAG"
+
+      - name: Resolve runtime dependencies
+        run: composer install --no-dev --no-interaction --prefer-dist
+
+      - name: Generate SBOM
+        uses: anchore/sbom-action@66cbf4bc1f1c0d2edc94016e65bc221b6bb0ad6c
+        with:
+          path: .
+          format: cyclonedx-json
+          output-file: simple-data-objects-${{ env.TAG }}.cdx.json
+          upload-artifact: false
+          upload-release-assets: false
+
+      - name: Attest build provenance
+        uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8
+        with:
+          subject-path: simple-data-objects-${{ env.TAG }}.tar.gz
+
+      - name: Attest SBOM
+        uses: actions/attest-sbom@c604332985a26aa8cf1bdc465b92731239ec6b9e
+        with:
+          subject-path: simple-data-objects-${{ env.TAG }}.tar.gz
+          sbom-path: simple-data-objects-${{ env.TAG }}.cdx.json
+
+      - name: Upload release assets
+        run: gh release upload "$TAG" "simple-data-objects-$TAG.tar.gz" "simple-data-objects-$TAG.cdx.json" --clobber --repo "$GITHUB_REPOSITORY"

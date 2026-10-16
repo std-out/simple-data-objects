@@ -7,6 +7,11 @@ and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Changed
+- Releases ship with a source archive, a CycloneDX SBOM and a build
+  provenance attestation (`gh attestation verify`). Security reports go
+  through GitHub private vulnerability reporting; 2.x is the supported line.
+
 ## [2.2.1] — 2026-10-16
 
 ### Security
