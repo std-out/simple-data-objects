@@ -8,24 +8,41 @@ use InvalidArgumentException;
 use LogicException;
 use RuntimeException;
 use SodiumException;
+use StdOut\SimpleDataObjects\Contracts\BindsToField;
 use StdOut\SimpleDataObjects\Contracts\CastsValue;
 use StdOut\SimpleDataObjects\Contracts\EncryptionKeyProvider;
+use StdOut\SimpleDataObjects\Contracts\EncryptionKeyring;
 use StdOut\SimpleDataObjects\Contracts\ProvidesJsonSchema;
+use StdOut\SimpleDataObjects\Support\KeyMaterial;
+use StdOut\SimpleDataObjects\Support\Redactor;
 
 /**
- * Authenticated encryption using XSalsa20-Poly1305 (libsodium).
+ * Authenticated encryption using libsodium.
  *
  * Deliberately NOT exportable to the metadata file cache (no __set_state):
  * exporting would write the key material to disk in plaintext. Classes using
  * this cast still get the in-memory metadata cache; only file persistence
  * is skipped.
- *
- * Breaking change from previous AES-256-CBC version: existing ciphertext
- * produced by the old cast is not compatible and must be re-encrypted.
  */
-final class EncryptedCast implements CastsValue, ProvidesJsonSchema
+final class EncryptedCast implements BindsToField, CastsValue, ProvidesJsonSchema
 {
-    private readonly \SensitiveParameterValue $secretKey;
+    private const string PREFIX = 'v2:';
+
+    private const int PAD_BLOCK = 32;
+
+    private const string KDF_CONTEXT = 'SDOcrypt';
+
+    private const string KEY_ID_PATTERN = '/^[A-Za-z0-9_-]{1,32}$/';
+
+    private readonly ?\SensitiveParameterValue $secretKey;
+
+    private readonly ?\SensitiveParameterValue $keyring;
+
+    private readonly ?string $currentKeyId;
+
+    private readonly bool $hasExplicitContext;
+
+    private string $associatedData;
 
     /**
      * Attribute arguments only allow constant expressions — env() or config()
@@ -35,28 +52,64 @@ final class EncryptedCast implements CastsValue, ProvidesJsonSchema
      *
      *     #[Cast(new EncryptedCast(env: 'DATA_ENCRYPTION_KEY'))]
      *     #[Cast(new EncryptedCast(provider: KmsKeyProvider::class))]
+     *     #[Cast(new EncryptedCast(keyring: AppKeyring::class))]
      *
      * @param  class-string<EncryptionKeyProvider>|null  $provider
+     * @param  class-string<EncryptionKeyring>|null  $keyring
      */
     public function __construct(
         #[\SensitiveParameter] ?string $key = null,
         ?string $env = null,
         ?string $provider = null,
+        ?string $keyring = null,
+        ?string $context = null,
     ) {
-        $key = match (true) {
-            ($key !== null) + ($env !== null) + ($provider !== null) !== 1 => throw new InvalidArgumentException('Provide exactly one of $key, $env or $provider.'),
-            $env !== null => self::keyFromEnvironment($env),
-            $provider !== null => self::keyFromProvider($provider),
-            default => $key,
-        };
+        $legacyKey = KeyMaterial::resolve($key, $env, $provider);
 
-        $this->secretKey = new \SensitiveParameterValue(sodium_crypto_generichash($key, '', SODIUM_CRYPTO_SECRETBOX_KEYBYTES));
+        if ($legacyKey === null && $keyring === null) {
+            throw new InvalidArgumentException('Provide $keyring, or exactly one of $key, $env or $provider.');
+        }
+
+        $this->secretKey = $legacyKey === null
+            ? null
+            : new \SensitiveParameterValue(sodium_crypto_generichash($legacyKey, '', SODIUM_CRYPTO_SECRETBOX_KEYBYTES));
+
+        if ($keyring === null) {
+            $this->keyring = null;
+            $this->currentKeyId = null;
+        } else {
+            [$keys, $this->currentKeyId] = self::loadKeyring($keyring);
+            $this->keyring = new \SensitiveParameterValue($keys);
+        }
+
+        $this->hasExplicitContext = $context !== null;
+        $this->associatedData = $context ?? '';
+    }
+
+    public function forField(string $class, string $field): static
+    {
+        if ($this->hasExplicitContext) {
+            return $this;
+        }
+
+        $bound = clone $this;
+        $bound->associatedData = $class.'::'.$field;
+
+        return $bound;
     }
 
     public function get(#[\SensitiveParameter] mixed $value): ?string
     {
         if ($value === null) {
             return null;
+        }
+
+        if (str_starts_with((string) $value, self::PREFIX)) {
+            return $this->open((string) $value);
+        }
+
+        if ($this->secretKey === null) {
+            throw new RuntimeException('Encrypted value uses the legacy format, but no $key, $env or $provider is configured to read it.');
         }
 
         try {
@@ -91,10 +144,19 @@ final class EncryptedCast implements CastsValue, ProvidesJsonSchema
             throw new InvalidArgumentException('EncryptedCast can only encrypt scalar or Stringable values, got '.get_debug_type($value).'.');
         }
 
+        if ($this->keyring !== null) {
+            return $this->seal((string) $value);
+        }
+
         $nonce = random_bytes(SODIUM_CRYPTO_SECRETBOX_NONCEBYTES);
         $ciphertext = sodium_crypto_secretbox((string) $value, $nonce, $this->secretKey->getValue());
 
         return sodium_bin2base64($nonce.$ciphertext, SODIUM_BASE64_VARIANT_URLSAFE_NO_PADDING);
+    }
+
+    public function needsReencryption(string $value): bool
+    {
+        return $this->keyring !== null && ! str_starts_with($value, self::PREFIX.$this->currentKeyId.':');
     }
 
     /** Prevents the derived key from leaking through serialize(). */
@@ -106,7 +168,7 @@ final class EncryptedCast implements CastsValue, ProvidesJsonSchema
     /** Redacts key material in var_dump()/print_r() output. */
     public function __debugInfo(): array
     {
-        return ['secretKey' => '[redacted]'];
+        return ['secretKey' => Redactor::REDACTED];
     }
 
     public function jsonSchema(): array
@@ -114,29 +176,99 @@ final class EncryptedCast implements CastsValue, ProvidesJsonSchema
         return ['type' => 'string'];
     }
 
-    private static function keyFromEnvironment(string $env): string
+    private function seal(#[\SensitiveParameter] string $plaintext): string
     {
-        $key = $_ENV[$env] ?? getenv($env);
+        $keyId = (string) $this->currentKeyId;
+        $nonce = random_bytes(SODIUM_CRYPTO_AEAD_XCHACHA20POLY1305_IETF_NPUBBYTES);
+        $ciphertext = sodium_crypto_aead_xchacha20poly1305_ietf_encrypt(
+            sodium_pad($plaintext, self::PAD_BLOCK),
+            $this->aad($keyId),
+            $nonce,
+            $this->keyring->getValue()[$keyId],
+        );
 
-        if (! is_string($key) || $key === '') {
-            throw new RuntimeException("Environment variable '{$env}' is not set or empty.");
-        }
-
-        return $key;
+        return self::PREFIX.$keyId.':'.sodium_bin2base64($nonce.$ciphertext, SODIUM_BASE64_VARIANT_URLSAFE_NO_PADDING);
     }
 
-    private static function keyFromProvider(string $provider): string
+    private function open(#[\SensitiveParameter] string $value): string
     {
-        if (! is_subclass_of($provider, EncryptionKeyProvider::class)) {
-            throw new InvalidArgumentException("Key provider '{$provider}' must implement ".EncryptionKeyProvider::class.'.');
+        if ($this->keyring === null) {
+            throw new RuntimeException('Encrypted value uses the keyring format, but no $keyring is configured to read it.');
         }
 
-        $key = (new $provider)->key();
+        $parts = explode(':', $value, 3);
 
-        if ($key === '') {
-            throw new RuntimeException("Key provider '{$provider}' returned an empty key.");
+        if (count($parts) !== 3) {
+            throw new InvalidArgumentException('Encrypted value is malformed.');
         }
 
-        return $key;
+        [, $keyId, $payload] = $parts;
+        $key = $this->keyring->getValue()[$keyId]
+            ?? throw new RuntimeException("Unknown encryption key id '".Redactor::forMessage($keyId)."'.");
+
+        try {
+            $decoded = sodium_base642bin($payload, SODIUM_BASE64_VARIANT_URLSAFE_NO_PADDING);
+        } catch (SodiumException) {
+            throw new InvalidArgumentException('Encrypted value is not valid base64.');
+        }
+
+        if (strlen($decoded) <= SODIUM_CRYPTO_AEAD_XCHACHA20POLY1305_IETF_NPUBBYTES + SODIUM_CRYPTO_AEAD_XCHACHA20POLY1305_IETF_ABYTES) {
+            throw new InvalidArgumentException('Encrypted value is too short.');
+        }
+
+        $padded = sodium_crypto_aead_xchacha20poly1305_ietf_decrypt(
+            substr($decoded, SODIUM_CRYPTO_AEAD_XCHACHA20POLY1305_IETF_NPUBBYTES),
+            $this->aad($keyId),
+            substr($decoded, 0, SODIUM_CRYPTO_AEAD_XCHACHA20POLY1305_IETF_NPUBBYTES),
+            $key,
+        );
+
+        if ($padded === false) {
+            throw new RuntimeException('Decryption failed: authentication tag mismatch.');
+        }
+
+        return sodium_unpad($padded, self::PAD_BLOCK);
+    }
+
+    private function aad(string $keyId): string
+    {
+        return self::PREFIX.$keyId.':'.$this->associatedData;
+    }
+
+    /**
+     * @param  class-string<EncryptionKeyring>  $keyring
+     * @return array{array<string, string>, string}
+     */
+    private static function loadKeyring(string $keyring): array
+    {
+        if (! is_subclass_of($keyring, EncryptionKeyring::class)) {
+            throw new InvalidArgumentException("Keyring '{$keyring}' must implement ".EncryptionKeyring::class.'.');
+        }
+
+        $source = new $keyring;
+        $keys = [];
+
+        foreach ($source->keys() as $keyId => $material) {
+            $keyId = (string) $keyId;
+
+            if (preg_match(self::KEY_ID_PATTERN, $keyId) !== 1) {
+                throw new InvalidArgumentException("Key id '".Redactor::forMessage($keyId)."' of {$keyring} must match [A-Za-z0-9_-]{1,32}.");
+            }
+
+            $keys[$keyId] = sodium_crypto_kdf_derive_from_key(
+                KeyMaterial::BYTES,
+                1,
+                self::KDF_CONTEXT,
+                KeyMaterial::strict($material, "Key '{$keyId}' of {$keyring}"),
+            );
+        }
+
+        $current = $source->currentKeyId();
+
+        if (! isset($keys[$current])) {
+            throw new InvalidArgumentException("Current key id '".Redactor::forMessage($current)."' is not among the keys of {$keyring}.");
+        }
+
+        return [$keys, $current];
     }
 }

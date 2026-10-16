@@ -7,6 +7,24 @@ and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## [2.5.0] — 2026-10-16
+
+### Added
+- `EncryptedCast(keyring: ...)` with the `EncryptionKeyring` contract turns
+  on a new ciphertext format, `v2:<key id>:…` (XChaCha20-Poly1305-IETF):
+  - the key ID is stored in the value, so keys rotate without downtime;
+  - the value is bound to its class and field (or to `context:`), so a
+    ciphertext copied into another field is rejected;
+  - the plaintext is padded to 32-byte blocks, hiding card-number length;
+  - keys must be 32 random bytes, raw or base64.
+  Opt-in: without `keyring:` nothing changes. With a legacy key next to the
+  keyring, both formats are read and only the new one is written.
+- `EncryptedCast::needsReencryption()` and `forField()` for rotation and
+  migration scripts.
+- `Support\BlindIndex`: a keyed HMAC-SHA256 to search encrypted columns.
+- `Contracts\BindsToField`: casts implementing it learn their class and
+  field when metadata is built.
+
 ## [2.4.0] — 2026-10-16
 
 ### Added
@@ -587,7 +605,8 @@ Initial release.
   `toResponse()`).
 - CI pipeline: tests across Laravel 10–13 and a scheduled `composer audit`.
 
-[Unreleased]: https://github.com/std-out/simple-data-objects/compare/v2.4.0...HEAD
+[Unreleased]: https://github.com/std-out/simple-data-objects/compare/v2.5.0...HEAD
+[2.5.0]: https://github.com/std-out/simple-data-objects/compare/v2.4.0...v2.5.0
 [2.4.0]: https://github.com/std-out/simple-data-objects/compare/v2.3.0...v2.4.0
 [2.3.0]: https://github.com/std-out/simple-data-objects/compare/v2.2.1...v2.3.0
 [2.2.1]: https://github.com/std-out/simple-data-objects/compare/v2.2.0...v2.2.1

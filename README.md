@@ -307,7 +307,7 @@ export interface OrderData {
 
 ## Built-in Casts
 
-`DateTimeCast` · `DateTimeImmutableCast` · `EnumCast` · `BooleanCast` · `IntegerCast` · `FloatCast` · `TrimCast` · `JsonCast` · `EncryptedCast` (XSalsa20-Poly1305)
+`DateTimeCast` · `DateTimeImmutableCast` · `EnumCast` · `BooleanCast` · `IntegerCast` · `FloatCast` · `TrimCast` · `JsonCast` · `EncryptedCast` (XChaCha20-Poly1305 with key IDs and field binding, or legacy XSalsa20-Poly1305)
 
 ---
 
