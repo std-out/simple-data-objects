@@ -4,14 +4,16 @@
 
 | Version | Supported |
 | ------- | --------- |
-| 1.x     | ✅        |
-| < 1.0   | ❌        |
+| 2.x     | ✅        |
+| < 2.0   | ❌        |
 
 ## Reporting a vulnerability
 
 **Please do not report security vulnerabilities through public GitHub issues.**
 
-Email [yuriyzee@gmail.com](mailto:yuriyzee@gmail.com) with:
+Report it privately through
+[GitHub Security Advisories](https://github.com/std-out/simple-data-objects/security/advisories/new)
+or email [yuriyzee@gmail.com](mailto:yuriyzee@gmail.com) with:
 
 - a description of the issue and its impact,
 - a minimal reproduction if possible,
@@ -20,6 +22,15 @@ Email [yuriyzee@gmail.com](mailto:yuriyzee@gmail.com) with:
 You'll get an acknowledgement within 48 hours and a status update within 7
 days. Once a fix is released, we'll coordinate disclosure with you and credit
 you in the release notes (unless you prefer to stay anonymous).
+
+## Verifying a release
+
+Every release carries a source archive, a CycloneDX SBOM and a signed build
+provenance attestation:
+
+```sh
+gh attestation verify simple-data-objects-vX.Y.Z.tar.gz --repo std-out/simple-data-objects
+```
 
 ## Security-sensitive areas
 
