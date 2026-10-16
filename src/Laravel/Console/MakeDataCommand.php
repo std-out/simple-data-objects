@@ -5,8 +5,13 @@ declare(strict_types=1);
 namespace StdOut\SimpleDataObjects\Laravel\Console;
 
 use Illuminate\Console\GeneratorCommand;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
+use InvalidArgumentException;
+use StdOut\SimpleDataObjects\Support\DataClassGenerator;
+use StdOut\SimpleDataObjects\Support\SampleReader;
 use Symfony\Component\Console\Input\InputOption;
 
 /**
@@ -65,6 +70,10 @@ final class MakeDataCommand extends GeneratorCommand
 
     public function handle()
     {
+        if ($this->option('from-json') !== null || $this->option('from-xml') !== null || $this->option('id') !== null) {
+            return $this->generateFromSample();
+        }
+
         if ($this->option('rules') && $this->option('from-model') === null) {
             $this->components->warn('--rules has no effect without --from-model; ignoring.');
         }
@@ -100,6 +109,12 @@ final class MakeDataCommand extends GeneratorCommand
             ['collection', null, InputOption::VALUE_NONE, 'Add a doc-comment pointing at static::collection()'],
             ['path', null, InputOption::VALUE_OPTIONAL, "Output directory, relative to the app's Models convention (defaults to config('simple-data-objects.paths')[0])"],
             ['force', 'f', InputOption::VALUE_NONE, 'Create the class even if it already exists'],
+            ['from-json', null, InputOption::VALUE_REQUIRED, 'Generate the class and its nested classes from a sample JSON file'],
+            ['from-xml', null, InputOption::VALUE_REQUIRED, 'Generate the class and its nested classes from a sample XML file'],
+            ['xml-path', null, InputOption::VALUE_REQUIRED, 'Path to the record element in --from-xml (default: the repeated child of the root)'],
+            ['id', null, InputOption::VALUE_REQUIRED, 'With --from-model: generate from this record instead of the table columns'],
+            ['with', null, InputOption::VALUE_REQUIRED, 'With --id: comma-separated relations to load and generate nested classes for'],
+            ['optional', null, InputOption::VALUE_NONE, 'Keys missing from some sample objects become T|Optional instead of ?T = null'],
         ];
     }
 
@@ -111,6 +126,62 @@ final class MakeDataCommand extends GeneratorCommand
         $stub = str_replace('{{ classDoc }}', $this->classDocBlock(), $stub);
 
         return str_replace('{{ properties }}', $this->propertiesBlock(), $stub);
+    }
+
+    private function generateFromSample(): int
+    {
+        $qualified = $this->qualifyClass($this->getNameInput());
+        $class = class_basename($qualified);
+        $namespace = Str::beforeLast($qualified, '\\');
+        $optional = (bool) $this->option('optional');
+
+        try {
+            $classes = match (true) {
+                $this->option('from-xml') !== null => DataClassGenerator::generate(SampleReader::fromXml($this->option('from-xml'), $this->option('xml-path'))[0], $class, $namespace, true, $optional),
+                $this->option('from-json') !== null => DataClassGenerator::generate(SampleReader::fromJson($this->sampleFile($this->option('from-json'))), $class, $namespace, optional: $optional),
+                default => DataClassGenerator::fromValue($this->record(), $class, $namespace, $optional),
+            };
+
+            $written = DataClassGenerator::write($classes, dirname($this->getPath($qualified)), (bool) $this->option('force'));
+        } catch (InvalidArgumentException|ModelNotFoundException $e) {
+            $this->components->error($e->getMessage());
+
+            return self::FAILURE;
+        }
+
+        foreach ($written as $path) {
+            $this->components->info("Data object [{$path}] created successfully.");
+        }
+
+        return self::SUCCESS;
+    }
+
+    private function sampleFile(string $path): string
+    {
+        $contents = is_file($path) ? file_get_contents($path) : false;
+
+        if ($contents === false) {
+            throw new InvalidArgumentException("Cannot read sample file: {$path}");
+        }
+
+        return $contents;
+    }
+
+    private function record(): Model
+    {
+        $model = $this->option('from-model');
+
+        if ($model === null) {
+            throw new InvalidArgumentException('--id requires --from-model.');
+        }
+
+        $class = class_exists($model) ? $model : $this->qualifyModel($model);
+
+        if (! is_subclass_of($class, Model::class)) {
+            throw new InvalidArgumentException("Model class [{$class}] does not exist.");
+        }
+
+        return $class::with(array_filter(explode(',', (string) $this->option('with'))))->findOrFail($this->option('id'));
     }
 
     private function relativeDataNamespace(): string

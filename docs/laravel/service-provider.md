@@ -168,6 +168,18 @@ Column-type mapping is best-effort (a stub generator, not a full ORM introspecti
 | `bool`, `boolean` | `bool` | `boolean` |
 | `float`, `double`, `decimal`, `numeric` | `float` | `numeric` |
 | `date`, `datetime`, `timestamp` | `string` | `date` |
+
+#### From a record or a sample
+
+Add `--id` to `--from-model` to generate from a real record instead of the columns — loaded relations (`--with`) become nested classes and collections, `$hidden` attributes are left out:
+
+```sh
+php artisan make:data OrderData --from-model=Order --id=1042 --with=customer,items
+php artisan make:data OrderData --from-json=storage/samples/order.json
+php artisan make:data OfferData --from-xml=storage/feed.xml --xml-path=catalog/offer
+```
+
+These write one file per generated class into the same directory. `--optional` turns keys missing from some objects into `T|Optional`, and `--force` overwrites existing files. Type inference is described in [Generating classes from a sample](../features/code-generation.md).
 | `json`, `jsonb` | `array` | `array` |
 | anything else | `mixed` | *(none)* |
 

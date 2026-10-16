@@ -260,6 +260,20 @@ $model->update($data->definedOnly());
 
 ---
 
+### Generating classes from a sample
+
+Point `sdo-generate` at a real JSON or XML document and it writes the classes — nested DTOs, collections, types and key mapping inferred from the values:
+
+```sh
+vendor/bin/sdo-generate storage/samples/order.json app/Data
+curl -s https://api.example.com/orders/1 | vendor/bin/sdo-generate - app/Data --class=OrderData
+php artisan make:data OrderData --from-model=Order --id=1042 --with=customer,items
+```
+
+`DataClassGenerator::fromValue($array, 'OrderData', 'App\\Data')` does the same for any PHP array or object.
+
+---
+
 ### Schema generation — JSON Schema & TypeScript
 
 `jsonSchema()` walks the same metadata as `from()`/`toArray()` — no extra reflection — into a JSON Schema (draft 2020-12). `TypeScriptGenerator`/`bin/sdo-typescript` build on top of it for `.d.ts` output:

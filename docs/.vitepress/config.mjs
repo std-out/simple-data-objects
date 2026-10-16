@@ -17,6 +17,7 @@ const guide = [
       { text: 'Collecting errors', link: '/features/error-accumulation' },
       { text: 'Optional values', link: '/features/optional' },
       { text: 'Input pipes', link: '/features/pipes' },
+      { text: 'Generating classes from a sample', link: '/features/code-generation' },
     ],
   },
   {
