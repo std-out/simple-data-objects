@@ -30,6 +30,8 @@ use StdOut\SimpleDataObjects\Attributes\XmlAttribute;
 use StdOut\SimpleDataObjects\Attributes\XmlElement;
 use StdOut\SimpleDataObjects\Attributes\XmlText;
 use StdOut\SimpleDataObjects\Concerns\HasSensitiveFields;
+use StdOut\SimpleDataObjects\Contracts\BindsToField;
+use StdOut\SimpleDataObjects\Contracts\CastsValue;
 use StdOut\SimpleDataObjects\Contracts\DataObject;
 use StdOut\SimpleDataObjects\Exceptions\DataHydrationException;
 
@@ -368,7 +370,7 @@ final class ClassMetaFactory
             ignoreIfNull: $parameter->getAttributes(IgnoreIfNull::class) !== [],
             flatten: $parameter->getAttributes(Flatten::class) !== [],
             rules: $rules,
-            caster: $castAttrs !== [] ? $castAttrs[0]->newInstance()->caster : null,
+            caster: $castAttrs !== [] ? self::bindCaster($castAttrs[0]->newInstance()->caster, $parameter) : null,
             pipes: $paramPipes,
             viaConstructor: $viaConstructor,
             whenLoadedRelation: $whenLoadedAttrs !== [] ? $whenLoadedAttrs[0]->newInstance()->relation : null,
@@ -379,6 +381,13 @@ final class ClassMetaFactory
             xmlSource: self::xmlSource($parameter, $phpName, (string) $inputNames[0]),
             isSensitive: $parameter->getAttributes(Sensitive::class) !== [],
         );
+    }
+
+    private static function bindCaster(CastsValue $caster, ReflectionParameter|ReflectionProperty $parameter): CastsValue
+    {
+        return $caster instanceof BindsToField
+            ? $caster->forField((string) $parameter->getDeclaringClass()?->getName(), $parameter->getName())
+            : $caster;
     }
 
     private static function xmlSource(ReflectionParameter|ReflectionProperty $parameter, string $phpName, string $defaultName): ?string
