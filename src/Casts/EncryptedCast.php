@@ -178,7 +178,7 @@ final class EncryptedCast implements BindsToField, CastsValue, ProvidesJsonSchem
 
     private function seal(#[\SensitiveParameter] string $plaintext): string
     {
-        $keyId = (string) $this->currentKeyId;
+        $keyId = $this->currentKeyId;
         $nonce = random_bytes(SODIUM_CRYPTO_AEAD_XCHACHA20POLY1305_IETF_NPUBBYTES);
         $ciphertext = sodium_crypto_aead_xchacha20poly1305_ietf_encrypt(
             sodium_pad($plaintext, self::PAD_BLOCK),

@@ -23,7 +23,13 @@ final class Money implements Stringable
 
     public function toDecimal(int $decimals = 2): string
     {
-        return number_format($this->amount / (10 ** $decimals), $decimals, '.', '');
+        if ($decimals < 1) {
+            return number_format($this->amount / (10 ** $decimals), $decimals, '.', '');
+        }
+
+        $digits = str_pad(ltrim((string) $this->amount, '-'), $decimals + 1, '0', STR_PAD_LEFT);
+
+        return ($this->amount < 0 ? '-' : '').substr($digits, 0, -$decimals).'.'.substr($digits, -$decimals);
     }
 
     public function equals(self $other): bool

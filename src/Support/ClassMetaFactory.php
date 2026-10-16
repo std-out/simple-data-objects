@@ -93,7 +93,7 @@ final class ClassMetaFactory
                 $pipes,
                 hasConstructor: false,
                 discriminatorField: $discriminator?->field,
-                discriminatorMap: $discriminator?->map ?? [],
+                discriminatorMap: $discriminator->map ?? [],
                 discriminatorFallback: $discriminator?->fallback,
                 rejectUnknownKeys: $rejectUnknownKeys,
                 wrapIn: $wrapIn,
@@ -127,7 +127,7 @@ final class ClassMetaFactory
             $allParams,
             $pipes,
             discriminatorField: $discriminator?->field,
-            discriminatorMap: $discriminator?->map ?? [],
+            discriminatorMap: $discriminator->map ?? [],
             discriminatorFallback: $discriminator?->fallback,
             rejectUnknownKeys: $rejectUnknownKeys,
             wrapIn: $wrapIn,
@@ -351,9 +351,9 @@ final class ClassMetaFactory
             $explicitRules !== null && ! $explicitRules->merge => $explicitRules->rules,
             $inferRules => [
                 ...RuleInferrer::forParameter($parameter, $allowsNull, $nestedDataClass, $enumClass, $dataCollectionClass, $isOptional),
-                ...$explicitRules?->rules ?? [],
+                ...$explicitRules->rules ?? [],
             ],
-            default => $explicitRules?->rules ?? [],
+            default => $explicitRules->rules ?? [],
         };
 
         return new ParameterMeta(

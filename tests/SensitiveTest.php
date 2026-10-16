@@ -11,6 +11,7 @@ use StdOut\SimpleDataObjects\Support\MetadataRegistry;
 use StdOut\SimpleDataObjects\Support\ParameterMeta;
 use StdOut\SimpleDataObjects\Tests\Fixtures\SensitiveCardData;
 use StdOut\SimpleDataObjects\Tests\Fixtures\SensitiveOptionalData;
+use StdOut\SimpleDataObjects\Tests\Fixtures\SensitivePrivateData;
 use StdOut\SimpleDataObjects\Tests\Fixtures\SensitiveSubclassData;
 use StdOut\SimpleDataObjects\Tests\Fixtures\SensitiveWithoutTraitData;
 use StdOut\SimpleDataObjects\Tests\Fixtures\Status;
@@ -156,5 +157,18 @@ class SensitiveTest extends TestCase
 
         $this->assertSame(Status::Inactive, $card->status);
         $this->assertSame('Bob', $card->holder);
+    }
+
+    public function test_private_sensitive_property_is_redacted_and_blocks_serialize(): void
+    {
+        $data = new SensitivePrivateData('Alice', '1234');
+
+        $this->assertStringNotContainsString('1234', print_r($data, true));
+        $this->assertStringContainsString('[redacted]', print_r($data, true));
+
+        $this->expectException(\LogicException::class);
+        $this->expectExceptionMessage("field 'pin' is #[Sensitive]");
+
+        serialize($data);
     }
 }

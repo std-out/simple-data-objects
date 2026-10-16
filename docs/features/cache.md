@@ -63,6 +63,27 @@ It scans the sources for **concrete** `BaseData` subclasses (abstract bases are 
 
 Classes whose metadata cannot be exported (see [Limitations](#limitations)) are reported as `skipped` and keep using the in-memory cache. A broken DTO definition (e.g. conflicting attributes) fails the command immediately — deploy-time is exactly when you want to find out.
 
+### Deploying a change
+
+The cache is keyed by class name only, not by the class's source. A worker that keeps running the old cache file keeps applying the old attributes — a removed `#[Hidden]` or a changed `#[Rules]` does not take effect. Every deploy that changes a DTO needs, in this order:
+
+1. **Warm:** `sdo-warm` (or `sdo:warm`). It always rebuilds every class, so stale files are replaced.
+2. **Reload PHP:** `systemctl reload php-fpm`, `php artisan octane:reload`, or restart the queue workers. Long-running workers keep their in-memory cache, and with `opcache.validate_timestamps=0` opcache keeps serving the old file even after it changed on disk.
+
+Skipping step 2 is safe only with `opcache.validate_timestamps=1` and short-lived FPM workers.
+
+### Protecting the cache directory
+
+Cache files are PHP code that every worker `require`s, so whoever can write to the directory can run code in your application. Keep the runtime user from writing there:
+
+1. Run `sdo-warm` as the deploy user, not as the web server user.
+2. Make the directory and files read-only for the runtime user, for example `chown -R deploy: storage/framework/data-objects && chmod 0755 … && chmod 0644 …/*.meta.php`.
+3. Watch the directory with your file-integrity monitoring (PCI DSS 11.5.2): it changes only on deploy.
+
+A read-only directory is safe: a class whose file is missing is built in memory and the failed write is ignored.
+
+The library does not sign cache files. A signature checked before `require` would not help: the file could be swapped between the check and the `require`, and reading it twice would cancel the opcache benefit. File permissions are the control that works.
+
 ### Going further: opcache.preload
 
 The warmed cache files are plain PHP, so they can be compiled into opcache **before the first request ever arrives** via [preloading](https://www.php.net/manual/en/opcache.preloading.php). Add to your preload script:

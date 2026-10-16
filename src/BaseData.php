@@ -264,7 +264,7 @@ abstract class BaseData implements Arrayable, DataObject, JsonSerializable, Stri
 
         if ($meta->validationRules !== []) {
             [$input, $rules] = $meta->validationInput($array);
-            static::validatorFactory()->make($input, $rules)->validate();
+            self::validatorFactory()->make($input, $rules)->validate();
         }
 
         return static::from($array);
@@ -309,7 +309,7 @@ abstract class BaseData implements Arrayable, DataObject, JsonSerializable, Stri
         }
 
         [$input, $rules] = $meta->validationInput($data);
-        $validator = static::validatorFactory()->make($input, $rules);
+        $validator = self::validatorFactory()->make($input, $rules);
 
         try {
             if (! $validator->fails()) {
@@ -348,7 +348,7 @@ abstract class BaseData implements Arrayable, DataObject, JsonSerializable, Stri
         $array = is_array($data) ? $data : InputNormalizer::normalize(static::class, $data);
         [$input, $rules] = $meta->validationInput($array);
 
-        static::validatorFactory()
+        self::validatorFactory()
             ->make($input, $rules)
             ->validate();
     }
@@ -429,7 +429,7 @@ abstract class BaseData implements Arrayable, DataObject, JsonSerializable, Stri
             return (SerializerCompiler::$serializers[static::class] ?? SerializerCompiler::compile(static::class))($this);
         }
 
-        return (SerializerCompiler::$contextualSerializers[static::class][$context] ?? SerializerCompiler::compile(static::class, $context))($this);
+        return (SerializerCompiler::$contextualSerializers[static::class][$context] ?? SerializerCompiler::compile(static::class, $context))($this, $context);
     }
 
     public function toJson(int $flags = 0, ?string $context = null): string

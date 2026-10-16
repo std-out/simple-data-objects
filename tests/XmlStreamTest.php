@@ -297,6 +297,38 @@ final class XmlStreamTest extends TestCase
         $this->assertSame(['Alice'], $names);
     }
 
+    public function test_a_stale_libxml_error_from_earlier_code_does_not_abort_reading(): void
+    {
+        $previous = libxml_use_internal_errors(true);
+        simplexml_load_string('<broken>');
+        libxml_use_internal_errors($previous);
+        $this->write('<users><user><name>Alice</name><email>a@example.com</email></user></users>');
+
+        $this->assertCount(1, UserData::lazyXml($this->file, 'users/user')->all());
+    }
+
+    public function test_items_under_repeated_parent_elements_are_all_read(): void
+    {
+        $user = static fn (string $name): string => "<user><name>{$name}</name><email>{$name}@example.com</email></user>";
+        $this->write('<root><group>'.$user('a').'</group><other><x/></other><group>'.$user('b').$user('c').'</group></root>');
+
+        $names = UserData::lazyXml($this->file, 'root/group/user')->map(static fn (UserData $u): string => $u->name)->all();
+
+        $this->assertSame(['a', 'b', 'c'], $names);
+    }
+
+    public function test_malformed_xml_error_names_the_parser_message_and_line(): void
+    {
+        $this->write("<users>\n<user><name>Alice</name></users>");
+
+        try {
+            UserData::lazyXml($this->file, 'users/user')->all();
+            $this->fail('Expected a DataHydrationException.');
+        } catch (DataHydrationException $e) {
+            $this->assertMatchesRegularExpression("#^Cannot read XML from '.+': \\S.*\\S on line 2\\.$#", $e->getMessage());
+        }
+    }
+
     /** @return LazyCollection<int, XmlOfferData> */
     private function offers(): LazyCollection
     {

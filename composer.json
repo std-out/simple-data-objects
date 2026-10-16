@@ -21,8 +21,10 @@
         "illuminate/database": "^12.0|^13.0",
         "illuminate/http": "^12.0|^13.0",
         "illuminate/pagination": "^12.0|^13.0",
+        "infection/infection": "^0.35",
         "laravel/pint": "^1.0",
         "orchestra/testbench": "^11.0",
+        "phpstan/phpstan": "^2.1",
         "phpunit/phpunit": "^11.0"
     },
     "suggest": {
@@ -48,11 +50,16 @@
     },
     "config": {
         "sort-packages": true,
-        "optimize-autoloader": true
+        "optimize-autoloader": true,
+        "allow-plugins": {
+            "infection/extension-installer": true
+        }
     },
     "scripts": {
         "lint": "vendor/bin/pint",
         "lint:check": "vendor/bin/pint --test",
+        "analyse": "vendor/bin/phpstan analyse --memory-limit=1G",
+        "mutation": "php -d memory_limit=1G vendor/bin/infection --threads=max --only-covering-test-cases",
         "test": "vendor/bin/phpunit --no-coverage",
         "test:coverage": "vendor/bin/phpunit --coverage-text --coverage-clover=build/coverage.xml",
         "coverage:check": "php bin/check-coverage.php build/coverage.xml 100"

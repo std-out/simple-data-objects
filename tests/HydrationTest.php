@@ -7,6 +7,7 @@ namespace StdOut\SimpleDataObjects\Tests;
 use JsonSerializable;
 use PHPUnit\Framework\TestCase;
 use StdOut\SimpleDataObjects\Exceptions\DataHydrationException;
+use StdOut\SimpleDataObjects\Support\InputNormalizer;
 use StdOut\SimpleDataObjects\Tests\Fixtures\MultiUnionData;
 use StdOut\SimpleDataObjects\Tests\Fixtures\NullableData;
 use StdOut\SimpleDataObjects\Tests\Fixtures\OrderData;
@@ -104,6 +105,16 @@ class HydrationTest extends TestCase
         $this->expectExceptionMessageMatches('/Cannot decode JSON/');
 
         UserData::from('not json at all');
+    }
+
+    public function test_json_input_is_decoded_with_a_depth_limit_of_32(): void
+    {
+        $nested = static fn (int $depth): string => '{"a":'.str_repeat('[', $depth - 1).str_repeat(']', $depth - 1).'}';
+
+        $this->assertCount(1, InputNormalizer::normalize(UserData::class, $nested(31)));
+
+        $this->expectException(DataHydrationException::class);
+        InputNormalizer::normalize(UserData::class, $nested(32));
     }
 
     public function test_from_scalar_json_string_throws(): void

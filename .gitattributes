@@ -25,3 +25,5 @@ package.json export-ignore
 package-lock.json export-ignore
 phpunit.xml.dist export-ignore
 pint.json export-ignore
+phpstan.neon.dist export-ignore
+infection.json5 export-ignore

@@ -32,9 +32,14 @@ final class SerializerCompiler
      *
      * @internal Read directly by BaseData::toArray() for speed — do not mutate.
      *
-     * @var array<class-string, array<string, Closure(object): array>>
+     * @var array<class-string, array<string, Closure(object, string): array>>
      */
     public static array $contextualSerializers = [];
+
+    private const int MAX_CACHED_CONTEXTS = 64;
+
+    /** @var array<class-string, Closure(object, string): array> */
+    private static array $undeclaredContextSerializers = [];
 
     /** @param class-string $class */
     public static function compile(string $class, ?string $context = null): Closure
@@ -56,17 +61,36 @@ final class SerializerCompiler
         }
 
         $p = $meta->parameters;
+        $declared = self::declaresContext($meta, $context);
 
-        /** @var Closure(object): array $fn */
-        $fn = Closure::bind(eval('return '.self::generate($class, $meta, $context).';'), null, $class);
+        /** @var Closure(object, string): array $fn */
+        $fn = $declared
+            ? Closure::bind(eval('return '.self::generate($class, $meta, $context, true).';'), null, $class)
+            : self::$undeclaredContextSerializers[$class] ??= Closure::bind(eval('return '.self::generate($class, $meta, null, true).';'), null, $class);
 
-        return self::$contextualSerializers[$class][$context] = $fn;
+        if ($declared || count(self::$contextualSerializers[$class] ?? []) < self::MAX_CACHED_CONTEXTS) {
+            self::$contextualSerializers[$class][$context] = $fn;
+        }
+
+        return $fn;
     }
 
     public static function flush(): void
     {
         self::$serializers = [];
         self::$contextualSerializers = [];
+        self::$undeclaredContextSerializers = [];
+    }
+
+    private static function declaresContext(ClassMeta $meta, string $context): bool
+    {
+        foreach ($meta->parameters as $param) {
+            if (in_array($context, $param->hiddenExcept, true)) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /**
@@ -76,9 +100,10 @@ final class SerializerCompiler
      *
      * @internal also used by MetadataRegistry to persist compiled code
      */
-    public static function generate(string $class, ClassMeta $meta, ?string $context = null): string
+    public static function generate(string $class, ClassMeta $meta, ?string $context = null, bool $contextual = false): string
     {
-        $contextExport = var_export($context, true);
+        $contextExport = $contextual ? '$context' : var_export($context, true);
+        $signature = $contextual ? "\\{$class} \$o, string \$context" : "\\{$class} \$o";
         $body = '';
 
         foreach ($meta->parameters as $i => $param) {
@@ -114,7 +139,7 @@ final class SerializerCompiler
         }
 
         return <<<PHP
-        static function (\\{$class} \$o) use (\$p): array {
+        static function ({$signature}) use (\$p): array {
             \$r = [];
         {$body}    return \$r;
         }

@@ -7,6 +7,34 @@ and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## [2.6.0] — 2026-10-16
+
+### Added
+- `CommaSeparatedCast(maxItems: ...)` caps the item count of untrusted input;
+  the string is never split past the limit.
+- `Support\SensitiveVarDumperCaster::register()` redacts `#[Sensitive]`
+  fields in Symfony VarDumper (`dump()`, `dd()`). Opt-in.
+
+### Fixed
+- `Money::toDecimal()` is exact for amounts above 2^53 (it went through a
+  float before) and about 25% faster.
+- `fromValidated()` on large collections under `#[InferRules]` now validates
+  in linear time: 8 000 items take 0.2 s instead of 1.3 s. Wildcard rules
+  are expanded per item only when the result is identical; rules with `*`
+  in their parameters and `distinct` keep the wildcard.
+- `toArray($context)` with ever-new context names no longer compiles and
+  keeps a serializer per name: contexts not declared in `#[Hidden(except:)]`
+  share one serializer, and at most 64 of them are cached per class.
+
+### Changed
+- PHPStan (level 5) runs in CI and covers the Laravel traits through the
+  classes that use them. `EncryptionKeyring::keys()` is documented as
+  `array<array-key, string>`, since numeric key IDs become integer keys.
+- New tests pin the ciphertext formats, the blind-index construction, the
+  metadata cache defaults and the file-cache edge cases (mutation testing).
+- Documentation: deploy order for the metadata cache (warm, then reload
+  PHP) and how to protect the cache directory.
+
 ## [2.5.0] — 2026-10-16
 
 ### Added
@@ -605,7 +633,8 @@ Initial release.
   `toResponse()`).
 - CI pipeline: tests across Laravel 10–13 and a scheduled `composer audit`.
 
-[Unreleased]: https://github.com/std-out/simple-data-objects/compare/v2.5.0...HEAD
+[Unreleased]: https://github.com/std-out/simple-data-objects/compare/v2.6.0...HEAD
+[2.6.0]: https://github.com/std-out/simple-data-objects/compare/v2.5.0...v2.6.0
 [2.5.0]: https://github.com/std-out/simple-data-objects/compare/v2.4.0...v2.5.0
 [2.4.0]: https://github.com/std-out/simple-data-objects/compare/v2.3.0...v2.4.0
 [2.3.0]: https://github.com/std-out/simple-data-objects/compare/v2.2.1...v2.3.0
