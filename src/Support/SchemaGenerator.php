@@ -46,7 +46,10 @@ final class SchemaGenerator
         return $schema;
     }
 
-    /** @return array{0: array<string, array>, 1: list<string>} */
+    /**
+     * @param  array<string, array>  $defs
+     * @return array{0: array<string, array>, 1: list<string>}
+     */
     private static function properties(ClassMeta $meta, array &$defs): array
     {
         $properties = [];

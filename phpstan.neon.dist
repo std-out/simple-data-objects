@@ -1,0 +1,30 @@
+parameters:
+    level: 5
+    paths:
+        - src
+        - tests/Fixtures
+    ignoreErrors:
+        -
+            identifier: new.static
+            path: src/BaseData.php
+        -
+            identifier: method.notFound
+            message: '#BaseData::__construct\(\)#'
+            path: src/BaseData.php
+        -
+            identifier: return.type
+            path: src/Laravel/Console/MakeDataCommand.php
+        -
+            identifier: return.type
+            message: '#should return StdOut\\SimpleDataObjects\\(TypedDataCollection|Laravel\\PaginatedDataCollection)<.+> but returns StdOut\\SimpleDataObjects\\(TypedDataCollection|Laravel\\PaginatedDataCollection)<StdOut\\SimpleDataObjects\\BaseData>\.$#'
+        -
+            identifier: property.uninitializedReadonly
+            path: tests/Fixtures/*
+        -
+            identifier: property.onlyWritten
+            path: tests/Fixtures/SensitiveCardData.php
+        -
+            identifier: argument.type
+            paths:
+                - tests/Fixtures/MissingTargetDiscriminatorData.php
+                - tests/Fixtures/NonStringTargetDiscriminatorData.php

@@ -33,6 +33,22 @@ class MoneyCastTest extends TestCase
         $this->assertSame('1.099', (new Money(1099, 'BHD'))->toDecimal(3));
     }
 
+    public function test_to_decimal_is_exact_beyond_float_precision(): void
+    {
+        $this->assertSame('92233720368547758.07', (new Money(PHP_INT_MAX, 'USD'))->toDecimal());
+        $this->assertSame('-92233720368547758.08', (new Money(PHP_INT_MIN, 'USD'))->toDecimal());
+        $this->assertSame('90071992547409.93', (new Money(9007199254740993, 'USD'))->toDecimal());
+    }
+
+    public function test_to_decimal_pads_small_and_negative_amounts(): void
+    {
+        $this->assertSame('0.00', (new Money(0, 'USD'))->toDecimal());
+        $this->assertSame('-0.05', (new Money(-5, 'USD'))->toDecimal());
+        $this->assertSame('0.005', (new Money(5, 'BHD'))->toDecimal(3));
+        $this->assertSame('-12.34', (new Money(-1234, 'USD'))->toDecimal());
+        $this->assertSame('100', (new Money(1, 'X'))->toDecimal(-2));
+    }
+
     public function test_money_equals(): void
     {
         $this->assertTrue((new Money(1099, 'USD'))->equals(new Money(1099, 'USD')));

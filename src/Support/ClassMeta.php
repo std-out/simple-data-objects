@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace StdOut\SimpleDataObjects\Support;
 
+use Illuminate\Support\Arr;
 use StdOut\SimpleDataObjects\Contracts\DataPipe;
 
 final class ClassMeta
@@ -125,8 +126,48 @@ final class ClassMeta
         }
 
         $rules = $this->validationRules;
+        $data = $this->prepareValidation($data, '', $rules);
 
-        return [$this->prepareValidation($data, '', $rules), $rules];
+        return [$data, self::expandCollectionWildcards($data, $rules)];
+    }
+
+    /**
+     * @param  array<mixed>  $data
+     * @param  array<string, array<mixed>>  $rules
+     * @return array<string, array<mixed>>
+     */
+    private static function expandCollectionWildcards(#[\SensitiveParameter] array $data, array $rules): array
+    {
+        $expanded = [];
+
+        foreach ($rules as $key => $keyRules) {
+            $star = strpos($key, '.*');
+            $suffix = $star === false ? '' : substr($key, $star + 2);
+            $items = $star === false ? null : Arr::get($data, substr($key, 0, $star));
+
+            if (! is_array($items)
+                || ($suffix !== '' && $suffix[0] !== '.')
+                || str_contains($suffix, '*')
+                || ! array_all($items, static fn (mixed $item): bool => is_array($item))
+                || ! array_all($keyRules, self::isIndexIndependent(...))) {
+                $expanded[$key] = $keyRules;
+
+                continue;
+            }
+
+            $prefix = substr($key, 0, $star + 1);
+
+            foreach (array_keys($items) as $index) {
+                $expanded[$prefix.$index.$suffix] = $keyRules;
+            }
+        }
+
+        return $expanded;
+    }
+
+    private static function isIndexIndependent(mixed $rule): bool
+    {
+        return ! is_string($rule) || (! str_contains($rule, '*') && ! str_starts_with($rule, 'distinct'));
     }
 
     /**

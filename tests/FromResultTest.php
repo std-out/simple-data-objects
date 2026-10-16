@@ -483,4 +483,18 @@ class FromResultTest extends TestCase
         $this->assertFalse($result->ok());
         $this->assertSame('Input could not be validated.', $result->errors()['$input']);
     }
+
+    public function test_extra_keys_are_ignored_for_a_class_without_reject_unknown_keys(): void
+    {
+        $result = UserData::fromResult(['name' => 'Alice', 'email' => 'a@example.com', 'extra' => 1]);
+
+        $this->assertTrue($result->ok());
+        $this->assertSame([], $result->errors());
+    }
+
+    public function test_try_from_rejects_unknown_keys_on_a_strict_class(): void
+    {
+        $this->assertNull(StrictUserData::tryFrom(['name' => 'Alice', 'user_email' => 'a@example.com', 'extra' => 1]));
+        $this->assertNotNull(StrictUserData::tryFrom(['name' => 'Alice', 'user_email' => 'a@example.com']));
+    }
 }

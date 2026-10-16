@@ -547,4 +547,38 @@ class PrimitiveCastsTest extends TestCase
 
         $this->assertSame('secret', $cast->get($cast->set($value)));
     }
+
+    public function test_comma_separated_cast_max_items_limits_strings_and_arrays(): void
+    {
+        $cast = new CommaSeparatedCast(maxItems: 3);
+
+        $this->assertSame(['a', 'b', 'c'], $cast->get('a, b ,c'));
+        $this->assertSame(['a', 'b', 'c'], $cast->get(['a', 'b', 'c']));
+
+        foreach (['a,b,c,d', ['a', 'b', 'c', 'd']] as $tooMany) {
+            try {
+                $cast->get($tooMany);
+                $this->fail('Expected InvalidArgumentException.');
+            } catch (InvalidArgumentException $e) {
+                $this->assertSame('CommaSeparatedCast accepts at most 3 items.', $e->getMessage());
+            }
+        }
+    }
+
+    public function test_comma_separated_cast_max_items_survives_export(): void
+    {
+        $cast = eval('return '.var_export(new CommaSeparatedCast('|', false, 1), true).';');
+
+        $this->assertSame([' a '], $cast->get(' a '));
+        $this->expectException(InvalidArgumentException::class);
+        $cast->get('a|b');
+    }
+
+    public function test_comma_separated_cast_rejects_a_non_positive_max_items(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('$maxItems must be at least 1');
+
+        new CommaSeparatedCast(maxItems: 0);
+    }
 }

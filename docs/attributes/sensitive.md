@@ -53,7 +53,14 @@ To queue a job that needs the card, pass an identifier (or a token from your pay
 
 ## Limits
 
-- `var_export()` and Symfony VarDumper (`dump()`, `dd()`) read properties directly and ignore `__debugInfo()`, so they still show the value.
+- Symfony VarDumper (`dump()`, `dd()`) reads properties directly and ignores `__debugInfo()`. Register the caster once at boot — for example in a service provider's `boot()` — to redact `#[Sensitive]` fields there too:
+
+  ```php
+  \StdOut\SimpleDataObjects\Support\SensitiveVarDumperCaster::register();
+  ```
+
+  It requires `symfony/var-dumper` (installed with Laravel) and changes nothing until you call it.
+- `var_export()` has no hook and always shows the value.
 - A field without a cast, enum or nested type goes to the constructor as-is; a wrong type raises PHP's `TypeError`, which names the type, never the value.
 - Every entry point (`from*()`, `tryFrom()`, `validate()`, `with()`, `collection()`), the compiled hydrators, pipes, casts and the Eloquent casts mark their input `#[\SensitiveParameter]`, so with `zend.exception_ignore_args=Off` stack traces show `Object(SensitiveParameterValue)` instead of the input. Your own casts and pipes need the same attribute on their `$value` / `$data` parameter. Keep `zend.exception_ignore_args=On` in production anyway: it also covers application frames.
 

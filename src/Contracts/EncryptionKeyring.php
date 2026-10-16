@@ -8,6 +8,6 @@ interface EncryptionKeyring
 {
     public function currentKeyId(): string;
 
-    /** @return array<string, string> */
+    /** @return array<array-key, string> */
     public function keys(): array;
 }
