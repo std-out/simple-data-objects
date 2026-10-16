@@ -7,18 +7,32 @@ and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## [2.2.1] — 2026-10-16
+
+### Security
+- `#[Rules]` now validate values sent under an input alias
+  (`#[MapInputName]`, `#[MapPropertyName]`, `#[MapOutputName]`). Previously
+  such values were hydrated unvalidated.
+- `#[InferRules]` validates nested `#[Discriminator]` fields and collection
+  items against the rules of the concrete class.
+- `MoneyCast` rejects amounts outside the `int` range instead of silently
+  saturating, and parses decimal strings in linear time (no ReDoS).
+- Control characters in exception messages are escaped (no log forging).
+
+### Fixed
+- `fromResult()` / `fromValidatedResult()` report input that fails to read or
+  validate under `$input` instead of throwing.
+- Metadata cache: `sdo:warm` rebuilds stale files; corrupt files are rebuilt;
+  an unwritable directory falls back to memory; object defaults without
+  `__set_state()` are not persisted; `clearCache()` takes the path literally
+  and removes orphaned temp files; temp names are random and files are never
+  world-writable.
+- `EncryptedCast` rejects arrays and non-`Stringable` objects instead of
+  encrypting `"Array"`.
+
 ### Changed
-- **Documentation:** every figure on the Performance page now comes from the
-  public benchmark project (booted Laravel app, medians of 7 runs), replacing
-  the earlier standalone-script numbers. The "50× less memory with
-  `lazyCollection()`" claim is gone: with both libraries streaming, peak
-  memory is equal and the difference is throughput (~1.85×).
-- **Documentation:** new navigation by section, home page and theme.
-- **Documentation:** the XML figures in the README and on the
-  [Performance](https://std-out.github.io/simple-data-objects/guide/performance)
-  page now come from the public benchmark (`make bench-xml`), and memory is
-  compared with SimpleXML twice — a loop that accumulates nothing (692 MB)
-  and every row collected first (998 MB), against 55 MB for `lazyXml()`.
+- Documentation: Performance page and XML figures now come from the public
+  benchmark; new navigation and theme.
 
 ## [2.2.0] — 2026-10-05
 
@@ -533,7 +547,8 @@ Initial release.
   `toResponse()`).
 - CI pipeline: tests across Laravel 10–13 and a scheduled `composer audit`.
 
-[Unreleased]: https://github.com/std-out/simple-data-objects/compare/v1.8.0...HEAD
+[Unreleased]: https://github.com/std-out/simple-data-objects/compare/v2.2.1...HEAD
+[2.2.1]: https://github.com/std-out/simple-data-objects/compare/v2.2.0...v2.2.1
 [1.8.0]: https://github.com/std-out/simple-data-objects/compare/v1.7.2...v1.8.0
 [1.7.2]: https://github.com/std-out/simple-data-objects/compare/v1.4.3...v1.7.2
 [1.4.3]: https://github.com/std-out/simple-data-objects/compare/v1.1.15...v1.4.3

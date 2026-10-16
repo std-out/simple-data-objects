@@ -7,8 +7,11 @@ namespace StdOut\SimpleDataObjects\Tests;
 use Illuminate\Validation\Rules\Enum;
 use Illuminate\Validation\ValidationException;
 use PHPUnit\Framework\TestCase;
+use StdOut\SimpleDataObjects\Exceptions\DataHydrationException;
 use StdOut\SimpleDataObjects\Support\MetadataRegistry;
+use StdOut\SimpleDataObjects\Tests\Fixtures\CardPaymentData;
 use StdOut\SimpleDataObjects\Tests\Fixtures\InferredAddressData;
+use StdOut\SimpleDataObjects\Tests\Fixtures\InferredCheckoutData;
 use StdOut\SimpleDataObjects\Tests\Fixtures\InferredCollectionData;
 use StdOut\SimpleDataObjects\Tests\Fixtures\InferredEnumData;
 use StdOut\SimpleDataObjects\Tests\Fixtures\InferredExplicitOverrideData;
@@ -187,5 +190,83 @@ class InferRulesTest extends TestCase
 
         $this->assertInstanceOf(InferredAddressData::class, $data->address);
         $this->assertSame('London', $data->address->city);
+    }
+
+    public function test_nested_discriminated_field_is_validated_against_the_concrete_class_rules(): void
+    {
+        try {
+            InferredCheckoutData::fromValidated([
+                'payment' => ['type' => 'card', 'amount' => 100, 'last4' => '12345'],
+                'refunds' => [['type' => 'bank', 'amount' => 5, 'iban' => 'DE123']],
+                'contact' => ['email' => 'a@example.com'],
+            ]);
+            $this->fail('Expected a ValidationException.');
+        } catch (ValidationException $e) {
+            $this->assertArrayHasKey('payment.last4', $e->errors());
+        }
+    }
+
+    public function test_discriminated_collection_items_are_validated_against_their_concrete_class_rules(): void
+    {
+        try {
+            InferredCheckoutData::fromValidated([
+                'payment' => ['type' => 'card', 'amount' => 100, 'last4' => '4242'],
+                'refunds' => [
+                    ['type' => 'card', 'amount' => 5, 'last4' => '4242'],
+                    ['type' => 'card', 'amount' => 5, 'last4' => '1'],
+                ],
+                'contact' => ['email' => 'a@example.com'],
+            ]);
+            $this->fail('Expected a ValidationException.');
+        } catch (ValidationException $e) {
+            $this->assertSame(['refunds.1.last4'], array_keys($e->errors()));
+        }
+    }
+
+    public function test_valid_nested_discriminated_data_passes(): void
+    {
+        $data = InferredCheckoutData::fromValidated([
+            'payment' => ['type' => 'card', 'amount' => 100, 'last4' => '4242'],
+            'refunds' => [['type' => 'bank', 'amount' => 5, 'iban' => 'DE123']],
+            'contact' => ['e_mail' => 'a@example.com'],
+        ]);
+
+        $this->assertInstanceOf(CardPaymentData::class, $data->payment);
+        $this->assertSame('a@example.com', $data->contact?->email);
+    }
+
+    public function test_aliases_inside_cascaded_nested_objects_are_validated(): void
+    {
+        try {
+            InferredCheckoutData::fromValidated([
+                'payment' => ['type' => 'card', 'amount' => 100, 'last4' => '4242'],
+                'refunds' => [['type' => 'bank', 'amount' => 5, 'iban' => 'DE123']],
+                'contact' => ['e_mail' => 'not-an-email'],
+            ]);
+            $this->fail('Expected a ValidationException.');
+        } catch (ValidationException $e) {
+            $this->assertSame(['contact.email'], array_keys($e->errors()));
+        }
+    }
+
+    public function test_unresolvable_nested_discriminator_is_left_to_hydration(): void
+    {
+        $this->expectException(DataHydrationException::class);
+
+        InferredCheckoutData::fromValidated([
+            'payment' => ['type' => 'crypto', 'amount' => 100],
+            'refunds' => [['type' => 'bank', 'amount' => 5, 'iban' => 'DE123']],
+            'contact' => ['email' => 'a@example.com'],
+        ]);
+    }
+
+    public function test_non_array_collection_items_are_left_to_hydration(): void
+    {
+        $result = InferredCheckoutData::fromValidatedResult([
+            'payment' => ['type' => 'card', 'amount' => 100, 'last4' => '4242'],
+            'refunds' => ['not-an-item'],
+        ]);
+
+        $this->assertFalse($result->ok());
     }
 }

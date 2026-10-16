@@ -135,6 +135,8 @@ abstract class BaseData implements Arrayable, DataObject, JsonSerializable, Stri
             $data = InputNormalizer::normalize(static::class, $data);
         } catch (DataHydrationException $e) {
             return HydrationResult::failure(['$input' => $e->getMessage()]);
+        } catch (\Throwable) {
+            return HydrationResult::failure(['$input' => 'Input could not be normalized.']);
         }
 
         /** @var HydrationResult<static> */
@@ -257,7 +259,8 @@ abstract class BaseData implements Arrayable, DataObject, JsonSerializable, Stri
         }
 
         if ($meta->validationRules !== []) {
-            static::validatorFactory()->make($array, $meta->validationRules)->validate();
+            [$input, $rules] = $meta->validationInput($array);
+            static::validatorFactory()->make($input, $rules)->validate();
         }
 
         return static::from($array);
@@ -276,6 +279,8 @@ abstract class BaseData implements Arrayable, DataObject, JsonSerializable, Stri
                 $data = InputNormalizer::normalize(static::class, $data);
             } catch (DataHydrationException $e) {
                 return HydrationResult::failure(['$input' => $e->getMessage()]);
+            } catch (\Throwable) {
+                return HydrationResult::failure(['$input' => 'Input could not be normalized.']);
             }
         }
 
@@ -299,10 +304,15 @@ abstract class BaseData implements Arrayable, DataObject, JsonSerializable, Stri
             return $result;
         }
 
-        $validator = static::validatorFactory()->make($data, $meta->validationRules);
+        [$input, $rules] = $meta->validationInput($data);
+        $validator = static::validatorFactory()->make($input, $rules);
 
-        if (! $validator->fails()) {
-            return $result;
+        try {
+            if (! $validator->fails()) {
+                return $result;
+            }
+        } catch (\Throwable) {
+            return HydrationResult::failure([...$result->errors(), '$input' => 'Input could not be validated.']);
         }
 
         $validationErrors = [];
@@ -332,9 +342,10 @@ abstract class BaseData implements Arrayable, DataObject, JsonSerializable, Stri
         }
 
         $array = is_array($data) ? $data : InputNormalizer::normalize(static::class, $data);
+        [$input, $rules] = $meta->validationInput($array);
 
         static::validatorFactory()
-            ->make($array, $meta->validationRules)
+            ->make($input, $rules)
             ->validate();
     }
 

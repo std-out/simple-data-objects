@@ -20,6 +20,7 @@ use StdOut\SimpleDataObjects\Tests\Fixtures\PaymentMethodData;
 use StdOut\SimpleDataObjects\Tests\Fixtures\PersonData;
 use StdOut\SimpleDataObjects\Tests\Fixtures\PipedNestedFieldData;
 use StdOut\SimpleDataObjects\Tests\Fixtures\ProductData;
+use StdOut\SimpleDataObjects\Tests\Fixtures\SchemaRulesData;
 use StdOut\SimpleDataObjects\Tests\Fixtures\StrictUserData;
 use StdOut\SimpleDataObjects\Tests\Fixtures\TeamData;
 use StdOut\SimpleDataObjects\Tests\Fixtures\ThrowingPipeData;
@@ -442,5 +443,36 @@ class FromResultTest extends TestCase
         $this->assertTrue($result->ok());
         $this->assertSame('A', $result->value()->address->street);
         $this->assertCount(1, $result->value()->members);
+    }
+
+    public function test_from_result_never_throws_when_input_iteration_fails(): void
+    {
+        $result = UserData::fromResult((static function (): \Generator {
+            yield 'name' => 'Alice';
+
+            throw new \RuntimeException('stream broke');
+        })());
+
+        $this->assertFalse($result->ok());
+        $this->assertSame(['$input' => 'Input could not be normalized.'], $result->errors());
+    }
+
+    public function test_from_validated_result_never_throws_when_input_iteration_fails(): void
+    {
+        $result = UserData::fromValidatedResult((static function (): \Generator {
+            yield 'name' => 'Alice';
+
+            throw new \RuntimeException('stream broke');
+        })());
+
+        $this->assertSame(['$input' => 'Input could not be normalized.'], $result->errors());
+    }
+
+    public function test_from_validated_result_never_throws_when_a_rule_cannot_evaluate_the_input(): void
+    {
+        $result = SchemaRulesData::fromValidatedResult(json_decode('{"age":1e400}', true));
+
+        $this->assertFalse($result->ok());
+        $this->assertSame('Input could not be validated.', $result->errors()['$input']);
     }
 }

@@ -240,4 +240,35 @@ class MoneyCastTest extends TestCase
         $this->assertSame('USD', $order->price->currency);
         $this->assertSame(1099, $order->toArray()['price']);
     }
+
+    public function test_cast_accepts_the_largest_representable_amount(): void
+    {
+        $this->assertSame(PHP_INT_MAX, (new MoneyCast('USD'))->get('92233720368547758.07')->amount);
+        $this->assertSame(-PHP_INT_MAX, (new MoneyCast('USD'))->get('-92233720368547758.07')->amount);
+    }
+
+    public function test_cast_rejects_amounts_beyond_the_integer_range_instead_of_saturating(): void
+    {
+        foreach (['92233720368547758.08', '99999999999999999999.00', str_repeat('9', 400), '92233720368547758.075'] as $amount) {
+            try {
+                (new MoneyCast('USD'))->get($amount);
+                $this->fail("Expected {$amount} to be rejected.");
+            } catch (InvalidArgumentException $e) {
+                $this->assertSame('Decimal amount exceeds the supported range of minor units.', $e->getMessage());
+            }
+        }
+    }
+
+    public function test_cast_rejects_long_non_numeric_input_in_linear_time(): void
+    {
+        $start = hrtime(true);
+
+        try {
+            (new MoneyCast('USD'))->get(str_repeat('1', 200_000).'x');
+            $this->fail('Expected the amount to be rejected.');
+        } catch (InvalidArgumentException) {
+        }
+
+        $this->assertLessThan(1_000_000_000, hrtime(true) - $start);
+    }
 }

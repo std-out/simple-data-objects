@@ -18,6 +18,10 @@ use StdOut\SimpleDataObjects\ValueObjects\Money;
  */
 final class MoneyCast implements CastsValue, ProvidesJsonSchema
 {
+    private const string MAX_MINOR_UNITS = '9223372036854775807';
+
+    private const int MAX_DIGITS = 19;
+
     public function __construct(
         private readonly string $currency,
         private readonly int $decimals = 2,
@@ -86,7 +90,7 @@ final class MoneyCast implements CastsValue, ProvidesJsonSchema
     {
         $amount = trim($amount);
 
-        if (! preg_match('/^[+-]?(?:\d+\.?\d*|\.\d+)$/', $amount)) {
+        if (! preg_match('/^[+-]?+(?:\d++\.?+\d*+|\.\d++)$/', $amount)) {
             throw new InvalidArgumentException("\"{$amount}\" is not a valid decimal amount.");
         }
 
@@ -103,7 +107,19 @@ final class MoneyCast implements CastsValue, ProvidesJsonSchema
             $fraction = str_pad($fraction, $this->decimals, '0');
         }
 
-        $minorUnits = (int) ($whole.$fraction) + ($roundUp ? 1 : 0);
+        $digits = $whole.$fraction;
+
+        if (strlen($digits) >= self::MAX_DIGITS) {
+            $digits = ltrim($digits, '0');
+
+            if (strlen($digits) > self::MAX_DIGITS
+                || (strlen($digits) === self::MAX_DIGITS && strcmp($digits, self::MAX_MINOR_UNITS) > 0)
+                || ($roundUp && $digits === self::MAX_MINOR_UNITS)) {
+                throw new InvalidArgumentException('Decimal amount exceeds the supported range of minor units.');
+            }
+        }
+
+        $minorUnits = (int) $digits + ($roundUp ? 1 : 0);
 
         return $negative ? -$minorUnits : $minorUnits;
     }

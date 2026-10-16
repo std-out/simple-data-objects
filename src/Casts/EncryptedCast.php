@@ -87,6 +87,10 @@ final class EncryptedCast implements CastsValue, ProvidesJsonSchema
             return null;
         }
 
+        if (! is_scalar($value) && ! $value instanceof \Stringable) {
+            throw new InvalidArgumentException('EncryptedCast can only encrypt scalar or Stringable values, got '.get_debug_type($value).'.');
+        }
+
         $nonce = random_bytes(SODIUM_CRYPTO_SECRETBOX_NONCEBYTES);
         $ciphertext = sodium_crypto_secretbox((string) $value, $nonce, $this->secretKey);
 

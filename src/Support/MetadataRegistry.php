@@ -37,9 +37,26 @@ final class MetadataRegistry
             return;
         }
 
-        foreach (glob(self::$storagePath.'/*'.self::FILE_SUFFIX) ?: [] as $file) {
-            @unlink($file);
+        foreach (scandir(self::$storagePath) ?: [] as $name) {
+            if (str_ends_with($name, self::FILE_SUFFIX) || str_contains($name, self::FILE_SUFFIX.'.tmp.')) {
+                @unlink(self::$storagePath.'/'.$name);
+            }
         }
+    }
+
+    public static function refresh(string $class): ClassMeta
+    {
+        $meta = ClassMetaFactory::build($class);
+
+        if (self::$storagePath !== null) {
+            $file = self::cacheFile($class);
+
+            if (! self::persist($class, $file, $meta)) {
+                @unlink($file);
+            }
+        }
+
+        return self::$cache[$class] = $meta;
     }
 
     public static function isPersisted(string $class): bool
@@ -64,7 +81,11 @@ final class MetadataRegistry
         $file = self::cacheFile($class);
 
         if (is_file($file)) {
-            $cached = require $file;
+            try {
+                $cached = @include $file;
+            } catch (\Throwable) {
+                $cached = null;
+            }
 
             // v2 format: [meta, hydrator, serializer] — restore the compiled
             // closures too, so warmed processes skip eval entirely (opcache
@@ -82,7 +103,11 @@ final class MetadataRegistry
                 return $meta;
             }
 
-            return $cached;
+            if ($cached instanceof ClassMeta) {
+                return $cached;
+            }
+
+            @unlink($file);
         }
 
         $meta = ClassMetaFactory::build($class);
@@ -97,17 +122,17 @@ final class MetadataRegistry
         return self::$storagePath.'/'.hash('sha256', $class).self::FILE_SUFFIX;
     }
 
-    private static function persist(string $class, string $file, ClassMeta $meta): void
+    private static function persist(string $class, string $file, ClassMeta $meta): bool
     {
         if (! self::isExportable($meta)) {
-            return;
+            return false;
         }
 
         $dir = dirname($file);
 
         // Racing processes may create the directory between checks
         if (! is_dir($dir) && ! @mkdir($dir, 0755, true) && ! is_dir($dir)) {
-            return;
+            return false;
         }
 
         $export = var_export($meta, true);
@@ -125,15 +150,23 @@ final class MetadataRegistry
             ."];\n";
 
         // Write to a temp file then rename — atomic on POSIX systems
-        $tmp = $file.'.tmp.'.getmypid();
+        $tmp = $file.'.tmp.'.bin2hex(random_bytes(8));
 
-        if (file_put_contents($tmp, $code) === false) {
-            return;
-        }
-
-        if (! rename($tmp, $file)) {
+        if (@file_put_contents($tmp, $code) === false) {
             @unlink($tmp);
+
+            return false;
         }
+
+        @chmod($tmp, 0644 & ~umask());
+
+        if (! @rename($tmp, $file)) {
+            @unlink($tmp);
+
+            return false;
+        }
+
+        return true;
     }
 
     /**
@@ -145,6 +178,10 @@ final class MetadataRegistry
     {
         foreach ($meta->parameters as $param) {
             if ($param->caster !== null && ! method_exists($param->caster, '__set_state')) {
+                return false;
+            }
+
+            if (! self::isExportableValue($param->defaultValue)) {
                 return false;
             }
 
@@ -164,5 +201,14 @@ final class MetadataRegistry
         }
 
         return true;
+    }
+
+    private static function isExportableValue(mixed $value): bool
+    {
+        if (is_array($value)) {
+            return array_all($value, self::isExportableValue(...));
+        }
+
+        return ! is_object($value) || $value instanceof \UnitEnum || method_exists($value, '__set_state');
     }
 }

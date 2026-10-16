@@ -228,4 +228,18 @@ class RejectUnknownKeysTest extends TestCase
             @rmdir($cacheDir);
         }
     }
+
+    public function test_control_characters_in_unknown_keys_cannot_forge_log_lines(): void
+    {
+        $message = DataHydrationException::unknownKeys('X', ["a\n[2026-10-15] production.INFO: ok"])->getMessage();
+
+        $this->assertStringNotContainsString("\n", $message);
+        $this->assertSame("Unknown key ['a\\n[2026-10-15] production.INFO: ok'] for X.", $message);
+    }
+
+    public function test_control_characters_in_rejected_values_are_escaped(): void
+    {
+        $this->assertStringNotContainsString("\n", DataHydrationException::invalidEnumValue('E', 'f', "a\nb")->getMessage());
+        $this->assertStringNotContainsString("\r", DataHydrationException::unresolvedDiscriminator('C', 'type', "a\rb")->getMessage());
+    }
 }

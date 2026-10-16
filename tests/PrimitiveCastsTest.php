@@ -480,4 +480,26 @@ class PrimitiveCastsTest extends TestCase
         $this->assertSame('a,b,c', $array['tags']);
         $this->assertSame(' x | y ', $array['raw']);
     }
+
+    public function test_encrypted_cast_refuses_to_encrypt_an_array(): void
+    {
+        $this->expectException(InvalidArgumentException::class);
+        $this->expectExceptionMessage('got array');
+
+        (new EncryptedCast(key: 'test-key'))->set(['pan' => '4111111111111111']);
+    }
+
+    public function test_encrypted_cast_encrypts_stringable_values(): void
+    {
+        $cast = new EncryptedCast(key: 'test-key');
+        $value = new class implements \Stringable
+        {
+            public function __toString(): string
+            {
+                return 'secret';
+            }
+        };
+
+        $this->assertSame('secret', $cast->get($cast->set($value)));
+    }
 }

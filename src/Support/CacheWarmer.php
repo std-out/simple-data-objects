@@ -28,7 +28,7 @@ final class CacheWarmer
 
         foreach (self::discover($paths) as $class) {
             try {
-                MetadataRegistry::get($class);
+                MetadataRegistry::refresh($class);
             } catch (\Throwable $e) {
                 // Fail fast, but name the offending class — deploy logs must be actionable
                 throw new \RuntimeException("Cannot warm {$class}: {$e->getMessage()}", 0, $e);

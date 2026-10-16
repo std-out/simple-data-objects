@@ -20,6 +20,7 @@ use StdOut\SimpleDataObjects\Tests\Fixtures\InferredEnumData;
 use StdOut\SimpleDataObjects\Tests\Fixtures\InferredNestedData;
 use StdOut\SimpleDataObjects\Tests\Fixtures\NoConstructorData;
 use StdOut\SimpleDataObjects\Tests\Fixtures\NonExportableData;
+use StdOut\SimpleDataObjects\Tests\Fixtures\ObjectDefaultData;
 use StdOut\SimpleDataObjects\Tests\Fixtures\PaymentData;
 use StdOut\SimpleDataObjects\Tests\Fixtures\ProductData;
 use StdOut\SimpleDataObjects\Tests\Fixtures\SecretData;
@@ -52,7 +53,8 @@ class MetadataCacheTest extends TestCase
             return;
         }
 
-        foreach (glob($dir.'/*') ?: [] as $entry) {
+        foreach (array_diff(scandir($dir) ?: [], ['.', '..']) as $name) {
+            $entry = $dir.'/'.$name;
             is_dir($entry) ? $this->removeDir($entry) : unlink($entry);
         }
 
@@ -515,25 +517,43 @@ class MetadataCacheTest extends TestCase
 
     public function test_persist_skips_when_tmp_file_cannot_be_written(): void
     {
-        // Pre-create a DIRECTORY at the deterministic tmp path so
-        // file_put_contents fails even when tests run as root (read-only
-        // permissions would not stop root), covering the failure branch.
-        $tmpPath = $this->cacheDir.'/'.hash('sha256', UserData::class).'.meta.php.tmp.'.getmypid();
-        mkdir($tmpPath, 0755, true);
+        if (! is_dir('/proc/self')) {
+            $this->markTestSkipped('Needs procfs: a directory nobody, not even root, can create files in.');
+        }
 
-        MetadataRegistry::setStoragePath($this->cacheDir);
+        MetadataRegistry::setStoragePath('/proc/self');
         MetadataRegistry::flush();
 
-        set_error_handler(static fn () => true);
+        $user = UserData::from(['name' => 'Alice', 'email' => 'alice@example.com']);
+
+        $this->assertSame('Alice', $user->name);
+        $this->assertFalse(MetadataRegistry::isPersisted(UserData::class));
+    }
+
+    public function test_unwritable_cache_never_breaks_never_throw_hydration(): void
+    {
+        if (! is_dir('/proc/self')) {
+            $this->markTestSkipped('Needs procfs: a directory nobody, not even root, can create files in.');
+        }
+
+        MetadataRegistry::setStoragePath('/proc/self');
+        MetadataRegistry::flush();
+
+        set_error_handler(static function (int $level, string $message): bool {
+            if ((error_reporting() & $level) === 0) {
+                return false;
+            }
+
+            throw new \ErrorException($message, 0, $level);
+        });
+
         try {
-            UserData::from(['name' => 'Alice', 'email' => 'alice@example.com']);
+            $result = UserData::fromResult(['name' => 'Alice', 'email' => 'alice@example.com']);
         } finally {
             restore_error_handler();
         }
 
-        $this->assertEmpty(glob($this->cacheDir.'/*.meta.php'));
-
-        rmdir($tmpPath);
+        $this->assertTrue($result->ok());
     }
 
     public function test_persist_unlinks_tmp_when_rename_fails(): void
@@ -576,5 +596,71 @@ class MetadataCacheTest extends TestCase
 
         $this->assertStringContainsString('[redacted]', $dump);
         $this->assertStringNotContainsString('direct-test-key', $dump);
+    }
+
+    public function test_corrupt_cache_files_are_discarded_and_rebuilt(): void
+    {
+        $file = $this->cacheDir.'/'.hash('sha256', UserData::class).'.meta.php';
+
+        foreach (["<?php\n\nreturn [", '', "<?php return 'stale';"] as $corrupt) {
+            file_put_contents($file, $corrupt);
+            MetadataRegistry::setStoragePath($this->cacheDir);
+            MetadataRegistry::flush();
+
+            $user = UserData::from(['name' => 'Bob', 'email' => 'bob@example.com']);
+
+            $this->assertSame('Bob', $user->name);
+            $this->assertIsArray(require $file);
+        }
+    }
+
+    public function test_clear_cache_treats_glob_metacharacters_in_the_path_literally(): void
+    {
+        $storage = $this->cacheDir.'/env[1]';
+        $sibling = $this->cacheDir.'/env1';
+        mkdir($storage);
+        mkdir($sibling);
+        file_put_contents($sibling.'/other-app.meta.php', '<?php return 1;');
+        file_put_contents($storage.'/foreign.php', '<?php return 1;');
+        file_put_contents($storage.'/abc.meta.php.tmp.0123456789abcdef', 'partial');
+
+        MetadataRegistry::setStoragePath($storage);
+        UserData::from(['name' => 'Bob', 'email' => 'bob@example.com']);
+        MetadataRegistry::clearCache();
+
+        $this->assertSame(['foreign.php'], array_values(array_diff(scandir($storage), ['.', '..'])));
+        $this->assertFileExists($sibling.'/other-app.meta.php');
+    }
+
+    public function test_cache_files_are_never_world_writable(): void
+    {
+        $previous = umask(0);
+
+        try {
+            MetadataRegistry::setStoragePath($this->cacheDir);
+            UserData::from(['name' => 'Bob', 'email' => 'bob@example.com']);
+        } finally {
+            umask($previous);
+        }
+
+        $file = $this->cacheDir.'/'.hash('sha256', UserData::class).'.meta.php';
+        clearstatcache();
+
+        $this->assertSame(0644, fileperms($file) & 0777);
+    }
+
+    public function test_object_defaults_without_set_state_are_not_persisted(): void
+    {
+        MetadataRegistry::setStoragePath($this->cacheDir);
+
+        foreach ([1, 2] as $request) {
+            MetadataRegistry::flush();
+
+            $data = ObjectDefaultData::from(['name' => "request {$request}"]);
+
+            $this->assertTrue($data->settings->enabled);
+        }
+
+        $this->assertFalse(MetadataRegistry::isPersisted(ObjectDefaultData::class));
     }
 }

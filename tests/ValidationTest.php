@@ -11,6 +11,7 @@ use Illuminate\Validation\Factory as ValidatorFactory;
 use Illuminate\Validation\ValidationException;
 use PHPUnit\Framework\TestCase;
 use StdOut\SimpleDataObjects\BaseData;
+use StdOut\SimpleDataObjects\Tests\Fixtures\AliasedValidatedData;
 use StdOut\SimpleDataObjects\Tests\Fixtures\UserData;
 use StdOut\SimpleDataObjects\Tests\Fixtures\ValidatedUserData;
 
@@ -165,5 +166,49 @@ class ValidationTest extends TestCase
         UserData::validate(['name' => 'Alice', 'email' => 'alice@example.com']);
 
         $this->assertTrue(true);
+    }
+
+    public function test_input_alias_is_validated_against_the_field_rules(): void
+    {
+        $this->expectException(ValidationException::class);
+
+        AliasedValidatedData::fromValidated(['e_mail' => 'not-an-email']);
+    }
+
+    public function test_output_name_alias_is_validated_against_the_field_rules(): void
+    {
+        $this->expectException(ValidationException::class);
+
+        AliasedValidatedData::fromValidated(['email' => 'a@example.com', 'card_number' => '12<script>']);
+    }
+
+    public function test_required_field_supplied_through_an_alias_passes(): void
+    {
+        $data = AliasedValidatedData::fromValidated(['mail' => 'a@example.com', 'card_number' => '4111111111111111']);
+
+        $this->assertSame('a@example.com', $data->email);
+        $this->assertSame('4111111111111111', $data->cardNumber);
+    }
+
+    public function test_primary_name_wins_over_an_alias_like_hydration_does(): void
+    {
+        $data = AliasedValidatedData::fromValidated(['email' => 'a@example.com', 'e_mail' => 'not-an-email']);
+
+        $this->assertSame('a@example.com', $data->email);
+    }
+
+    public function test_validate_checks_alias_values(): void
+    {
+        $this->expectException(ValidationException::class);
+
+        AliasedValidatedData::validate(['e_mail' => 'not-an-email']);
+    }
+
+    public function test_from_validated_result_reports_alias_violations_under_the_primary_name(): void
+    {
+        $result = AliasedValidatedData::fromValidatedResult(['e_mail' => 'not-an-email']);
+
+        $this->assertFalse($result->ok());
+        $this->assertArrayHasKey('email', $result->errors());
     }
 }

@@ -27,6 +27,11 @@ final class ClassMeta
      */
     public readonly bool $hasExtraProperties;
 
+    /** @var array<string|int, list<string|int>> */
+    public readonly array $validationAliases;
+
+    public readonly bool $cascadesNestedRules;
+
     /**
      * @param  list<ParameterMeta>  $parameters
      * @param  list<class-string<DataPipe>>  $pipes
@@ -44,14 +49,25 @@ final class ClassMeta
         public readonly bool $rejectUnknownKeys = false,
         public readonly ?string $wrapIn = null,
         public readonly array $computed = [],
+        public readonly bool $inferRules = false,
     ) {
         $validationRules = [];
+        $validationAliases = [];
+        $cascadesNestedRules = false;
 
         foreach ($parameters as $meta) {
             $inputName = $meta->inputNames[0];
 
             if ($meta->rules !== []) {
                 $validationRules[$inputName] = $meta->rules;
+            }
+
+            if (($meta->rules !== [] || $meta->nestedRules !== []) && count($meta->inputNames) > 1) {
+                $validationAliases[$inputName] = array_slice($meta->inputNames, 1);
+            }
+
+            if ($inferRules && ($meta->nestedDataClass !== null || $meta->dataCollectionClass !== null)) {
+                $cascadesNestedRules = true;
             }
 
             foreach ($meta->nestedRules as $suffix => $rules) {
@@ -61,6 +77,8 @@ final class ClassMeta
 
         $this->parameters = $parameters;
         $this->validationRules = $validationRules;
+        $this->validationAliases = $validationAliases;
+        $this->cascadesNestedRules = $cascadesNestedRules;
         $this->pipes = $pipes;
         $this->hasConstructor = $hasConstructor;
         $this->hasExtraProperties = $hasConstructor && array_any($parameters, static fn (ParameterMeta $p): bool => ! $p->viaConstructor);
@@ -87,6 +105,93 @@ final class ClassMeta
         return $target ?? $this->discriminatorFallback;
     }
 
+    /**
+     * @param  array<mixed>  $data
+     * @return array{0: array<mixed>, 1: array<string, array<mixed>>}
+     */
+    public function validationInput(array $data): array
+    {
+        if ($this->validationAliases === [] && ! $this->cascadesNestedRules) {
+            return [$data, $this->validationRules];
+        }
+
+        $rules = $this->validationRules;
+
+        return [$this->prepareValidation($data, '', $rules), $rules];
+    }
+
+    /**
+     * @param  array<mixed>  $data
+     * @param  array<string, array<mixed>>  $rules
+     * @return array<mixed>
+     */
+    private function prepareValidation(array $data, string $prefix, array &$rules): array
+    {
+        foreach ($this->validationAliases as $primary => $aliases) {
+            if (array_key_exists($primary, $data)) {
+                continue;
+            }
+
+            foreach ($aliases as $alias) {
+                if (array_key_exists($alias, $data)) {
+                    $data[$primary] = $data[$alias];
+
+                    break;
+                }
+            }
+        }
+
+        if (! $this->cascadesNestedRules) {
+            return $data;
+        }
+
+        foreach ($this->parameters as $param) {
+            $name = $param->inputNames[0];
+
+            if (! isset($data[$name]) || ! is_array($data[$name])) {
+                continue;
+            }
+
+            if ($param->nestedDataClass !== null) {
+                $data[$name] = self::prepareNestedValidation($param->nestedDataClass, $data[$name], "{$prefix}{$name}.", $rules);
+            } elseif ($param->dataCollectionClass !== null) {
+                foreach ($data[$name] as $key => $item) {
+                    if (is_array($item)) {
+                        $data[$name][$key] = self::prepareNestedValidation($param->dataCollectionClass, $item, "{$prefix}{$name}.{$key}.", $rules);
+                    }
+                }
+            }
+        }
+
+        return $data;
+    }
+
+    /**
+     * @param  array<mixed>  $data
+     * @param  array<string, array<mixed>>  $rules
+     * @return array<mixed>
+     */
+    private static function prepareNestedValidation(string $class, array $data, string $prefix, array &$rules): array
+    {
+        $meta = MetadataRegistry::get($class);
+
+        if ($meta->discriminatorField !== null) {
+            $target = $meta->resolveDiscriminatedClass($data);
+
+            if ($target === null) {
+                return $data;
+            }
+
+            $meta = MetadataRegistry::get($target);
+
+            foreach ($meta->validationRules as $key => $rule) {
+                $rules[$prefix.$key] = $rule;
+            }
+        }
+
+        return $meta->prepareValidation($data, $prefix, $rules);
+    }
+
     public static function __set_state(array $state): self
     {
         return new self(
@@ -99,6 +204,7 @@ final class ClassMeta
             $state['rejectUnknownKeys'] ?? false,
             $state['wrapIn'] ?? null,
             $state['computed'] ?? [],
+            $state['inferRules'] ?? false,
         );
     }
 }

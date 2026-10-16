@@ -93,6 +93,7 @@ final class ClassMetaFactory
                 rejectUnknownKeys: $rejectUnknownKeys,
                 wrapIn: $wrapIn,
                 computed: $computed,
+                inferRules: $inferRules,
             );
         }
 
@@ -125,6 +126,7 @@ final class ClassMetaFactory
             rejectUnknownKeys: $rejectUnknownKeys,
             wrapIn: $wrapIn,
             computed: $computed,
+            inferRules: $inferRules,
         );
     }
 

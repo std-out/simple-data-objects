@@ -126,4 +126,26 @@ class CacheWarmerTest extends TestCase
 
         CacheWarmer::warm($this->cacheDir, [__DIR__.'/Fixtures/ConflictCollectionCastData.php']);
     }
+
+    public function test_warm_rebuilds_an_existing_stale_cache_file(): void
+    {
+        $file = $this->cacheDir.'/'.hash('sha256', UserData::class).'.meta.php';
+        file_put_contents($file, "<?php return 'stale';");
+
+        $result = CacheWarmer::warm($this->cacheDir, [__DIR__.'/Fixtures/UserData.php']);
+
+        $this->assertSame([UserData::class], $result['warmed']);
+        $this->assertIsArray(require $file);
+    }
+
+    public function test_warm_removes_a_stale_cache_file_for_a_class_that_is_no_longer_exportable(): void
+    {
+        $file = $this->cacheDir.'/'.hash('sha256', SecretData::class).'.meta.php';
+        file_put_contents($file, "<?php return 'stale';");
+
+        $result = CacheWarmer::warm($this->cacheDir, [__DIR__.'/Fixtures/SecretData.php']);
+
+        $this->assertSame([SecretData::class], $result['skipped']);
+        $this->assertFileDoesNotExist($file);
+    }
 }
