@@ -17,6 +17,7 @@ final class TrimCast implements CastsValue, ProvidesJsonSchema
         private readonly ?string $transform = null,
     ) {}
 
+    /** @param  array<string, mixed>  $state */
     public static function __set_state(array $state): self
     {
         return new self($state['transform']);
@@ -42,6 +43,7 @@ final class TrimCast implements CastsValue, ProvidesJsonSchema
         return $this->get($value);
     }
 
+    /** @return array<string, mixed> */
     public function jsonSchema(): array
     {
         return ['type' => 'string'];

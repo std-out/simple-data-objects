@@ -28,6 +28,7 @@ final class MoneyCast implements CastsValue, ProvidesJsonSchema
         private readonly int $decimals = 2,
     ) {}
 
+    /** @param  array<string, mixed>  $state */
     public static function __set_state(array $state): self
     {
         return new self($state['currency'], $state['decimals']);
@@ -134,6 +135,7 @@ final class MoneyCast implements CastsValue, ProvidesJsonSchema
         }
     }
 
+    /** @return array<string, mixed> */
     public function jsonSchema(): array
     {
         return ['type' => 'integer', 'description' => 'Amount in minor units (cents).'];

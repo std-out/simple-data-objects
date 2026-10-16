@@ -5,8 +5,12 @@ declare(strict_types=1);
 namespace StdOut\SimpleDataObjects\Tests;
 
 use PHPUnit\Framework\TestCase;
+use StdOut\SimpleDataObjects\Casts\EncryptedCast;
 use StdOut\SimpleDataObjects\Tests\Fixtures\EventData;
+use StdOut\SimpleDataObjects\Tests\Fixtures\KeyringCardData;
+use StdOut\SimpleDataObjects\Tests\Fixtures\SecretData;
 use StdOut\SimpleDataObjects\Tests\Fixtures\UserData;
+use StdOut\SimpleDataObjects\Tests\Fixtures\UserDataSubclass;
 
 class EqualsDiffTest extends TestCase
 {
@@ -113,5 +117,57 @@ class EqualsDiffTest extends TestCase
         $event = EventData::from(['name' => 'Conf', 'startsAt' => '2024-06-01']);
 
         $this->assertFalse($user->equals($event));
+    }
+
+    public function test_equals_compares_encrypted_fields_by_plaintext(): void
+    {
+        $a = new SecretData('abc');
+
+        $this->assertNotSame($a->toArray(), new SecretData('abc')->toArray());
+        $this->assertTrue($a->equals(new SecretData('abc')));
+        $this->assertFalse($a->equals(new SecretData('abd')));
+    }
+
+    public function test_diff_ignores_reencryption_and_reports_ciphertext_of_changed_fields(): void
+    {
+        $a = new KeyringCardData('4111111111111111', 'ALICE');
+        $b = new KeyringCardData('4111111111111111', 'BOB');
+
+        $diff = $a->diff($b);
+
+        $this->assertSame(['holder'], array_keys($diff));
+        $this->assertStringStartsWith('v2:', $diff['holder'][0]);
+        $this->assertStringStartsWith('v2:', $diff['holder'][1]);
+        $this->assertSame([], $a->diff(new KeyringCardData('4111111111111111', 'ALICE')));
+    }
+
+    public function test_plaintext_comparison_mode_is_scoped_and_restored(): void
+    {
+        $cast = new EncryptedCast('test-encryption-key');
+
+        $inner = EncryptedCast::comparingPlaintext(static function () use ($cast): array {
+            $nested = EncryptedCast::comparingPlaintext(static fn (): ?string => $cast->set('x'));
+
+            return [$nested, $cast->set('y')];
+        });
+
+        $this->assertSame(['x', 'y'], $inner);
+        $this->assertNotSame('z', $cast->set('z'));
+
+        try {
+            EncryptedCast::comparingPlaintext(static fn () => throw new \RuntimeException('boom'));
+        } catch (\RuntimeException) {
+        }
+
+        $this->assertNotSame('z', $cast->set('z'));
+    }
+
+    public function test_equals_returns_false_for_different_classes_with_identical_output(): void
+    {
+        $user = UserData::from(['name' => 'Alice', 'email' => 'alice@example.com']);
+        $admin = new UserDataSubclass('Alice', 'alice@example.com');
+
+        $this->assertSame($user->toArray(), $admin->toArray());
+        $this->assertFalse($user->equals($admin));
     }
 }

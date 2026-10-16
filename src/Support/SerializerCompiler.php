@@ -21,7 +21,7 @@ final class SerializerCompiler
     /**
      * @internal Read directly by BaseData::toArray() for speed — do not mutate.
      *
-     * @var array<class-string, Closure(object): array>
+     * @var array<class-string, Closure(object): array<string, mixed>>
      */
     public static array $serializers = [];
 
@@ -32,13 +32,13 @@ final class SerializerCompiler
      *
      * @internal Read directly by BaseData::toArray() for speed — do not mutate.
      *
-     * @var array<class-string, array<string, Closure(object, string): array>>
+     * @var array<class-string, array<string, Closure(object, string): array<string, mixed>>>
      */
     public static array $contextualSerializers = [];
 
     private const int MAX_CACHED_CONTEXTS = 64;
 
-    /** @var array<class-string, Closure(object, string): array> */
+    /** @var array<class-string, Closure(object, string): array<string, mixed>> */
     private static array $undeclaredContextSerializers = [];
 
     /** @param class-string $class */
@@ -54,7 +54,7 @@ final class SerializerCompiler
 
             $p = $meta->parameters;
 
-            /** @var Closure(object): array $fn */
+            /** @var Closure(object): array<string, mixed> $fn */
             $fn = Closure::bind(eval('return '.self::generate($class, $meta).';'), null, $class);
 
             return self::$serializers[$class] = $fn;
@@ -63,7 +63,7 @@ final class SerializerCompiler
         $p = $meta->parameters;
         $declared = self::declaresContext($meta, $context);
 
-        /** @var Closure(object, string): array $fn */
+        /** @var Closure(object, string): array<string, mixed> $fn */
         $fn = $declared
             ? Closure::bind(eval('return '.self::generate($class, $meta, $context, true).';'), null, $class)
             : self::$undeclaredContextSerializers[$class] ??= Closure::bind(eval('return '.self::generate($class, $meta, null, true).';'), null, $class);

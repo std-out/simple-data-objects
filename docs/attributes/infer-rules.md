@@ -78,6 +78,8 @@ public readonly TypedDataCollection $items;
 
 The cascade only happens if the **nested** class itself has rules to contribute — a nested class without `#[InferRules]` and without any `#[Rules]` attributes contributes nothing beyond the parent's own `'field' => ['required'|'nullable', 'array']` entry. Nesting depth is unbounded (a nested class's own cascade recurses into its own nested classes), and self-referential or mutually cyclic `BaseData` graphs are detected and stop cascading at the cycle instead of recursing forever.
 
+A required [`#[Flatten]`](./flatten.md) property reads its fields from the parent's own keys, so it gets no rule for itself and the nested class's rules apply to the parent's keys without a prefix (`'zip'`, not `'address.zip'`). A nullable or defaulted flattened property keeps the prefixed form.
+
 ## Overriding or merging with #[Rules]
 
 By default, an explicit [`#[Rules]`](./rules.md) on a property **replaces** the inferred rules for that property entirely — predictable, no surprises about what's actually being merged:

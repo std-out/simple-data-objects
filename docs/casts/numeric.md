@@ -41,6 +41,17 @@ class PriceData extends BaseData
 PriceData::from(['amount' => '9.99'])->amount; // 9.99 (float)
 ```
 
+### Rejecting INF and NAN
+
+`json_decode('1e400')` yields `INF`, and a float field accepts it — then `toJson()` fails with `JsonException`. Pass `finite: true` to reject non-finite values at hydration:
+
+```php
+#[Cast(new FloatCast(finite: true))]
+public readonly float $amount,
+```
+
+`INF`, `-INF` and `NAN` then throw `InvalidArgumentException`, and `tryFrom()` returns `null`. Without `finite` they pass through unchanged.
+
 ## Null Handling
 
 Both casts return `null` for `null` input.

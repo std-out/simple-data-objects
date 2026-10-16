@@ -44,6 +44,11 @@ final class EncryptedCast implements BindsToField, CastsValue, ProvidesJsonSchem
 
     private string $associatedData;
 
+    private static bool $comparingPlaintext = false;
+
+    /** @internal */
+    public static int $encryptions = 0;
+
     /**
      * Attribute arguments only allow constant expressions — env() or config()
      * calls are a compile error there. Pass the NAME of an environment
@@ -144,6 +149,12 @@ final class EncryptedCast implements BindsToField, CastsValue, ProvidesJsonSchem
             throw new InvalidArgumentException('EncryptedCast can only encrypt scalar or Stringable values, got '.get_debug_type($value).'.');
         }
 
+        if (self::$comparingPlaintext) {
+            return (string) $value;
+        }
+
+        self::$encryptions++;
+
         if ($this->keyring !== null) {
             return $this->seal((string) $value);
         }
@@ -152,6 +163,38 @@ final class EncryptedCast implements BindsToField, CastsValue, ProvidesJsonSchem
         $ciphertext = sodium_crypto_secretbox((string) $value, $nonce, $this->secretKey->getValue());
 
         return sodium_bin2base64($nonce.$ciphertext, SODIUM_BASE64_VARIANT_URLSAFE_NO_PADDING);
+    }
+
+    /**
+     * @internal
+     *
+     * @template T
+     *
+     * @param  \Closure(): T  $compare
+     * @return T
+     */
+    public static function comparingPlaintext(\Closure $compare): mixed
+    {
+        $previous = self::$comparingPlaintext;
+        self::$comparingPlaintext = true;
+
+        try {
+            return $compare();
+        } finally {
+            self::$comparingPlaintext = $previous;
+        }
+    }
+
+    /**
+     * @internal
+     *
+     * @param  \Closure(): bool  $compare
+     */
+    public static function sameIgnoringNonces(\Closure $compare): bool
+    {
+        $encryptions = self::$encryptions;
+
+        return $compare() || (self::$encryptions !== $encryptions && self::comparingPlaintext($compare));
     }
 
     public function needsReencryption(string $value): bool
@@ -171,6 +214,7 @@ final class EncryptedCast implements BindsToField, CastsValue, ProvidesJsonSchem
         return ['secretKey' => Redactor::REDACTED];
     }
 
+    /** @return array<string, mixed> */
     public function jsonSchema(): array
     {
         return ['type' => 'string'];

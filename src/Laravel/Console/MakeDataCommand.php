@@ -178,7 +178,7 @@ final class MakeDataCommand extends GeneratorCommand
     }
 
     /**
-     * @return list<array{name: string, type_name: string, nullable: bool, auto_increment: bool, generation: array|null}>|null
+     * @return list<array{name: string, type_name: string, nullable: bool, auto_increment: bool, generation: array<string, mixed>|null}>|null
      */
     private function columnsForModel(string $model): ?array
     {

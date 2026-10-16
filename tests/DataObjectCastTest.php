@@ -10,6 +10,7 @@ use StdOut\SimpleDataObjects\Laravel\DataObjectCast;
 use StdOut\SimpleDataObjects\Tests\Fixtures\CastableAccountData;
 use StdOut\SimpleDataObjects\Tests\Fixtures\CastableAddressData;
 use StdOut\SimpleDataObjects\Tests\Fixtures\CastablePaymentData;
+use StdOut\SimpleDataObjects\Tests\Fixtures\CastableSecretData;
 
 /**
  * Direct, isolated tests of the cast class itself — $model is unused by
@@ -127,5 +128,14 @@ class DataObjectCastTest extends TestCase
         $cast = new DataObjectCast(CastablePaymentData::class);
 
         $this->assertFalse($cast->compare($this->model(), 'payment', '{"type":"card","last4":"4242"}', '{"type":"bank","iban":"UA00"}'));
+    }
+
+    public function test_compare_matches_encrypted_fields_by_plaintext(): void
+    {
+        $cast = new DataObjectCast(CastableSecretData::class);
+        $raw = fn (string $pan): string => $cast->set($this->model(), 'secret', new CastableSecretData('visa', $pan), []);
+
+        $this->assertTrue($cast->compare($this->model(), 'secret', $raw('4111111111111111'), $raw('4111111111111111')));
+        $this->assertFalse($cast->compare($this->model(), 'secret', $raw('4111111111111111'), $raw('4000000000000002')));
     }
 }

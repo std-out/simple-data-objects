@@ -7,6 +7,28 @@ and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## [2.7.0] — 2026-10-16
+
+### Added
+- `FloatCast(finite: true)` rejects `INF` and `NAN` (e.g. `1e400` in JSON)
+  at hydration instead of letting `toJson()` fail later. Opt-in.
+
+### Fixed
+- `equals()`, `diff()` and the Eloquent casts compare `EncryptedCast` fields
+  by their decrypted value. Equal objects no longer differ only because each
+  `toArray()` draws a new nonce, and saving an unchanged model no longer
+  rewrites the encrypted column. `diff()` still reports ciphertexts, never
+  plaintext.
+- `#[InferRules]` with a required `#[Flatten]` property rejected valid flat
+  input with "address is required"; the nested rules now apply to the
+  parent's own keys.
+
+### Changed
+- PHPStan runs at level 6: array, iterable and generic types are documented
+  across `src`.
+- Documentation: XML entity handling, comparison of encrypted and hidden
+  fields.
+
 ## [2.6.0] — 2026-10-16
 
 ### Added
@@ -633,7 +655,8 @@ Initial release.
   `toResponse()`).
 - CI pipeline: tests across Laravel 10–13 and a scheduled `composer audit`.
 
-[Unreleased]: https://github.com/std-out/simple-data-objects/compare/v2.6.0...HEAD
+[Unreleased]: https://github.com/std-out/simple-data-objects/compare/v2.7.0...HEAD
+[2.7.0]: https://github.com/std-out/simple-data-objects/compare/v2.6.0...v2.7.0
 [2.6.0]: https://github.com/std-out/simple-data-objects/compare/v2.5.0...v2.6.0
 [2.5.0]: https://github.com/std-out/simple-data-objects/compare/v2.4.0...v2.5.0
 [2.4.0]: https://github.com/std-out/simple-data-objects/compare/v2.3.0...v2.4.0

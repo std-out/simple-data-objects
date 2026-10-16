@@ -13,7 +13,10 @@ use StdOut\SimpleDataObjects\Contracts\ProvidesJsonSchema;
  */
 final class SchemaGenerator
 {
-    /** @param class-string $class */
+    /**
+     * @param  class-string  $class
+     * @return array<string, mixed>
+     */
     public static function generate(string $class): array
     {
         $defs = [];
@@ -22,7 +25,10 @@ final class SchemaGenerator
         return $defs === [] ? $schema : ['$defs' => $defs, ...$schema];
     }
 
-    /** @param array<string, array> $defs */
+    /**
+     * @param  array<string, array<string, mixed>>  $defs
+     * @return array<string, mixed>
+     */
     private static function classSchema(string $class, array &$defs): array
     {
         $meta = MetadataRegistry::get($class);
@@ -47,8 +53,8 @@ final class SchemaGenerator
     }
 
     /**
-     * @param  array<string, array>  $defs
-     * @return array{0: array<string, array>, 1: list<string>}
+     * @param  array<string, array<string, mixed>>  $defs
+     * @return array{0: array<string, array<string, mixed>>, 1: list<string>}
      */
     private static function properties(ClassMeta $meta, array &$defs): array
     {
@@ -82,7 +88,8 @@ final class SchemaGenerator
      * Per-field schema, shared with TypeScriptGenerator so type resolution
      * (casts, enums, nested refs, collections, rules) exists in one place.
      *
-     * @param  array<string, array>  $defs
+     * @param  array<string, array<string, mixed>>  $defs
+     * @return array<string, mixed>
      */
     public static function fieldSchema(ParameterMeta $param, array &$defs): array
     {
@@ -106,6 +113,7 @@ final class SchemaGenerator
         return $schema;
     }
 
+    /** @return array<string, mixed> */
     private static function scalarSchema(string $phpType): array
     {
         return match ($phpType) {
@@ -118,7 +126,10 @@ final class SchemaGenerator
         };
     }
 
-    /** @param class-string $enumClass */
+    /**
+     * @param  class-string  $enumClass
+     * @return array<string, mixed>
+     */
     private static function enumSchema(string $enumClass): array
     {
         $isBacked = is_subclass_of($enumClass, BackedEnum::class);
@@ -130,7 +141,10 @@ final class SchemaGenerator
         return ['type' => is_int($values[0] ?? null) ? 'integer' : 'string', 'enum' => $values];
     }
 
-    /** @param array<string, array> $defs */
+    /**
+     * @param  array<string, array<string, mixed>>  $defs
+     * @return array<string, mixed>
+     */
     private static function refSchema(string $class, array &$defs): array
     {
         $key = self::defKey($class);
@@ -151,7 +165,10 @@ final class SchemaGenerator
         return $pos === false ? $class : substr($class, $pos + 1);
     }
 
-    /** @param array<string, array> $defs */
+    /**
+     * @param  array<string, array<string, mixed>>  $defs
+     * @return array<string, mixed>
+     */
     private static function discriminatorSchema(ClassMeta $meta, array &$defs): array
     {
         $classes = $meta->discriminatorMap;
@@ -169,6 +186,11 @@ final class SchemaGenerator
         return ['oneOf' => $refs];
     }
 
+    /**
+     * @param  array<string, mixed>  $schema
+     * @param  array<mixed>  $rules
+     * @return array<string, mixed>
+     */
     private static function applyRules(array $schema, array $rules): array
     {
         $type = $schema['type'] ?? null;
@@ -195,6 +217,10 @@ final class SchemaGenerator
         return $schema;
     }
 
+    /**
+     * @param  array<string, mixed>  $schema
+     * @return array<string, mixed>
+     */
     private static function applyBound(array $schema, ?string $type, string $bound, float $value): array
     {
         $key = match (true) {

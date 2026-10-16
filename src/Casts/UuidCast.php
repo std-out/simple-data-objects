@@ -13,6 +13,7 @@ final class UuidCast implements CastsValue, ProvidesJsonSchema
 {
     private const string PATTERN = '/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i';
 
+    /** @param  array<string, mixed>  $state */
     public static function __set_state(array $state): self
     {
         return new self;
@@ -38,6 +39,7 @@ final class UuidCast implements CastsValue, ProvidesJsonSchema
         return $this->get($value);
     }
 
+    /** @return array<string, mixed> */
     public function jsonSchema(): array
     {
         return ['type' => 'string', 'format' => 'uuid'];

@@ -20,6 +20,7 @@ final class ParameterMeta
      * @param  class-string|null  $nestedDataClass
      * @param  class-string|null  $enumClass
      * @param  class-string|null  $dataCollectionClass
+     * @param  array<mixed>  $rules
      */
     public function __construct(
         public readonly string $phpName,
@@ -57,6 +58,7 @@ final class ParameterMeta
             && $pipes === [];
     }
 
+    /** @param  array<string, mixed>  $state */
     public static function __set_state(array $state): self
     {
         // Older caches only have a single 'inputName' — reuse it as both.

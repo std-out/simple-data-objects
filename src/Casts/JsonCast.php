@@ -14,6 +14,7 @@ final class JsonCast implements CastsValue, ProvidesJsonSchema
         private readonly int $encodeFlags = 0,
     ) {}
 
+    /** @param  array<string, mixed>  $state */
     public static function __set_state(array $state): self
     {
         return new self($state['assoc'], $state['encodeFlags']);
@@ -41,6 +42,7 @@ final class JsonCast implements CastsValue, ProvidesJsonSchema
         return json_encode($value, $this->encodeFlags | JSON_THROW_ON_ERROR);
     }
 
+    /** @return array<string, mixed> */
     public function jsonSchema(): array
     {
         return [];

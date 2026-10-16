@@ -20,6 +20,7 @@ trait WireableData
 
     abstract public function toArray(): array;
 
+    /** @return array<string, mixed> */
     public function toLivewire(): array
     {
         return $this->toArray();

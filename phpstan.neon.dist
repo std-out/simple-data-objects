@@ -1,5 +1,5 @@
 parameters:
-    level: 5
+    level: 6
     paths:
         - src
         - tests/Fixtures
@@ -28,3 +28,18 @@ parameters:
             paths:
                 - tests/Fixtures/MissingTargetDiscriminatorData.php
                 - tests/Fixtures/NonStringTargetDiscriminatorData.php
+        -
+            identifier: missingType.iterableValue
+            path: tests/Fixtures/*
+        -
+            identifier: missingType.generics
+            path: tests/Fixtures/*
+        -
+            identifier: missingType.parameter
+            path: tests/Fixtures/*
+        -
+            identifier: missingType.property
+            path: tests/Fixtures/*
+        -
+            identifier: missingType.return
+            path: tests/Fixtures/*

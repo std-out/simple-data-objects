@@ -26,6 +26,7 @@ final class DateTimeCast implements CastsValue, ProvidesJsonSchema
         $this->timezone = $timezone instanceof DateTimeZone ? $timezone->getName() : $timezone;
     }
 
+    /** @param  array<string, mixed>  $state */
     public static function __set_state(array $state): self
     {
         return new self($state['outputFormat'], $state['inputFormat'], $state['timezone']);
@@ -77,6 +78,7 @@ final class DateTimeCast implements CastsValue, ProvidesJsonSchema
         return $dt?->format($this->outputFormat);
     }
 
+    /** @return array<string, mixed> */
     public function jsonSchema(): array
     {
         return $this->outputFormat === DateTimeInterface::ATOM

@@ -136,7 +136,10 @@ final class ClassMetaFactory
         );
     }
 
-    /** @param list<ParameterMeta> $params */
+    /**
+     * @param  list<ParameterMeta>  $params
+     * @param  ReflectionClass<object>  $reflection
+     */
     private static function assertSensitiveFieldsProtected(ReflectionClass $reflection, array $params): void
     {
         if (! array_any($params, static fn (ParameterMeta $p): bool => $p->isSensitive)) {
@@ -154,7 +157,10 @@ final class ClassMetaFactory
         );
     }
 
-    /** @return array<string, string> method name => output key */
+    /**
+     * @param  ReflectionClass<object>  $reflection
+     * @return array<string, string> method name => output key
+     */
     private static function computedMethods(ReflectionClass $reflection, ?string $strategy): array
     {
         $computed = [];
@@ -256,6 +262,7 @@ final class ClassMetaFactory
 
     /**
      * @param  list<string>  $excludeNames
+     * @param  ReflectionClass<object>  $reflection
      * @return list<ReflectionProperty>
      */
     private static function publicTypedProperties(ReflectionClass $reflection, array $excludeNames): array
@@ -349,6 +356,7 @@ final class ClassMetaFactory
 
         $rules = match (true) {
             $explicitRules !== null && ! $explicitRules->merge => $explicitRules->rules,
+            $inferRules && $flattenAttrs !== [] && ! $allowsNull && ! $hasDefault => $explicitRules->rules ?? [],
             $inferRules => [
                 ...RuleInferrer::forParameter($parameter, $allowsNull, $nestedDataClass, $enumClass, $dataCollectionClass, $isOptional),
                 ...$explicitRules->rules ?? [],

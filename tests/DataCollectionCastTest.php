@@ -10,6 +10,7 @@ use StdOut\SimpleDataObjects\Exceptions\DataHydrationException;
 use StdOut\SimpleDataObjects\Laravel\AsDataCollection;
 use StdOut\SimpleDataObjects\Laravel\DataCollectionCast;
 use StdOut\SimpleDataObjects\Tests\Fixtures\CastableItemData;
+use StdOut\SimpleDataObjects\Tests\Fixtures\CastableSecretData;
 use StdOut\SimpleDataObjects\TypedDataCollection;
 
 /**
@@ -119,5 +120,14 @@ class DataCollectionCastTest extends TestCase
 
         $this->assertInstanceOf(DataCollectionCast::class, $cast);
         $this->assertInstanceOf(TypedDataCollection::class, $cast->get($this->model(), 'items', [], []));
+    }
+
+    public function test_compare_matches_encrypted_fields_by_plaintext(): void
+    {
+        $cast = new DataCollectionCast(CastableSecretData::class);
+        $raw = fn (string $pan): string => $cast->set($this->model(), 'secrets', [new CastableSecretData('visa', $pan)], []);
+
+        $this->assertTrue($cast->compare($this->model(), 'secrets', $raw('4111111111111111'), $raw('4111111111111111')));
+        $this->assertFalse($cast->compare($this->model(), 'secrets', $raw('4111111111111111'), $raw('4000000000000002')));
     }
 }

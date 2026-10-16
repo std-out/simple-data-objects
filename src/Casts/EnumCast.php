@@ -15,6 +15,7 @@ final class EnumCast implements CastsValue
         private readonly ?UnitEnum $default = null,
     ) {}
 
+    /** @param  array<string, mixed>  $state */
     public static function __set_state(array $state): self
     {
         return new self($state['enumClass'], $state['default']);

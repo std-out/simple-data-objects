@@ -14,6 +14,7 @@ use StdOut\SimpleDataObjects\TypedDataCollection;
 /** @template T of BaseData */
 final class PaginatedDataCollection implements JsonSerializable, Responsable
 {
+    /** @param  LengthAwarePaginator<array-key, mixed>  $paginator */
     private function __construct(
         /** @var TypedDataCollection<T> */
         public readonly TypedDataCollection $data,
@@ -22,6 +23,7 @@ final class PaginatedDataCollection implements JsonSerializable, Responsable
 
     /**
      * @param  class-string<T>  $dataClass
+     * @param  LengthAwarePaginator<array-key, mixed>  $paginator
      * @return self<T>
      */
     public static function of(string $dataClass, LengthAwarePaginator $paginator): self
@@ -45,11 +47,13 @@ final class PaginatedDataCollection implements JsonSerializable, Responsable
         ];
     }
 
+    /** @return array<string, mixed> */
     public function jsonSerialize(): array
     {
         return $this->toArray();
     }
 
+    /** @param  array<string, mixed>  $headers */
     public function toResponse($request, int $status = 200, array $headers = [], ?string $context = null): JsonResponse
     {
         return new JsonResponse($this->toArray($context), $status, $headers);

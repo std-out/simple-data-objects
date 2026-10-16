@@ -24,7 +24,7 @@ final class HydratorCompiler
     /**
      * @internal Read directly by BaseData::from() for speed — do not mutate.
      *
-     * @var array<class-string, Closure(array): object>
+     * @var array<class-string, Closure(array<mixed>): object>
      */
     public static array $hydrators = [];
 
@@ -35,7 +35,7 @@ final class HydratorCompiler
      *
      * @internal Read directly by BaseData::fromLazy() — do not mutate.
      *
-     * @var array<class-string, Closure(array): array>
+     * @var array<class-string, Closure(array<mixed>): array<mixed>>
      */
     public static array $argResolvers = [];
 
@@ -47,7 +47,7 @@ final class HydratorCompiler
      *
      * @internal Read directly by BaseData::fromLazy() and BaseData::with() — do not mutate.
      *
-     * @var array<class-string, Closure(array, object): void>
+     * @var array<class-string, Closure(array<mixed>, object): void>
      */
     public static array $populators = [];
 
@@ -57,7 +57,7 @@ final class HydratorCompiler
      *
      * @internal Read directly by BaseData::fromResult() for speed — do not mutate.
      *
-     * @var array<class-string, Closure(array): HydrationResult>
+     * @var array<class-string, Closure(array<mixed>): HydrationResult<BaseData>>
      */
     public static array $collectingHydrators = [];
 
@@ -108,7 +108,7 @@ final class HydratorCompiler
 
     /**
      * @param  class-string  $class
-     * @return Closure(array, object): void
+     * @return Closure(array<mixed>, object): void
      */
     public static function compilePopulate(string $class): Closure
     {

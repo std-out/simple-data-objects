@@ -15,6 +15,7 @@ use StdOut\SimpleDataObjects\Tests\Fixtures\CastableBankPaymentData;
 use StdOut\SimpleDataObjects\Tests\Fixtures\CastableCardPaymentData;
 use StdOut\SimpleDataObjects\Tests\Fixtures\CastableItemData;
 use StdOut\SimpleDataObjects\Tests\Fixtures\CastableOrderModel;
+use StdOut\SimpleDataObjects\Tests\Fixtures\CastableSecretData;
 use StdOut\SimpleDataObjects\TypedDataCollection;
 
 /**
@@ -39,6 +40,8 @@ class EloquentCastTest extends TestCase
             $table->string('items')->nullable();
             $table->string('payment')->nullable();
             $table->string('account')->nullable();
+            $table->text('secret')->nullable();
+            $table->text('secrets')->nullable();
         });
 
         self::$capsule = $capsule;
@@ -199,6 +202,41 @@ class EloquentCastTest extends TestCase
         $model->address = new CastableAddressData('456 Other St', 'Lviv');
 
         $this->assertTrue($model->isDirty('address'));
+    }
+
+    public function test_dirty_check_compares_encrypted_fields_by_plaintext(): void
+    {
+        $this->skipUnlessDirtyCheckDispatchesToCompare();
+
+        $model = CastableOrderModel::create([
+            'secret' => new CastableSecretData('visa', '4111111111111111'),
+            'secrets' => [new CastableSecretData('visa', '4111111111111111')],
+        ])->fresh();
+        $stored = $model->getRawOriginal('secret');
+
+        $model->secret = new CastableSecretData('visa', '4111111111111111');
+        $model->secrets = CastableSecretData::collection([new CastableSecretData('visa', '4111111111111111')]);
+
+        $this->assertNotSame($stored, $model->getAttributes()['secret']);
+        $this->assertFalse($model->isDirty(['secret', 'secrets']));
+
+        $model->save();
+
+        $this->assertSame($stored, CastableOrderModel::find($model->id)->getRawOriginal('secret'));
+    }
+
+    public function test_dirty_check_detects_a_changed_encrypted_field(): void
+    {
+        $model = CastableOrderModel::create([
+            'secret' => new CastableSecretData('visa', '4111111111111111'),
+            'secrets' => [new CastableSecretData('visa', '4111111111111111')],
+        ])->fresh();
+
+        $model->secret = new CastableSecretData('visa', '4000000000000002');
+        $model->secrets = CastableSecretData::collection([new CastableSecretData('visa', '4000000000000002')]);
+
+        $this->assertTrue($model->isDirty('secret'));
+        $this->assertTrue($model->isDirty('secrets'));
     }
 
     public function test_collection_dirty_check_compares_decoded_values(): void

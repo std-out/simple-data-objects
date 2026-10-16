@@ -7,9 +7,10 @@ namespace StdOut\SimpleDataObjects\Laravel;
 use Illuminate\Contracts\Database\Eloquent\CastsAttributes;
 use Illuminate\Database\Eloquent\Model;
 use StdOut\SimpleDataObjects\BaseData;
+use StdOut\SimpleDataObjects\Casts\EncryptedCast;
 
 /**
- * @implements CastsAttributes<BaseData, BaseData|array|string>
+ * @implements CastsAttributes<BaseData, BaseData|array<mixed>|string>
  */
 final class DataObjectCast implements CastsAttributes
 {
@@ -47,6 +48,7 @@ final class DataObjectCast implements CastsAttributes
         $first = $this->dataClass::from($firstValue);
         $second = $this->dataClass::from($secondValue);
 
-        return $first::class === $second::class && $first->toArray($this->context) === $second->toArray($this->context);
+        return $first::class === $second::class
+            && EncryptedCast::sameIgnoringNonces(fn (): bool => $first->toArray($this->context) === $second->toArray($this->context));
     }
 }
