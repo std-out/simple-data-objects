@@ -49,6 +49,7 @@ final class TypeResolver
         return [null, null, false];
     }
 
+    /** @return array{0: class-string|null, 1: class-string|null} */
     private static function classEntry(string $typeName): array
     {
         if (is_subclass_of($typeName, DataObject::class)) {

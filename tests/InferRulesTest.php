@@ -15,9 +15,12 @@ use StdOut\SimpleDataObjects\Tests\Fixtures\InferredCheckoutData;
 use StdOut\SimpleDataObjects\Tests\Fixtures\InferredCollectionData;
 use StdOut\SimpleDataObjects\Tests\Fixtures\InferredEnumData;
 use StdOut\SimpleDataObjects\Tests\Fixtures\InferredExplicitOverrideData;
+use StdOut\SimpleDataObjects\Tests\Fixtures\InferredFlattenData;
+use StdOut\SimpleDataObjects\Tests\Fixtures\InferredFlattenMergeData;
 use StdOut\SimpleDataObjects\Tests\Fixtures\InferredMergeData;
 use StdOut\SimpleDataObjects\Tests\Fixtures\InferredNestedData;
 use StdOut\SimpleDataObjects\Tests\Fixtures\InferredNestedNoRulesData;
+use StdOut\SimpleDataObjects\Tests\Fixtures\InferredNullableFlattenData;
 use StdOut\SimpleDataObjects\Tests\Fixtures\InferredScalarData;
 use StdOut\SimpleDataObjects\Tests\Fixtures\InferredTreeData;
 use StdOut\SimpleDataObjects\Tests\Fixtures\InferredUnionAndUntypedData;
@@ -268,5 +271,45 @@ class InferRulesTest extends TestCase
         ]);
 
         $this->assertFalse($result->ok());
+    }
+
+    public function test_required_flatten_validates_the_parents_own_keys(): void
+    {
+        $rules = MetadataRegistry::get(InferredFlattenData::class)->validationRules;
+
+        $this->assertArrayNotHasKey('address', $rules);
+        $this->assertSame(['required', 'string'], $rules['street']);
+        $this->assertSame(['required', 'string', 'max:5'], $rules['zip']);
+
+        $data = InferredFlattenData::fromValidated(['name' => 'Alice', 'street' => 'Main', 'zip' => '01001']);
+
+        $this->assertSame('01001', $data->address->zip);
+    }
+
+    public function test_required_flatten_rejects_invalid_nested_keys(): void
+    {
+        try {
+            InferredFlattenData::fromValidated(['name' => 'Alice', 'zip' => '0100100']);
+            $this->fail('Expected ValidationException');
+        } catch (ValidationException $e) {
+            $this->assertSame(['street', 'zip'], array_keys($e->errors()));
+        }
+    }
+
+    public function test_nullable_flatten_keeps_prefixed_rules(): void
+    {
+        $rules = MetadataRegistry::get(InferredNullableFlattenData::class)->validationRules;
+
+        $this->assertSame(['nullable', 'array'], $rules['address']);
+        $this->assertSame(['required', 'string', 'max:5'], $rules['address.zip']);
+        $this->assertArrayNotHasKey('zip', $rules);
+    }
+
+    public function test_required_flatten_keeps_explicitly_merged_rules_for_itself(): void
+    {
+        $rules = MetadataRegistry::get(InferredFlattenMergeData::class)->validationRules;
+
+        $this->assertSame(['array'], $rules['address']);
+        $this->assertSame(['required', 'string'], $rules['street']);
     }
 }

@@ -125,6 +125,7 @@ class VendorData extends BaseData
 - **Undeclared elements are skipped** without being read into memory, so a DTO that needs three fields of a fifty-field element only pays for three. This also means `#[RejectUnknownKeys]` and class-level pipes only ever see declared fields.
 - **Namespaced elements** are matched by their qualified name as written in the file: `#[XmlElement('g:price')]`.
 - **`#[MapInputName]` and `#[TransformKeys]`** still apply to element names, so a class already mapped for array input needs nothing extra.
+- **Entities.** The predefined entities (`&amp;`, `&lt;`, …) and character references (`&#65;`) are decoded. Entities declared in a DTD are never expanded — neither internal nor external — so the file can't trigger entity-expansion attacks or read local files; a reference to one is dropped from the text (`A&x;B` reads as `AB`). Validate or reject DTD-bearing input upstream if that matters for your data.
 
 ## Errors
 

@@ -63,6 +63,12 @@ $a->diff($b);
 // ['startsAt' => ['2024-01-01', '2025-06-15']]
 ```
 
+## Encrypted and Hidden Fields
+
+`EncryptedCast` produces a fresh ciphertext on every `toArray()`, so `equals()` and `diff()` compare those fields by their decrypted value: two objects holding the same card number are equal. `diff()` still reports a changed encrypted field with its ciphertexts, never the plaintext. The Eloquent cast (`IsEloquentCastable`) uses the same comparison, so saving a model whose data object didn't change doesn't rewrite the column.
+
+`#[Hidden]` fields are not part of `toArray()` and are ignored by both methods.
+
 ## Use Cases
 
 ```php

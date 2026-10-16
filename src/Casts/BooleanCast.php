@@ -11,6 +11,7 @@ final class BooleanCast implements CastsValue, ProvidesJsonSchema
 {
     private const array TRUTHY = ['true', '1', 'yes', 'on'];
 
+    /** @param  array<string, mixed>  $state */
     public static function __set_state(array $state): self
     {
         return new self;
@@ -34,6 +35,7 @@ final class BooleanCast implements CastsValue, ProvidesJsonSchema
         return $value === null ? null : (bool) $value;
     }
 
+    /** @return array<string, mixed> */
     public function jsonSchema(): array
     {
         return ['type' => 'boolean'];

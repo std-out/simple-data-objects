@@ -20,11 +20,13 @@ final class CommaSeparatedCast implements CastsValue, ProvidesJsonSchema
         }
     }
 
+    /** @param  array<string, mixed>  $state */
     public static function __set_state(array $state): self
     {
         return new self($state['separator'], $state['trim'], $state['maxItems'] ?? null);
     }
 
+    /** @return list<string>|null */
     public function get(#[\SensitiveParameter] mixed $value): ?array
     {
         if ($value === null) {
@@ -64,6 +66,7 @@ final class CommaSeparatedCast implements CastsValue, ProvidesJsonSchema
         throw new InvalidArgumentException("CommaSeparatedCast accepts at most {$this->maxItems} items.");
     }
 
+    /** @return array<string, mixed> */
     public function jsonSchema(): array
     {
         return ['type' => 'string'];

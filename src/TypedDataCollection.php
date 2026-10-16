@@ -17,6 +17,7 @@ final class TypedDataCollection extends Collection
 {
     /**
      * @param  class-string<T>  $dataClass
+     * @param  iterable<mixed>  $items
      * @return static<T>
      */
     public static function of(string $dataClass, #[\SensitiveParameter] iterable $items = []): static

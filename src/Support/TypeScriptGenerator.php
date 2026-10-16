@@ -49,8 +49,8 @@ final class TypeScriptGenerator
     }
 
     /**
-     * @param  array<string, array>  $defs
-     * @return array<string, array{0: array, 1: bool}> output name => [schema, isOptional]
+     * @param  array<string, array<string, mixed>>  $defs
+     * @return array<string, array{0: array<string, mixed>, 1: bool}> output name => [schema, isOptional]
      */
     private static function fields(ClassMeta $meta, array &$defs): array
     {
@@ -86,6 +86,7 @@ final class TypeScriptGenerator
         return 'export type '.SchemaGenerator::defKey($class).' = '.implode(' | ', $names).";\n\n";
     }
 
+    /** @param  array<string, mixed>  $schema */
     private static function tsType(array $schema): string
     {
         $type = $schema['type'] ?? null;

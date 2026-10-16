@@ -79,8 +79,10 @@ final class ClassMeta
                 $cascadesNestedRules = true;
             }
 
+            $nestedPrefix = $meta->flatten && ! $meta->allowsNull && ! $meta->hasDefault ? '' : "{$inputName}.";
+
             foreach ($meta->nestedRules as $suffix => $rules) {
-                $validationRules["{$inputName}.{$suffix}"] = $rules;
+                $validationRules[$nestedPrefix.$suffix] = $rules;
             }
         }
 
@@ -98,6 +100,7 @@ final class ClassMeta
      * Missing and unmapped discriminator values resolve to the configured
      * fallback, or null when there is none.
      *
+     * @param  array<mixed>  $data
      * @return class-string|null
      */
     public function resolveDiscriminatedClass(#[\SensitiveParameter] array $data): ?string
@@ -242,6 +245,7 @@ final class ClassMeta
         return $meta->prepareValidation($data, $prefix, $rules);
     }
 
+    /** @param  array<string, mixed>  $state */
     public static function __set_state(array $state): self
     {
         return new self(

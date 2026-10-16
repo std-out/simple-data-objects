@@ -12,6 +12,7 @@ use Illuminate\Translation\Translator;
 use Illuminate\Validation\Factory as ValidatorFactory;
 use Illuminate\Validation\ValidationException;
 use JsonSerializable;
+use StdOut\SimpleDataObjects\Casts\EncryptedCast;
 use StdOut\SimpleDataObjects\Contracts\DataObject;
 use StdOut\SimpleDataObjects\Exceptions\DataHydrationException;
 use StdOut\SimpleDataObjects\Support\ClassMeta;
@@ -24,6 +25,7 @@ use StdOut\SimpleDataObjects\Support\ValueCaster;
 use StdOut\SimpleDataObjects\Support\XmlStream;
 use Stringable;
 
+/** @implements Arrayable<string, mixed> */
 abstract class BaseData implements Arrayable, DataObject, JsonSerializable, Stringable
 {
     private static ?ValidatorFactory $validatorFactory = null;
@@ -144,6 +146,7 @@ abstract class BaseData implements Arrayable, DataObject, JsonSerializable, Stri
     }
 
     /**
+     * @param  iterable<mixed>  $items
      * @return TypedDataCollection<static>
      */
     public static function collection(#[\SensitiveParameter] iterable $items): TypedDataCollection
@@ -151,6 +154,7 @@ abstract class BaseData implements Arrayable, DataObject, JsonSerializable, Stri
         return TypedDataCollection::of(static::class, $items);
     }
 
+    /** @return array<string, mixed> */
     public static function jsonSchema(): array
     {
         return SchemaGenerator::generate(static::class);
@@ -162,6 +166,7 @@ abstract class BaseData implements Arrayable, DataObject, JsonSerializable, Stri
      * for large iterables (a DB cursor, a generator reading a big CSV) where
      * holding every hydrated instance in memory at once would be wasteful.
      *
+     * @param  iterable<mixed>  $items
      * @return LazyCollection<int, static>
      */
     public static function lazyCollection(#[\SensitiveParameter] iterable $items): LazyCollection
@@ -354,6 +359,7 @@ abstract class BaseData implements Arrayable, DataObject, JsonSerializable, Stri
     }
 
     /**
+     * @param  array<mixed>  $data
      * @return class-string<static>
      *
      * @throws DataHydrationException
@@ -401,14 +407,27 @@ abstract class BaseData implements Arrayable, DataObject, JsonSerializable, Stri
 
     public function equals(self $other): bool
     {
-        return $other::class === static::class && $this->toArray() === $other->toArray();
+        if ($other::class !== static::class) {
+            return false;
+        }
+
+        $encryptions = EncryptedCast::$encryptions;
+
+        return $this->toArray() === $other->toArray()
+            || (EncryptedCast::$encryptions !== $encryptions && EncryptedCast::comparingPlaintext(fn (): bool => $this->toArray() === $other->toArray()));
     }
 
     /** @return array<string, array{0: mixed, 1: mixed}> */
     public function diff(self $other): array
     {
+        $encryptions = EncryptedCast::$encryptions;
         $a = $this->toArray();
         $b = $other->toArray();
+
+        if (EncryptedCast::$encryptions !== $encryptions) {
+            return self::diffPlaintext($a, $b, ...EncryptedCast::comparingPlaintext(fn (): array => [$this->toArray(), $other->toArray()]));
+        }
+
         $result = [];
 
         foreach (array_keys($a + $b) as $key) {
@@ -417,6 +436,26 @@ abstract class BaseData implements Arrayable, DataObject, JsonSerializable, Stri
 
             if ($aVal !== $bVal) {
                 $result[$key] = [$aVal, $bVal];
+            }
+        }
+
+        return $result;
+    }
+
+    /**
+     * @param  array<string, mixed>  $a
+     * @param  array<string, mixed>  $b
+     * @param  array<string, mixed>  $plainA
+     * @param  array<string, mixed>  $plainB
+     * @return array<string, array{0: mixed, 1: mixed}>
+     */
+    private static function diffPlaintext(array $a, array $b, array $plainA, array $plainB): array
+    {
+        $result = [];
+
+        foreach (array_keys($a + $b) as $key) {
+            if (($plainA[$key] ?? null) !== ($plainB[$key] ?? null)) {
+                $result[$key] = [$a[$key] ?? null, $b[$key] ?? null];
             }
         }
 
@@ -437,21 +476,25 @@ abstract class BaseData implements Arrayable, DataObject, JsonSerializable, Stri
         return json_encode($this->toArray($context), $flags | JSON_THROW_ON_ERROR);
     }
 
+    /** @return array<string, mixed> */
     public function only(string ...$keys): array
     {
         return array_intersect_key($this->toArray(), array_flip($keys));
     }
 
+    /** @return array<string, mixed> */
     public function except(string ...$keys): array
     {
         return array_diff_key($this->toArray(), array_flip($keys));
     }
 
+    /** @return array<string, mixed> */
     public function definedOnly(?string $context = null): array
     {
         return $this->toArray($context);
     }
 
+    /** @return array<string, mixed> */
     public function jsonSerialize(): array
     {
         return $this->toArray();

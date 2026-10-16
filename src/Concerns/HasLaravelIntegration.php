@@ -41,6 +41,10 @@ trait HasLaravelIntegration
         return static::from($data);
     }
 
+    /**
+     * @param  Request  $request
+     * @param  array<string, mixed>  $headers
+     */
     public function toResponse($request, int $status = 200, array $headers = [], ?string $context = null): JsonResponse
     {
         $wrapIn = MetadataRegistry::get(static::class)->wrapIn;
@@ -50,6 +54,7 @@ trait HasLaravelIntegration
     }
 
     /**
+     * @param  LengthAwarePaginator<array-key, mixed>  $paginator
      * @return PaginatedDataCollection<static>
      */
     public static function paginatedCollection(LengthAwarePaginator $paginator): PaginatedDataCollection

@@ -12,6 +12,8 @@ use XMLReader;
  * element is skipped without being read into memory.
  *
  * @internal
+ *
+ * @phpstan-type XmlShape array{0: array<string, array{0: string, 1: int}>, 1: array{0: string, 1: int}|null, 2: array<string, array{0: int, 1: string, 2: int|class-string}>, 3: array<string, mixed>}
  */
 final class XmlStream
 {
@@ -38,7 +40,7 @@ final class XmlStream
      * text entry is [input key, scalar type]; a child is [kind, input key,
      * scalar type or class-string].
      *
-     * @var array<class-string, array{0: array<string, array>, 1: array|null, 2: array<string, array>, 3: array<string, array>}>
+     * @var array<class-string, XmlShape>
      */
     private static array $shapes = [];
 
@@ -118,6 +120,9 @@ final class XmlStream
     /**
      * Expects the reader on an element; leaves it either on that same element
      * or on its end tag, so the caller always advances with next().
+     *
+     * @param  XmlShape  $shape
+     * @param  array<string, mixed>  $row
      */
     private static function fill(XMLReader $xml, array $shape, #[\SensitiveParameter] array &$row): void
     {
@@ -192,7 +197,10 @@ final class XmlStream
         };
     }
 
-    /** @param class-string $class */
+    /**
+     * @param  class-string  $class
+     * @return XmlShape
+     */
     private static function shape(string $class): array
     {
         $shape = [[], null, [], []];
@@ -201,7 +209,10 @@ final class XmlStream
         return self::$shapes[$class] = $shape;
     }
 
-    /** @param class-string $class */
+    /**
+     * @param  class-string  $class
+     * @param  XmlShape  $shape
+     */
     private static function describe(string $class, array &$shape): void
     {
         $meta = MetadataRegistry::get($class);

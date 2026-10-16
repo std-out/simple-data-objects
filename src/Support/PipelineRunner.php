@@ -22,6 +22,8 @@ final class PipelineRunner
      *
      * @param  list<class-string<DataPipe>>  $pipes
      * @param  class-string  $dataClass
+     * @param  array<mixed>  $data
+     * @return array<mixed>
      */
     public static function run(#[\SensitiveParameter] array $data, string $dataClass, array $pipes): array
     {

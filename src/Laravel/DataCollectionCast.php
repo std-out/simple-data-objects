@@ -7,17 +7,19 @@ namespace StdOut\SimpleDataObjects\Laravel;
 use Illuminate\Contracts\Database\Eloquent\CastsAttributes;
 use Illuminate\Database\Eloquent\Model;
 use StdOut\SimpleDataObjects\BaseData;
+use StdOut\SimpleDataObjects\Casts\EncryptedCast;
 use StdOut\SimpleDataObjects\Exceptions\DataHydrationException;
 use StdOut\SimpleDataObjects\TypedDataCollection;
 
 /**
- * @implements CastsAttributes<TypedDataCollection, TypedDataCollection|iterable|string>
+ * @implements CastsAttributes<TypedDataCollection<BaseData>, TypedDataCollection<BaseData>|iterable<mixed>|string>
  */
 final class DataCollectionCast implements CastsAttributes
 {
     /** @param class-string<BaseData> $dataClass */
     public function __construct(private readonly string $dataClass) {}
 
+    /** @return TypedDataCollection<BaseData>|null */
     public function get(Model $model, string $key, #[\SensitiveParameter] mixed $value, #[\SensitiveParameter] array $attributes): ?TypedDataCollection
     {
         if ($value === null) {
@@ -65,7 +67,9 @@ final class DataCollectionCast implements CastsAttributes
             ->map(static fn (BaseData $item): array => $item->toArray())
             ->all();
 
-        return $toArrays($this->get($model, $key, $firstValue, []))
-            === $toArrays($this->get($model, $key, $secondValue, []));
+        $first = $this->get($model, $key, $firstValue, []);
+        $second = $this->get($model, $key, $secondValue, []);
+
+        return EncryptedCast::sameIgnoringNonces(static fn (): bool => $toArrays($first) === $toArrays($second));
     }
 }
