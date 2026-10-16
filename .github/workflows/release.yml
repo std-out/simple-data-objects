@@ -55,7 +55,7 @@ jobs:
           subject-path: simple-data-objects-${{ env.TAG }}.tar.gz
 
       - name: Attest SBOM
-        uses: actions/attest-sbom@c604332985a26aa8cf1bdc465b92731239ec6b9e
+        uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6
         with:
           subject-path: simple-data-objects-${{ env.TAG }}.tar.gz
           sbom-path: simple-data-objects-${{ env.TAG }}.cdx.json
