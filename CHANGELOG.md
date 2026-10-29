@@ -7,6 +7,15 @@ and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Security
+- An exception thrown by a data class constructor during `from()`, `fromLazy()`
+  or `with()` (a `TypeError` for a wrong input type, or the constructor's own
+  validation) no longer carries the raw arguments in the constructor's stack
+  frame: they are wrapped in `SensitiveParameterValue`, as PHP does for
+  `#[\SensitiveParameter]`. The exception's type, message, line and previous
+  chain are unchanged. Run `sdo:clear` (or `sdo:warm`) after upgrading so
+  file-cached hydrators are regenerated.
+
 ## [2.8.0] — 2026-10-16
 
 ### Added
