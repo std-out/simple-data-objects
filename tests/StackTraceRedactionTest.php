@@ -16,6 +16,8 @@ use StdOut\SimpleDataObjects\Laravel\DataCollectionCast;
 use StdOut\SimpleDataObjects\Laravel\DataObjectCast;
 use StdOut\SimpleDataObjects\Tests\Fixtures\CastableAddressData;
 use StdOut\SimpleDataObjects\Tests\Fixtures\CastableItemData;
+use StdOut\SimpleDataObjects\Tests\Fixtures\ChargeData;
+use StdOut\SimpleDataObjects\Tests\Fixtures\HybridChargeData;
 use StdOut\SimpleDataObjects\Tests\Fixtures\OrderWithMoneyData;
 use StdOut\SimpleDataObjects\Tests\Fixtures\OrderWithUuidData;
 use StdOut\SimpleDataObjects\Tests\Fixtures\SensitiveCardData;
@@ -63,6 +65,11 @@ class StackTraceRedactionTest extends TestCase
         yield 'encrypted cast' => [static fn () => (new EncryptedCast('k'))->get($pan.'!')];
         yield 'data pipe' => [static fn () => ThrowingPipeData::from(['name' => $pan])];
         yield 'fromLivewire' => [static fn () => WireableEventData::fromLivewire(['name' => $pan])];
+        yield 'constructor type error' => [static fn () => ChargeData::from(['pan' => $pan, 'amount' => 'ten'])];
+        yield 'constructor throws' => [static fn () => ChargeData::from(['pan' => $pan, 'amount' => -1, 'cvv' => '123'])];
+        yield 'inherited constructor, extra properties' => [static fn () => HybridChargeData::from(['pan' => $pan, 'amount' => -1])];
+        yield 'constructor throws in fromLazy' => [static fn () => ChargeData::fromLazy(['pan' => $pan, 'amount' => -1])->amount];
+        yield 'constructor throws in with' => [static fn () => ChargeData::from(['pan' => $pan, 'amount' => 1])->with(amount: -1)];
     }
 
     #[DataProvider('failingCalls')]
@@ -78,6 +85,31 @@ class StackTraceRedactionTest extends TestCase
 
         $this->assertNoPanInTrace(fn () => (new DataObjectCast(CastableAddressData::class))->get($model, 'address', ['street' => self::PAN], $attributes));
         $this->assertNoPanInTrace(fn () => (new DataCollectionCast(CastableItemData::class))->get($model, 'items', '{"pan":"'.self::PAN.'"', $attributes));
+    }
+
+    public function test_constructor_exception_keeps_type_message_line_and_previous(): void
+    {
+        try {
+            ChargeData::from(['pan' => self::PAN, 'amount' => -1, 'cvv' => '123']);
+            $this->fail('Expected the constructor to throw.');
+        } catch (\DomainException $e) {
+            $this->assertSame('Charge rejected.', $e->getMessage());
+            $this->assertStringEndsWith('ChargeData.php', $e->getFile());
+            $this->assertInstanceOf(\InvalidArgumentException::class, $e->getPrevious());
+
+            $frame = $e->getTrace()[0];
+            $this->assertSame([ChargeData::class, '__construct'], [$frame['class'] ?? null, $frame['function']]);
+            $this->assertContainsOnlyInstancesOf(\SensitiveParameterValue::class, $frame['args'] ?? []);
+            $this->assertSame([self::PAN, -1, '123'], array_map(static fn (\SensitiveParameterValue $arg): mixed => $arg->getValue(), $frame['args'] ?? []));
+        }
+    }
+
+    public function test_constructor_type_error_stays_a_type_error(): void
+    {
+        $this->expectException(\TypeError::class);
+        $this->expectExceptionMessage('Argument #2 ($amount) must be of type int');
+
+        ChargeData::from(['pan' => self::PAN, 'amount' => 'ten']);
     }
 
     private function assertNoPanInTrace(Closure $call): void

@@ -19,6 +19,7 @@ use StdOut\SimpleDataObjects\Support\ClassMeta;
 use StdOut\SimpleDataObjects\Support\HydratorCompiler;
 use StdOut\SimpleDataObjects\Support\InputNormalizer;
 use StdOut\SimpleDataObjects\Support\MetadataRegistry;
+use StdOut\SimpleDataObjects\Support\Redactor;
 use StdOut\SimpleDataObjects\Support\SchemaGenerator;
 use StdOut\SimpleDataObjects\Support\SerializerCompiler;
 use StdOut\SimpleDataObjects\Support\ValueCaster;
@@ -94,7 +95,12 @@ abstract class BaseData implements Arrayable, DataObject, JsonSerializable, Stri
             }
 
             $args = (HydratorCompiler::$argResolvers[$class] ?? HydratorCompiler::compileArgs($class))($normalized);
-            $ghost->__construct(...$args);
+
+            try {
+                $ghost->__construct(...$args);
+            } catch (\Throwable $e) {
+                throw Redactor::scrubConstructorArguments($e, $class);
+            }
 
             // Hybrid: the constructor only covers its own parameters — the
             // extra properties still need populating, same mechanism as the
@@ -242,7 +248,11 @@ abstract class BaseData implements Arrayable, DataObject, JsonSerializable, Stri
             );
         }
 
-        $instance = $meta->hasConstructor ? new static(...$ctorArgs) : new static;
+        try {
+            $instance = $meta->hasConstructor ? new static(...$ctorArgs) : new static;
+        } catch (\Throwable $e) { // @phpstan-ignore catch.neverThrown (PHPStan sees only BaseData, which has no constructor; subclass constructors can throw)
+            throw Redactor::scrubConstructorArguments($e, static::class);
+        }
 
         // Extra (non-constructor) properties — constructor-less classes and
         // hybrid classes' extra fields. Legal even for readonly properties:

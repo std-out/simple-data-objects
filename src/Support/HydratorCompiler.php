@@ -190,13 +190,18 @@ final class HydratorCompiler
 
         $unknownCheck = self::buildUnknownKeysCheck($class, $meta);
         [$body, $argList] = self::buildParts($class, $meta);
+        $construct = "try {\n"
+            ."        \$o = new \\{$class}({$argList});\n"
+            ."    } catch (\\Throwable \$e) {\n"
+            ."        throw \\StdOut\\SimpleDataObjects\\Support\\Redactor::scrubConstructorArguments(\$e, \\{$class}::class);\n"
+            ."    }\n";
 
         if ($meta->hasExtraProperties) {
             $extraBody = self::buildPropertyAssignments($class, $meta, includePipesPrelude: false);
 
             return <<<PHP
             static function (#[\\SensitiveParameter] array \$d) use (\$p, \$pipes): \\{$class} {
-            {$unknownCheck}{$body}    \$o = new \\{$class}({$argList});
+            {$unknownCheck}{$body}    {$construct}
             {$extraBody}    return \$o;
             }
             PHP;
@@ -204,7 +209,7 @@ final class HydratorCompiler
 
         return <<<PHP
         static function (#[\\SensitiveParameter] array \$d) use (\$p, \$pipes): \\{$class} {
-        {$unknownCheck}{$body}    return new \\{$class}({$argList});
+        {$unknownCheck}{$body}    {$construct}    return \$o;
         }
         PHP;
     }
