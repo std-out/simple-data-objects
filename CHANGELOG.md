@@ -11,9 +11,10 @@ and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.
 
 ### Fixed
 - `fromValidated()` and `validate()` throw only `ValidationException`. A rule
-  that cannot evaluate the input (e.g. `numeric|max:100` on `INF`, `NAN` or a
-  JSON `1e400`) raised `Brick\Math\Exception\NumberFormatException`, which
-  Laravel turned into a 500; it is now a validation error
+  that throws while evaluating the input (e.g. `numeric|max:100` on `INF`,
+  `NAN` or a JSON `1e400` on Laravel versions whose size rules raise
+  `Brick\Math\Exception\NumberFormatException`) surfaced that exception,
+  which Laravel turned into a 500; it is now a validation error
   `'$input' => ['Input could not be validated.']`, matching
   `fromValidatedResult()`. A `ValidationException` thrown by a rule, and a
   custom exception class set on the validator, are kept.
