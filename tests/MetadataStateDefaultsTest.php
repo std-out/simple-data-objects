@@ -42,7 +42,6 @@ class MetadataStateDefaultsTest extends TestCase
         $this->assertFalse($meta->rejectUnknownKeys);
         $this->assertNull($meta->wrapIn);
         $this->assertSame([], $meta->computed);
-        $this->assertFalse($meta->inferRules);
     }
 
     public function test_class_meta_state_values_override_the_defaults(): void
@@ -53,14 +52,12 @@ class MetadataStateDefaultsTest extends TestCase
             'hasConstructor' => false,
             'rejectUnknownKeys' => true,
             'computed' => ['total' => 'total'],
-            'inferRules' => true,
         ]);
 
         $this->assertSame(['P'], $meta->pipes);
         $this->assertFalse($meta->hasConstructor);
         $this->assertTrue($meta->rejectUnknownKeys);
         $this->assertSame(['total' => 'total'], $meta->computed);
-        $this->assertTrue($meta->inferRules);
     }
 
     public function test_class_meta_constructor_defaults(): void
@@ -68,7 +65,6 @@ class MetadataStateDefaultsTest extends TestCase
         $meta = new ClassMeta([]);
 
         $this->assertFalse($meta->rejectUnknownKeys);
-        $this->assertFalse($meta->inferRules);
         $this->assertTrue($meta->hasConstructor);
     }
 

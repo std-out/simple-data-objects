@@ -53,7 +53,6 @@ final class ClassMeta
         public readonly bool $rejectUnknownKeys = false,
         public readonly ?string $wrapIn = null,
         public readonly array $computed = [],
-        public readonly bool $inferRules = false,
     ) {
         $validationRules = [];
         $validationAliases = [];
@@ -75,11 +74,15 @@ final class ClassMeta
                 $validationAliases[$inputName] = array_slice($meta->inputNames, 1);
             }
 
-            if ($inferRules && ($meta->nestedDataClass !== null || $meta->dataCollectionClass !== null)) {
+            if ($meta->nestedDataClass !== null || $meta->dataCollectionClass !== null) {
                 $cascadesNestedRules = true;
             }
 
-            $nestedPrefix = $meta->flatten && ! $meta->allowsNull && ! $meta->hasDefault ? '' : "{$inputName}.";
+            if ($meta->allowsNull || $meta->hasDefault || $meta->isOptional) {
+                continue;
+            }
+
+            $nestedPrefix = $meta->flatten ? '' : "{$inputName}.";
 
             foreach ($meta->nestedRules as $suffix => $rules) {
                 $validationRules[$nestedPrefix.$suffix] = $rules;
@@ -205,9 +208,23 @@ final class ClassMeta
                 continue;
             }
 
+            $presenceDependent = $param->allowsNull || $param->hasDefault || $param->isOptional;
+
             if ($param->nestedDataClass !== null) {
+                if ($presenceDependent) {
+                    foreach (MetadataRegistry::get($param->nestedDataClass)->validationRules as $suffix => $keyRules) {
+                        $rules["{$prefix}{$name}.{$suffix}"] = $keyRules;
+                    }
+                }
+
                 $data[$name] = self::prepareNestedValidation($param->nestedDataClass, $data[$name], "{$prefix}{$name}.", $rules);
             } elseif ($param->dataCollectionClass !== null) {
+                if ($presenceDependent) {
+                    foreach (MetadataRegistry::get($param->dataCollectionClass)->validationRules as $suffix => $keyRules) {
+                        $rules["{$prefix}{$name}.*.{$suffix}"] = $keyRules;
+                    }
+                }
+
                 foreach ($data[$name] as $key => $item) {
                     if (is_array($item)) {
                         $data[$name][$key] = self::prepareNestedValidation($param->dataCollectionClass, $item, "{$prefix}{$name}.{$key}.", $rules);
@@ -258,7 +275,6 @@ final class ClassMeta
             $state['rejectUnknownKeys'] ?? false,
             $state['wrapIn'] ?? null,
             $state['computed'] ?? [],
-            $state['inferRules'] ?? false,
         );
     }
 }

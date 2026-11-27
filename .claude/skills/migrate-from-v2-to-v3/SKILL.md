@@ -51,7 +51,11 @@ classes. Steps 2 and 3 only matter for classes reached through those calls.
 
 Find parents **without** `#[InferRules]` that have a property typed as a data
 class (or `#[DataCollection(X::class)]`) where that class, or anything it
-nests, has `#[Rules]`. In 3.0 those nested rules apply.
+nests, has `#[Rules]`. In 3.0 those nested rules apply: always for a
+required property, and for a nullable, defaulted or `Optional` one when the
+value is present as an array. Parents **with** `#[InferRules]` change only
+in the other direction: an absent or `null` optional nested value no longer
+fails the nested `required` rules.
 
 For each one, write a test that posts the real payload shape through the
 validating call site. If it now fails, **STOP AND ASK**: is the nested rule

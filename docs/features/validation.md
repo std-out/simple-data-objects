@@ -43,6 +43,40 @@ class RegisterData extends BaseData
 }
 ```
 
+## Nested Data Classes
+
+The rules of a nested data class, and of the item class of a [`#[DataCollection]`](../attributes/data-collection.md), apply when the parent is validated, under a dot-prefixed key. The parent needs no `#[InferRules]` for this:
+
+```php
+class AddressData extends BaseData
+{
+    public function __construct(
+        #[Rules(['required', 'string', 'size:5'])]
+        public readonly string $zip,
+    ) {}
+}
+
+class CustomerData extends BaseData
+{
+    public function __construct(
+        public readonly AddressData $address,
+        #[DataCollection(AddressData::class)]
+        public readonly TypedDataCollection $shipping,
+        public readonly ?AddressData $billing = null,
+    ) {}
+}
+
+CustomerData::fromValidated([
+    'address' => ['zip' => '123'],
+    'shipping' => [['zip' => '01001'], ['zip' => '1']],
+]);
+// ValidationException: 'address.zip', 'shipping.1.zip'
+```
+
+A nested property that is nullable, has a default or is [`Optional`](./optional.md) is validated only when its value is present as an array: an absent or `null` `billing` does not make `billing.zip` required. A nested class's own nested properties follow the same rules at every depth, including self-referential classes. A [`#[Discriminator]`](../attributes/discriminator.md) base resolves to its concrete class first, and that class's rules apply.
+
+In 2.x the nested rules applied only when the parent had `#[InferRules]`; see [`UPGRADE-3.0.md`](https://github.com/std-out/simple-data-objects/blob/main/UPGRADE-3.0.md).
+
 ## fromValidated() — Validate then Hydrate
 
 Throws `Illuminate\Validation\ValidationException` if validation fails; returns a hydrated instance on success. A rule that throws while evaluating the input (for example, on some Laravel versions, `max:100` on `INF` from a JSON `1e400`) is reported the same way, as a single `'$input' => ['Input could not be validated.']` error, so the response is a 422 rather than a 500. The same applies to `validate()`.

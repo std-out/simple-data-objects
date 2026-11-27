@@ -30,8 +30,16 @@ for Claude Code that walks a codebase through this guide class by class.
 `#[DataCollection]`, were checked only when the parent class had
 `#[InferRules]`. Without it they were ignored.
 
-**3.0:** a nested class's rules always apply when the nested value is
-present, whether or not the parent has `#[InferRules]`.
+**3.0:** a nested class's rules apply whether or not the parent has
+`#[InferRules]`. For a required nested property they are part of the
+parent's rules (`address.zip`, `items.*.zip`). For a nullable, defaulted or
+`Optional` one they apply only when the value is present as an array: an
+absent or `null` value no longer fails the nested `required` rules, which
+2.x did even with `#[InferRules]`. Nested classes are validated at every
+depth, including self-referential ones.
+
+Code that reads `ClassMeta::$validationRules` sees the nested keys of
+required properties only; `ClassMeta` no longer has `$inferRules`.
 
 **Affected:** a class with a property typed as another data class (or a
 `#[DataCollection]`) whose class has `#[Rules]`, validated through

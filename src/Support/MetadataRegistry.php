@@ -12,7 +12,7 @@ final class MetadataRegistry
      */
     private const string FILE_SUFFIX = '.meta.php';
 
-    private const string FORMAT = 'sdo-cache-3';
+    private const string FORMAT = 'sdo-cache-4';
 
     /** @var array<string, ClassMeta> */
     private static array $cache = [];

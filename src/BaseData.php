@@ -277,8 +277,10 @@ abstract class BaseData implements Arrayable, DataObject, JsonSerializable, Stri
             return self::resolveDiscriminated($meta, $array)::fromValidated($array);
         }
 
-        if ($meta->validationRules !== []) {
-            self::runValidation(...$meta->validationInput($array));
+        [$input, $rules] = $meta->validationInput($array);
+
+        if ($rules !== []) {
+            self::runValidation($input, $rules);
         }
 
         return static::from($array);
@@ -318,11 +320,12 @@ abstract class BaseData implements Arrayable, DataObject, JsonSerializable, Stri
 
         $result = static::fromResult($data);
 
-        if ($meta->validationRules === []) {
+        [$input, $rules] = $meta->validationInput($data);
+
+        if ($rules === []) {
             return $result;
         }
 
-        [$input, $rules] = $meta->validationInput($data);
         $validator = self::validatorFactory()->make($input, $rules);
 
         try {
@@ -355,12 +358,16 @@ abstract class BaseData implements Arrayable, DataObject, JsonSerializable, Stri
             return;
         }
 
-        if ($meta->validationRules === []) {
+        if ($meta->validationRules === [] && ! $meta->cascadesNestedRules) {
             return;
         }
 
         $array = is_array($data) ? $data : InputNormalizer::normalize(static::class, $data);
-        self::runValidation(...$meta->validationInput($array));
+        [$input, $rules] = $meta->validationInput($array);
+
+        if ($rules !== []) {
+            self::runValidation($input, $rules);
+        }
     }
 
     /**
