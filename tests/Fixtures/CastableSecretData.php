@@ -16,7 +16,7 @@ final class CastableSecretData extends BaseData implements Castable
 
     public function __construct(
         public readonly string $label,
-        #[Cast(new EncryptedCast('test-encryption-key'))]
+        #[Cast(new EncryptedCast('TU/pBcXXXWPceeZh0Zt76EgWHOl78yIlUaMoRPQZeME='))]
         public readonly string $pan,
     ) {}
 }

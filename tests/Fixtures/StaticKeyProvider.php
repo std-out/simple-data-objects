@@ -10,6 +10,6 @@ final class StaticKeyProvider implements EncryptionKeyProvider
 {
     public function key(): string
     {
-        return 'provider-key';
+        return 's/rAunJu2UVFegODXBdxxfC+RlDT66KL7yeKID87Hrw=';
     }
 }
