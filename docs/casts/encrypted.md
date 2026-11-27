@@ -126,7 +126,7 @@ Both formats are told apart by the `v2:` prefix, which cannot occur in base64url
 
 ## Key Handling
 
-Use a key of **32 random bytes** (for example `base64_encode(random_bytes(32))`). The keyring format enforces this. The legacy format hashes any string with a fast function, so a short or guessable key such as a password can be brute-forced from any stored ciphertext.
+Use a key of **32 random bytes** (for example `base64_encode(random_bytes(32))`). The keyring format enforces this. The legacy format hashes any string with a fast function, so a short or guessable key such as a password can be brute-forced from any stored ciphertext. Since 2.9 a legacy key (`$key`, `$env` or `$provider`) that is not 32 random bytes raises an `E_USER_DEPRECATED` notice when the cast is built; 3.0 will reject it. The notice is silenced with `@`, Symfony-style: Laravel still writes it to the `deprecations` log channel, and PHPUnit ignores it unless `ignoreSuppressionOfDeprecations` is set. It never includes the key.
 
 The cast keeps key material out of the places the library controls:
 

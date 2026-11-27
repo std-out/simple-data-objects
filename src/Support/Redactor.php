@@ -24,6 +24,11 @@ final class Redactor
         return addcslashes(self::maskPan($value), "\0..\37\177");
     }
 
+    public static function forConstructorError(\Throwable $e): string
+    {
+        return self::forMessage((string) preg_replace('/, called in .+? on line \d+$/s', '', $e->getMessage()));
+    }
+
     /** @param  class-string  $class */
     public static function scrubConstructorArguments(\Throwable $e, string $class): \Throwable
     {

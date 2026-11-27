@@ -278,8 +278,7 @@ abstract class BaseData implements Arrayable, DataObject, JsonSerializable, Stri
         }
 
         if ($meta->validationRules !== []) {
-            [$input, $rules] = $meta->validationInput($array);
-            self::validatorFactory()->make($input, $rules)->validate();
+            self::runValidation(...$meta->validationInput($array));
         }
 
         return static::from($array);
@@ -361,11 +360,36 @@ abstract class BaseData implements Arrayable, DataObject, JsonSerializable, Stri
         }
 
         $array = is_array($data) ? $data : InputNormalizer::normalize(static::class, $data);
-        [$input, $rules] = $meta->validationInput($array);
+        self::runValidation(...$meta->validationInput($array));
+    }
 
-        self::validatorFactory()
-            ->make($input, $rules)
-            ->validate();
+    /**
+     * @param  array<mixed>  $input
+     * @param  array<mixed>  $rules
+     *
+     * @throws ValidationException
+     */
+    private static function runValidation(#[\SensitiveParameter] array $input, array $rules): void
+    {
+        $factory = self::validatorFactory();
+        $validator = $factory->make($input, $rules);
+
+        try {
+            $failed = $validator->fails();
+        } catch (ValidationException $e) {
+            throw $e;
+        } catch (\Throwable) {
+            $validator = $factory->make([], []);
+            $validator->errors()->add('$input', 'Input could not be validated.');
+
+            throw new ValidationException($validator);
+        }
+
+        if ($failed) {
+            $exception = $validator->getException();
+
+            throw new $exception($validator);
+        }
     }
 
     /**

@@ -45,7 +45,7 @@ class RegisterData extends BaseData
 
 ## fromValidated() — Validate then Hydrate
 
-Throws `Illuminate\Validation\ValidationException` if validation fails; returns a hydrated instance on success.
+Throws `Illuminate\Validation\ValidationException` if validation fails; returns a hydrated instance on success. A rule that cannot evaluate the input at all (for example `max:100` on `INF` from a JSON `1e400`) is reported the same way, as a single `'$input' => ['Input could not be validated.']` error, so the response is a 422 rather than a 500. The same applies to `validate()`.
 
 ```php
 use Illuminate\Validation\ValidationException;
