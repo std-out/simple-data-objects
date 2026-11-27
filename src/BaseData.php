@@ -226,7 +226,7 @@ abstract class BaseData implements Arrayable, DataObject, JsonSerializable, Stri
             if (array_key_exists($param->phpName, $overrides)) {
                 $value = $overrides[$param->phpName];
                 $value = match (true) {
-                    $param->isPlain => $value,
+                    $param->isPlain && $param->scalarType === null => $value,
                     $param->isSensitive => ValueCaster::castSensitive($param, $value, static::class),
                     default => ValueCaster::cast($param, $value),
                 };

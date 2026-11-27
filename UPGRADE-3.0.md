@@ -88,14 +88,20 @@ takes only values that convert without loss:
 |---|---|---|
 | `int` | int, a float with no fraction, a string of digits with an optional `-` within range | `"1.9"`, `1.9`, `true`, `"abc"` |
 | `float` | int, float, a numeric string | `true`, `"abc"` |
-| `string` | string, int, float | `true`, arrays, objects |
+| `string` | string, int, float, `Stringable` | `true`, arrays, other objects |
 | `bool` | bool, and `"1"`, `"0"`, `"true"`, `"false"`, `"on"`, `"off"`, `"yes"`, `"no"`, `""`, `1`, `0` | `"maybe"`, `2` |
 
-Anything else throws `DataHydrationException` naming the field; `tryFrom()`
-returns `null` and `fromResult()` reports it under the field's key.
+Anything else throws `DataHydrationException` naming the field ("Invalid
+value for field 'age': Cannot convert string to int without loss."); `tryFrom()`
+returns `null` and `fromResult()` reports it under the field's key. `with()`
+applies the same rules.
+
+Union types (`int|string`) are not coerced: PHP checks them in strict mode,
+so `int|string` given `1.5` or `true` throws a `TypeError`.
 
 **Affected:** inputs that relied on lossy coercion: decimals into `int`,
-`"false"`/`"no"` strings into `bool` (now `false`, previously `true`).
+`"false"`/`"no"` strings into `bool` (now `false`, previously `true`), and
+values PHP coerced into a union type.
 
 **What to do:** type the property as `float`, add a cast (`IntegerCast`,
 `BooleanCast`), or fix the input.

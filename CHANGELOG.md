@@ -20,6 +20,12 @@ and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.
   validation error under `'$pipeline'` (class pipe) or the property's key.
   `#[RejectUnknownKeys]` still checks the raw input; `from()` is unchanged
   (#23).
+- A property typed `int`, `float`, `string` or `bool` without a cast takes
+  only values that convert without loss (`"3"` and `3.0` into `int`,
+  `"false"` into `bool` as `false`); anything else throws
+  `DataHydrationException` naming the field. Union types are checked in
+  strict mode. In 2.x PHP's weak coercion applied (`"1.9"` became `1`,
+  `"false"` became `true`) (#24).
 - A non-null value that matches no case of a nullable enum property throws
   `DataHydrationException` (`tryFrom()` returns `null`, `fromResult()`
   reports the field) instead of becoming `null`. `#[Cast(new EnumCast(...))]`
