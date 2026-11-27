@@ -7,6 +7,23 @@ and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Changed (breaking)
+- The `#[Rules]` of a nested data class, and of the item class of a
+  `#[DataCollection]`, apply when the parent is validated by
+  `fromValidated()`, `validate()` or `fromValidatedResult()`, whether or not
+  the parent has `#[InferRules]`. In 2.x they were ignored without it (#22).
+
+### Fixed
+- A nullable, defaulted or `Optional` nested property that is absent or
+  `null` no longer makes the nested class's `required` rules fail. Its
+  nested rules apply only when the value is present as an array, at every
+  depth, including self-referential classes, which 2.x validated only one
+  level deep.
+
+### Internal
+- The metadata cache format is `sdo-cache-4`; files written by 2.x are
+  rebuilt on first use. `ClassMeta` no longer takes `inferRules`.
+
 ## [2.9.0] — 2026-11-27
 
 ### Fixed

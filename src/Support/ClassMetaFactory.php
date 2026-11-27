@@ -98,7 +98,6 @@ final class ClassMetaFactory
                 rejectUnknownKeys: $rejectUnknownKeys,
                 wrapIn: $wrapIn,
                 computed: $computed,
-                inferRules: $inferRules,
             );
         }
 
@@ -132,7 +131,6 @@ final class ClassMetaFactory
             rejectUnknownKeys: $rejectUnknownKeys,
             wrapIn: $wrapIn,
             computed: $computed,
-            inferRules: $inferRules,
         );
     }
 
@@ -382,7 +380,7 @@ final class ClassMetaFactory
             pipes: $paramPipes,
             viaConstructor: $viaConstructor,
             whenLoadedRelation: $whenLoadedAttrs !== [] ? $whenLoadedAttrs[0]->newInstance()->relation : null,
-            nestedRules: $inferRules ? RuleInferrer::cascade($nestedDataClass, $dataCollectionClass) : [],
+            nestedRules: RuleInferrer::cascade($nestedDataClass, $dataCollectionClass),
             isOptional: $isOptional,
             hiddenExcept: $hiddenExcept,
             phpType: RuleInferrer::phpTypeName($parameter),

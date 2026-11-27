@@ -296,13 +296,22 @@ class InferRulesTest extends TestCase
         }
     }
 
-    public function test_nullable_flatten_keeps_prefixed_rules(): void
+    public function test_nullable_flatten_applies_prefixed_rules_only_when_present(): void
     {
         $rules = MetadataRegistry::get(InferredNullableFlattenData::class)->validationRules;
 
         $this->assertSame(['nullable', 'array'], $rules['address']);
-        $this->assertSame(['required', 'string', 'max:5'], $rules['address.zip']);
+        $this->assertArrayNotHasKey('address.zip', $rules);
         $this->assertArrayNotHasKey('zip', $rules);
+
+        InferredNullableFlattenData::validate(['name' => 'Alice']);
+
+        try {
+            InferredNullableFlattenData::validate(['name' => 'Alice', 'address' => ['zip' => '0100100']]);
+            $this->fail('Expected ValidationException');
+        } catch (ValidationException $e) {
+            $this->assertSame(['address.street', 'address.zip'], array_keys($e->errors()));
+        }
     }
 
     public function test_required_flatten_keeps_explicitly_merged_rules_for_itself(): void
