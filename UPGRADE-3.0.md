@@ -1,10 +1,5 @@
 # Upgrading from 2.x to 3.0
 
-> **Work in progress.** 3.0 is being built on the `3.x` branch, one pull
-> request per change (milestone [3.0.0](https://github.com/std-out/simple-data-objects/milestone/1)).
-> This guide is updated in the same pull request as each change and is final
-> only when 3.0.0 is tagged. To try it: `composer require std-out/simple-data-objects:3.0.x-dev`.
-
 3.0 changes how input is validated and coerced. Every change makes the
 library reject input that 2.x accepted silently or turned into something
 else. No public API is removed. Most applications need no code changes,

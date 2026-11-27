@@ -7,6 +7,11 @@ and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## [3.0.0] — 2026-11-27
+
+Every change rejects input that 2.x accepted silently or turned into
+something else; see [UPGRADE-3.0.md](UPGRADE-3.0.md).
+
 ### Changed (breaking)
 - The `#[Rules]` of a nested data class, and of the item class of a
   `#[DataCollection]`, apply when the parent is validated by
@@ -53,7 +58,7 @@ and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.
   level deep.
 
 ### Internal
-- The metadata cache format is `sdo-cache-4`; files written by 2.x are
+- The metadata cache format is `sdo-cache-5`; files written by 2.x are
   rebuilt on first use. `ClassMeta` no longer takes `inferRules`.
 
 ## [2.9.0] — 2026-11-27
@@ -758,7 +763,8 @@ Initial release.
   `toResponse()`).
 - CI pipeline: tests across Laravel 10–13 and a scheduled `composer audit`.
 
-[Unreleased]: https://github.com/std-out/simple-data-objects/compare/v2.9.0...HEAD
+[Unreleased]: https://github.com/std-out/simple-data-objects/compare/v3.0.0...HEAD
+[3.0.0]: https://github.com/std-out/simple-data-objects/compare/v2.9.0...v3.0.0
 [2.9.0]: https://github.com/std-out/simple-data-objects/compare/v2.8.1...v2.9.0
 [2.8.1]: https://github.com/std-out/simple-data-objects/compare/v2.8.0...v2.8.1
 [2.8.0]: https://github.com/std-out/simple-data-objects/compare/v2.7.0...v2.8.0

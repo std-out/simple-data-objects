@@ -88,11 +88,8 @@ and disclosure.
 
 ## Branches
 
-- `main` — the current release line (2.x until 3.0.0 is out). Fixes and
-  backward-compatible features go here.
-- `3.x` — 3.0 in progress. Changes that alter existing behaviour go here
-  (milestone [3.0.0](https://github.com/std-out/simple-data-objects/milestone/1));
-  update `UPGRADE-3.0.md` in the same pull request.
+- `main` — the current release line (3.x). Fixes and backward-compatible
+  features go here.
 - `v2`, `v1` — maintenance of older major versions.
 
 ## Pull request checklist

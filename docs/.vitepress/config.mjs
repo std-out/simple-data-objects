@@ -44,8 +44,9 @@ const guide = [
     ],
   },
   {
-    text: 'Coming from another library',
+    text: 'Upgrading & migrating',
     items: [
+      { text: 'Upgrading from 2.x', link: '/guide/upgrading' },
       { text: 'Migrating from laravel-data', link: '/guide/migrating-from-laravel-data' },
     ],
   },
@@ -194,9 +195,10 @@ export default defineConfig({
       },
       { text: 'Performance', link: '/guide/performance' },
       {
-        text: 'v2',
+        text: 'v3',
         items: [
-          { text: 'v2 (current)', link: '/' },
+          { text: 'v3 (current)', link: '/' },
+          { text: 'v2 (maintenance)', link: 'https://std-out.github.io/simple-data-objects/v2/' },
           { text: 'v1 (stable)', link: 'https://std-out.github.io/simple-data-objects/v1/' },
           { text: 'Changelog', link: 'https://github.com/std-out/simple-data-objects/blob/main/CHANGELOG.md' },
         ],
