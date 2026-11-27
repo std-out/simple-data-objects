@@ -57,7 +57,9 @@ pipes. `'  ab '` passed `min:3` and was trimmed to `'ab'` afterwards.
 
 **3.0:** `fromValidated()`, `validate()` and `fromValidatedResult()` run the
 class and property pipes first, validate the piped values, and hydrate from
-them without running the pipes again. `from()` is unchanged.
+them without running the pipes again. `#[RejectUnknownKeys]` still checks
+the raw input. Pipes on a `#[Flatten]` property and pipes of nested data
+classes still run at hydration, after validation. `from()` is unchanged.
 
 **Affected:** any class with both `#[Pipe]` and `#[Rules]` (or
 `#[InferRules]`).
@@ -68,7 +70,9 @@ them without running the pipes again. `from()` is unchanged.
   turns `"1,2"` into `[1, 2]` now needs an `array` rule, not a `string` rule.
 - A pipe now sees invalid input before any rule rejects it. Make it return
   unexpected types unchanged instead of failing on them. A pipe that still
-  throws is reported as a validation error under `'$pipeline'`.
+  throws is reported as a validation error: under `'$pipeline'` for a class
+  pipe, under the property's input key for a property pipe, with the
+  message `Input could not be processed.`
 
 ## Scalar properties are coerced without loss
 

@@ -13,6 +13,14 @@ and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.
   `fromValidated()`, `validate()` or `fromValidatedResult()`, whether or not
   the parent has `#[InferRules]`. In 2.x they were ignored without it (#22).
 
+- `fromValidated()`, `validate()` and `fromValidatedResult()` run the class
+  and property pipes before validation, validate the piped values and
+  hydrate from them without running the pipes again. In 2.x the rules saw
+  the raw input and the pipes ran afterwards. A pipe that throws is a
+  validation error under `'$pipeline'` (class pipe) or the property's key.
+  `#[RejectUnknownKeys]` still checks the raw input; `from()` is unchanged
+  (#23).
+
 ### Fixed
 - A nullable, defaulted or `Optional` nested property that is absent or
   `null` no longer makes the nested class's `required` rules fail. Its

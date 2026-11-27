@@ -79,7 +79,7 @@ In 2.x the nested rules applied only when the parent had `#[InferRules]`; see [`
 
 ## fromValidated() — Validate then Hydrate
 
-Throws `Illuminate\Validation\ValidationException` if validation fails; returns a hydrated instance on success. A rule that throws while evaluating the input (for example, on some Laravel versions, `max:100` on `INF` from a JSON `1e400`) is reported the same way, as a single `'$input' => ['Input could not be validated.']` error, so the response is a 422 rather than a 500. The same applies to `validate()`.
+Runs the [pipes](./pipes.md#pipes-and-validation), validates the piped values, then hydrates them. Throws `Illuminate\Validation\ValidationException` if validation fails; returns a hydrated instance on success. A rule that throws while evaluating the input (for example, on some Laravel versions, `max:100` on `INF` from a JSON `1e400`) is reported the same way, as a single `'$input' => ['Input could not be validated.']` error, so the response is a 422 rather than a 500. The same applies to `validate()`.
 
 ```php
 use Illuminate\Validation\ValidationException;

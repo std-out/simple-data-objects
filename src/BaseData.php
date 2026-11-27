@@ -277,13 +277,20 @@ abstract class BaseData implements Arrayable, DataObject, JsonSerializable, Stri
             return self::resolveDiscriminated($meta, $array)::fromValidated($array);
         }
 
-        [$input, $rules] = $meta->validationInput($array);
+        $piped = self::validatedInput($meta, $array);
 
-        if ($rules !== []) {
-            self::runValidation($input, $rules);
+        if (! $meta->pipesBeforeValidation) {
+            return static::from($piped);
         }
 
-        return static::from($array);
+        if ($meta->rejectUnknownKeys && ($unknown = $meta->unknownKeys($array)) !== []) {
+            throw DataHydrationException::unknownKeys(static::class, $unknown);
+        }
+
+        $hydrate = HydratorCompiler::$pipelessHydrators[static::class] ?? HydratorCompiler::compilePipeless(static::class);
+
+        /** @var static */
+        return $hydrate($piped);
     }
 
     /**
@@ -318,31 +325,31 @@ abstract class BaseData implements Arrayable, DataObject, JsonSerializable, Stri
             return $target::fromValidatedResult($data);
         }
 
-        $result = static::fromResult($data);
+        $pipeErrors = [];
+
+        if ($meta->pipesBeforeValidation) {
+            [$piped, $pipeErrors] = $meta->runPipes($data, static::class);
+
+            if (isset($pipeErrors['$pipeline'])) {
+                return HydrationResult::failure($pipeErrors);
+            }
+
+            if ($meta->rejectUnknownKeys && ($unknown = $meta->unknownKeys($data)) !== []) {
+                $pipeErrors['$unknown'] = DataHydrationException::unknownKeys(static::class, $unknown)->getMessage();
+            }
+
+            $data = $piped;
+            $collect = HydratorCompiler::$pipelessCollectingHydrators[static::class] ?? HydratorCompiler::compilePipelessCollecting(static::class);
+            /** @var HydrationResult<static> $result */
+            $result = $collect($data);
+        } else {
+            $result = static::fromResult($data);
+        }
 
         [$input, $rules] = $meta->validationInput($data);
+        $errors = $rules === [] ? $pipeErrors : [...$pipeErrors, ...self::validationErrors($input, $rules)];
 
-        if ($rules === []) {
-            return $result;
-        }
-
-        $validator = self::validatorFactory()->make($input, $rules);
-
-        try {
-            if (! $validator->fails()) {
-                return $result;
-            }
-        } catch (\Throwable) {
-            return HydrationResult::failure([...$result->errors(), '$input' => 'Input could not be validated.']);
-        }
-
-        $validationErrors = [];
-
-        foreach ($validator->errors()->messages() as $key => $messages) {
-            $validationErrors[$key] = $messages[0];
-        }
-
-        return HydrationResult::failure([...$result->errors(), ...$validationErrors]);
+        return $errors === [] ? $result : HydrationResult::failure([...$result->errors(), ...$errors]);
     }
 
     /** @throws ValidationException */
@@ -358,16 +365,70 @@ abstract class BaseData implements Arrayable, DataObject, JsonSerializable, Stri
             return;
         }
 
-        if ($meta->validationRules === [] && ! $meta->cascadesNestedRules) {
+        if ($meta->validationRules === [] && ! $meta->cascadesNestedRules && ! $meta->pipesBeforeValidation) {
             return;
         }
 
-        $array = is_array($data) ? $data : InputNormalizer::normalize(static::class, $data);
-        [$input, $rules] = $meta->validationInput($array);
+        self::validatedInput($meta, is_array($data) ? $data : InputNormalizer::normalize(static::class, $data));
+    }
+
+    /**
+     * Pipes the input, validates the piped values and returns them.
+     *
+     * @param  array<mixed>  $data
+     * @return array<mixed>
+     *
+     * @throws ValidationException
+     */
+    private static function validatedInput(ClassMeta $meta, #[\SensitiveParameter] array $data): array
+    {
+        if ($meta->pipesBeforeValidation) {
+            [$data, $pipeErrors] = $meta->runPipes($data, static::class);
+
+            if ($pipeErrors !== []) {
+                $validator = self::validatorFactory()->make([], []);
+
+                foreach (array_keys($pipeErrors) as $key) {
+                    $validator->errors()->add((string) $key, 'Input could not be processed.');
+                }
+
+                throw new ValidationException($validator);
+            }
+        }
+
+        [$input, $rules] = $meta->validationInput($data);
 
         if ($rules !== []) {
             self::runValidation($input, $rules);
         }
+
+        return $data;
+    }
+
+    /**
+     * @param  array<mixed>  $input
+     * @param  array<mixed>  $rules
+     * @return array<string, string>
+     */
+    private static function validationErrors(#[\SensitiveParameter] array $input, array $rules): array
+    {
+        $validator = self::validatorFactory()->make($input, $rules);
+
+        try {
+            if (! $validator->fails()) {
+                return [];
+            }
+        } catch (\Throwable) {
+            return ['$input' => 'Input could not be validated.'];
+        }
+
+        $errors = [];
+
+        foreach ($validator->errors()->messages() as $key => $messages) {
+            $errors[$key] = $messages[0];
+        }
+
+        return $errors;
     }
 
     /**
