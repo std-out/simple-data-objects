@@ -30,6 +30,10 @@ and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.
   reports that message. Built-in casts reject input of the wrong type with
   `InvalidArgumentException` instead of PHP warnings or errors; `IntegerCast`
   and `FloatCast` reject arrays and objects (#26).
+- A legacy `EncryptedCast` key (`$key`, `$env`, `$provider`) that is not 32
+  random bytes throws `InvalidArgumentException` when it is the only key.
+  Next to `keyring:` it is accepted to read values written with it and
+  raises `E_USER_DEPRECATED` (#28).
 - `FloatCast` rejects `INF` and `NAN` by default (`finite: true`); pass
   `finite: false` to accept them (#27).
 

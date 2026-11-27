@@ -62,7 +62,7 @@ class StackTraceRedactionTest extends TestCase
         yield 'cast directly' => [static fn () => (new UuidCast)->get($pan)];
         yield 'date cast' => [static fn () => (new DateTimeCast)->get($pan)];
         yield 'immutable date cast' => [static fn () => (new DateTimeImmutableCast)->get($pan)];
-        yield 'encrypted cast' => [static fn () => (new EncryptedCast('k'))->get($pan.'!')];
+        yield 'encrypted cast' => [static fn () => (new EncryptedCast('XniGPtH/ufxmsdYWNLEmv46yAmfnmWKX7uubGcjA9zI='))->get($pan.'!')];
         yield 'data pipe' => [static fn () => ThrowingPipeData::from(['name' => $pan])];
         yield 'fromLivewire' => [static fn () => WireableEventData::fromLivewire(['name' => $pan])];
         yield 'constructor type error' => [static fn () => ChargeData::from(['pan' => $pan, 'amount' => 'ten'])];

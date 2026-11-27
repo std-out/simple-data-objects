@@ -61,18 +61,18 @@ class EncryptedKeyringTest extends TestCase
 
     public function test_reads_legacy_ciphertext_when_a_legacy_key_is_configured(): void
     {
-        $legacy = (new EncryptedCast('old-key'))->set('secret');
-        $cast = new EncryptedCast('old-key', keyring: ConfigurableKeyring::class);
+        $legacy = (new EncryptedCast('diwI/BehzF8A0kj4tQ8vL00X/yk0rDHmTerLP1uz8uw='))->set('secret');
+        $cast = new EncryptedCast('diwI/BehzF8A0kj4tQ8vL00X/yk0rDHmTerLP1uz8uw=', keyring: ConfigurableKeyring::class);
 
         $this->assertSame('secret', $cast->get($legacy));
         $this->assertTrue($cast->needsReencryption($legacy));
         $this->assertStringStartsWith('v2:k1:', $cast->set('secret'));
-        $this->assertFalse((new EncryptedCast('old-key'))->needsReencryption($legacy));
+        $this->assertFalse((new EncryptedCast('diwI/BehzF8A0kj4tQ8vL00X/yk0rDHmTerLP1uz8uw='))->needsReencryption($legacy));
     }
 
     public function test_legacy_ciphertext_without_a_legacy_key_throws(): void
     {
-        $legacy = (new EncryptedCast('old-key'))->set('secret');
+        $legacy = (new EncryptedCast('diwI/BehzF8A0kj4tQ8vL00X/yk0rDHmTerLP1uz8uw='))->set('secret');
 
         $this->expectException(RuntimeException::class);
         $this->expectExceptionMessage('legacy format');
@@ -85,7 +85,7 @@ class EncryptedKeyringTest extends TestCase
         $this->expectException(RuntimeException::class);
         $this->expectExceptionMessage('no $keyring is configured');
 
-        (new EncryptedCast('old-key'))->get(self::ring()->set('secret'));
+        (new EncryptedCast('diwI/BehzF8A0kj4tQ8vL00X/yk0rDHmTerLP1uz8uw='))->get(self::ring()->set('secret'));
     }
 
     public function test_unknown_key_id_throws(): void
@@ -253,7 +253,7 @@ class EncryptedKeyringTest extends TestCase
     }
 
     #[DataProvider('legacyKeys')]
-    public function test_a_legacy_key_that_is_not_32_random_bytes_is_deprecated(string $key, bool $deprecated): void
+    public function test_a_weak_legacy_key_is_rejected_alone_and_deprecated_next_to_a_keyring(string $key, bool $weak): void
     {
         $notices = [];
         set_error_handler(static function (int $level, string $message) use (&$notices): bool {
@@ -263,17 +263,25 @@ class EncryptedKeyringTest extends TestCase
         });
 
         try {
-            new EncryptedCast($key);
             new EncryptedCast($key, keyring: ConfigurableKeyring::class);
+
+            try {
+                new EncryptedCast($key);
+                $this->assertFalse($weak);
+            } catch (InvalidArgumentException $e) {
+                $this->assertTrue($weak);
+                $this->assertStringContainsString('must be 32 random bytes', $e->getMessage());
+                $this->assertStringNotContainsString($key, $e->getMessage());
+            }
         } finally {
             restore_error_handler();
         }
 
-        $this->assertCount($deprecated ? 2 : 0, $notices);
+        $this->assertCount($weak ? 1 : 0, $notices);
 
         foreach ($notices as [$level, $message]) {
             $this->assertSame(E_USER_DEPRECATED, $level);
-            $this->assertStringContainsString('will be rejected in 3.0', $message);
+            $this->assertStringContainsString('only to read values encrypted with it', $message);
             $this->assertStringNotContainsString($key, $message);
         }
     }
