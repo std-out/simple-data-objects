@@ -515,6 +515,22 @@ class MetadataCacheTest extends TestCase
         $this->assertSame('Bob', $user->name);
     }
 
+    public function test_cache_file_from_an_older_format_is_rebuilt(): void
+    {
+        MetadataRegistry::setStoragePath($this->cacheDir);
+        UserData::from(['name' => 'Alice', 'email' => 'alice@example.com']);
+
+        $file = $this->cacheDir.'/'.hash('sha256', UserData::class).'.meta.php';
+        $current = (string) file_get_contents($file);
+        file_put_contents($file, preg_replace("/^    'sdo-cache-\\d+',\\n/m", '', $current, 1));
+        MetadataRegistry::flush();
+
+        $user = UserData::from(['name' => 'Bob', 'email' => 'bob@example.com']);
+
+        $this->assertSame('Bob', $user->name);
+        $this->assertSame($current, file_get_contents($file));
+    }
+
     public function test_persist_skips_when_tmp_file_cannot_be_written(): void
     {
         if (! is_dir('/proc/self')) {
