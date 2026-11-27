@@ -496,7 +496,7 @@ final class HydratorCompiler
                     try {
                         \$o = new \\{$class}({$argList});
                     } catch (\\Throwable \$e) {
-                        \$errors['\$construct'] = \$e->getMessage();
+                        \$errors['\$construct'] = \\StdOut\\SimpleDataObjects\\Support\\Redactor::forConstructorError(\$e);
                     }
                 }
                 if (\$o !== null) {
@@ -515,7 +515,7 @@ final class HydratorCompiler
             try {
                 return {$resultClass}::success(new \\{$class}({$argList}));
             } catch (\\Throwable \$e) {
-                return {$resultClass}::failure(['\$construct' => \$e->getMessage()]);
+                return {$resultClass}::failure(['\$construct' => \\StdOut\\SimpleDataObjects\\Support\\Redactor::forConstructorError(\$e)]);
             }
         }
         PHP;

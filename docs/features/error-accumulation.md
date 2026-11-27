@@ -50,7 +50,7 @@ $result->errors();
 
 - `#[RejectUnknownKeys]` reports unrecognized keys as a single `'$unknown'` entry, alongside any field errors — it doesn't abort the rest of the accumulation.
 - A failing class-level [`#[Pipe]`](../attributes/pipe.md) reports a single `'$pipeline'` entry. Since the array transform itself failed, per-field extraction is skipped for that call — there's nothing reliable left to read.
-- An exception from the constructor itself (e.g. an invariant check in the constructor body) is reported as `'$construct'`.
+- An exception from the constructor itself (e.g. an invariant check in the constructor body) is reported as `'$construct'`. The message is passed through the same redaction as the library's own messages: card numbers are masked and control characters escaped. For a `TypeError` PHP's `called in … on line …` suffix is dropped, so no internal file path reaches the response.
 - Invalid non-array input (a malformed JSON string, or a type `InputNormalizer` can't convert) is reported as `'$input'`.
 
 ## fromValidatedResult() — merge in Rules validation too

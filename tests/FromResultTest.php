@@ -7,15 +7,19 @@ namespace StdOut\SimpleDataObjects\Tests;
 use Illuminate\Translation\ArrayLoader;
 use Illuminate\Translation\Translator;
 use Illuminate\Validation\Factory as ValidatorFactory;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use StdOut\SimpleDataObjects\BaseData;
 use StdOut\SimpleDataObjects\Support\HydratorCompiler;
 use StdOut\SimpleDataObjects\Tests\Fixtures\AddressData;
 use StdOut\SimpleDataObjects\Tests\Fixtures\AliasedUserData;
 use StdOut\SimpleDataObjects\Tests\Fixtures\BankPaymentData;
+use StdOut\SimpleDataObjects\Tests\Fixtures\BlockedCardData;
 use StdOut\SimpleDataObjects\Tests\Fixtures\CardPaymentData;
+use StdOut\SimpleDataObjects\Tests\Fixtures\ChargeData;
 use StdOut\SimpleDataObjects\Tests\Fixtures\CollectingEdgeCasesData;
 use StdOut\SimpleDataObjects\Tests\Fixtures\ConstructAssertData;
+use StdOut\SimpleDataObjects\Tests\Fixtures\HybridChargeData;
 use StdOut\SimpleDataObjects\Tests\Fixtures\HybridData;
 use StdOut\SimpleDataObjects\Tests\Fixtures\InferredEnumData;
 use StdOut\SimpleDataObjects\Tests\Fixtures\InferredNestedNoRulesData;
@@ -321,6 +325,31 @@ class FromResultTest extends TestCase
 
         $this->assertFalse($result->ok());
         $this->assertArrayHasKey('$construct', $result->errors());
+    }
+
+    /** @return iterable<string, array{0: class-string<BaseData>}> */
+    public static function chargeClasses(): iterable
+    {
+        yield 'constructor only' => [ChargeData::class];
+        yield 'extra properties' => [HybridChargeData::class];
+    }
+
+    #[DataProvider('chargeClasses')]
+    public function test_constructor_type_error_is_collected_without_the_internal_call_site(string $class): void
+    {
+        $result = $class::fromResult(['pan' => '4111111111111111', 'amount' => 'ten']);
+
+        $this->assertSame(
+            ['$construct' => ChargeData::class.'::__construct(): Argument #2 ($amount) must be of type int, string given'],
+            $result->errors(),
+        );
+    }
+
+    public function test_constructor_error_message_masks_pan_and_escapes_control_characters(): void
+    {
+        $result = BlockedCardData::fromResult(['pan' => '4111111111111111']);
+
+        $this->assertSame(['$construct' => 'Card ************1111 is blocked.\\nretry later'], $result->errors());
     }
 
     public function test_constructor_not_throwing_succeeds(): void

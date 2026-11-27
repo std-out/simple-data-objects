@@ -9,9 +9,14 @@ use Illuminate\Translation\ArrayLoader;
 use Illuminate\Translation\Translator;
 use Illuminate\Validation\Factory as ValidatorFactory;
 use Illuminate\Validation\ValidationException;
+use Illuminate\Validation\Validator;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\TestCase;
 use StdOut\SimpleDataObjects\BaseData;
 use StdOut\SimpleDataObjects\Tests\Fixtures\AliasedValidatedData;
+use StdOut\SimpleDataObjects\Tests\Fixtures\BoundedAmountData;
+use StdOut\SimpleDataObjects\Tests\Fixtures\CustomValidationException;
+use StdOut\SimpleDataObjects\Tests\Fixtures\UnevaluableRuleData;
 use StdOut\SimpleDataObjects\Tests\Fixtures\UserData;
 use StdOut\SimpleDataObjects\Tests\Fixtures\ValidatedUserData;
 
@@ -210,5 +215,82 @@ class ValidationTest extends TestCase
 
         $this->assertFalse($result->ok());
         $this->assertArrayHasKey('email', $result->errors());
+    }
+
+    /** @return iterable<string, array{0: mixed}> */
+    public static function unevaluableAmounts(): iterable
+    {
+        yield 'JSON 1e400' => [json_decode('{"amount":1e400}', true)['amount']];
+        yield 'INF' => [INF];
+        yield 'NAN' => [NAN];
+    }
+
+    #[DataProvider('unevaluableAmounts')]
+    public function test_from_validated_throws_only_validation_exception_for_non_finite_numbers(mixed $amount): void
+    {
+        $this->expectException(ValidationException::class);
+
+        BoundedAmountData::fromValidated(['amount' => $amount]);
+    }
+
+    #[DataProvider('unevaluableAmounts')]
+    public function test_validate_throws_only_validation_exception_for_non_finite_numbers(mixed $amount): void
+    {
+        $this->expectException(ValidationException::class);
+
+        BoundedAmountData::validate(['amount' => $amount]);
+    }
+
+    /** @return iterable<string, array{0: string}> */
+    public static function validatingMethods(): iterable
+    {
+        yield 'fromValidated' => ['fromValidated'];
+        yield 'validate' => ['validate'];
+    }
+
+    #[DataProvider('validatingMethods')]
+    public function test_a_rule_that_cannot_evaluate_the_input_is_reported_as_a_validation_error(string $method): void
+    {
+        $factory = new ValidatorFactory(new Translator(new ArrayLoader, 'en'));
+        $factory->extend('unevaluable', static fn (): bool => throw new \RuntimeException('rule failed'));
+        BaseData::setValidatorFactory($factory);
+
+        try {
+            UnevaluableRuleData::$method(['name' => 'Alice']);
+            $this->fail('Expected ValidationException');
+        } catch (ValidationException $e) {
+            $this->assertSame(['$input' => ['Input could not be validated.']], $e->errors());
+        }
+    }
+
+    public function test_validation_exception_thrown_by_a_rule_is_passed_through(): void
+    {
+        $factory = new ValidatorFactory(new Translator(new ArrayLoader, 'en'));
+        $thrown = new ValidationException($factory->make([], []));
+        $factory->extend('unevaluable', static fn (): bool => throw $thrown);
+        BaseData::setValidatorFactory($factory);
+
+        try {
+            UnevaluableRuleData::validate(['name' => 'Alice']);
+            $this->fail('Expected ValidationException');
+        } catch (ValidationException $e) {
+            $this->assertSame($thrown, $e);
+        }
+    }
+
+    public function test_validator_exception_class_is_honoured(): void
+    {
+        $factory = new ValidatorFactory(new Translator(new ArrayLoader, 'en'));
+        $factory->resolver(static function (...$args): Validator {
+            $validator = new Validator(...$args);
+            $validator->setException(CustomValidationException::class);
+
+            return $validator;
+        });
+        BaseData::setValidatorFactory($factory);
+
+        $this->expectException(CustomValidationException::class);
+
+        BoundedAmountData::fromValidated(['amount' => 101]);
     }
 }

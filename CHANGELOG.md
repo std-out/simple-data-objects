@@ -7,6 +7,31 @@ and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## [2.9.0] — 2026-11-27
+
+### Fixed
+- `fromValidated()` and `validate()` throw only `ValidationException`. A rule
+  that throws while evaluating the input (e.g. `numeric|max:100` on `INF`,
+  `NAN` or a JSON `1e400` on Laravel versions whose size rules raise
+  `Brick\Math\Exception\NumberFormatException`) surfaced that exception,
+  which Laravel turned into a 500; it is now a validation error
+  `'$input' => ['Input could not be validated.']`, matching
+  `fromValidatedResult()`. A `ValidationException` thrown by a rule, and a
+  custom exception class set on the validator, are kept.
+
+### Security
+- The `'$construct'` error of `fromResult()` / `fromValidatedResult()` goes
+  through the same redaction as the library's own messages: card numbers are
+  masked and control characters escaped. For a `TypeError`, PHP's
+  `called in … on line …` suffix, which named the library's internal file, is
+  dropped.
+
+### Deprecated
+- A legacy `EncryptedCast` key (`$key`, `$env` or `$provider`) that is not 32
+  random bytes (raw or base64-encoded) raises a silenced `E_USER_DEPRECATED`
+  notice when the cast is built. 3.0 will reject it. Generate a key with
+  `base64_encode(random_bytes(32))`; the keyring format already requires one.
+
 ## [2.8.1] — 2026-11-27
 
 ### Security
@@ -684,7 +709,8 @@ Initial release.
   `toResponse()`).
 - CI pipeline: tests across Laravel 10–13 and a scheduled `composer audit`.
 
-[Unreleased]: https://github.com/std-out/simple-data-objects/compare/v2.8.1...HEAD
+[Unreleased]: https://github.com/std-out/simple-data-objects/compare/v2.9.0...HEAD
+[2.9.0]: https://github.com/std-out/simple-data-objects/compare/v2.8.1...v2.9.0
 [2.8.1]: https://github.com/std-out/simple-data-objects/compare/v2.8.0...v2.8.1
 [2.8.0]: https://github.com/std-out/simple-data-objects/compare/v2.7.0...v2.8.0
 [2.7.0]: https://github.com/std-out/simple-data-objects/compare/v2.6.0...v2.7.0

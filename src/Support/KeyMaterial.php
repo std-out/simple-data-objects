@@ -24,17 +24,23 @@ final class KeyMaterial
 
     public static function strict(#[\SensitiveParameter] string $key, string $label): string
     {
+        return self::randomBytes($key) ?? throw new InvalidArgumentException("{$label} must be 32 random bytes, raw or base64-encoded.");
+    }
+
+    public static function isRandom(#[\SensitiveParameter] string $key): bool
+    {
+        return self::randomBytes($key) !== null;
+    }
+
+    private static function randomBytes(#[\SensitiveParameter] string $key): ?string
+    {
         if (strlen($key) === self::BYTES && ! ctype_print($key)) {
             return $key;
         }
 
         $decoded = base64_decode(strtr($key, '-_', '+/'), true);
 
-        if ($decoded !== false && strlen($decoded) === self::BYTES) {
-            return $decoded;
-        }
-
-        throw new InvalidArgumentException("{$label} must be 32 random bytes, raw or base64-encoded.");
+        return $decoded !== false && strlen($decoded) === self::BYTES ? $decoded : null;
     }
 
     private static function fromEnvironment(string $env): string

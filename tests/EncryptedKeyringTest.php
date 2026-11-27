@@ -240,4 +240,41 @@ class EncryptedKeyringTest extends TestCase
         $this->assertStringNotContainsString(str_repeat("\x03", 32), $dump);
         $this->assertStringNotContainsString(ConfigurableKeyring::$keys['k1'], $dump);
     }
+
+    /** @return iterable<string, array{0: string, 1: bool}> */
+    public static function legacyKeys(): iterable
+    {
+        yield 'password' => ['password', true];
+        yield 'short random bytes' => [random_bytes(16), true];
+        yield '32 printable characters' => [str_repeat('a', 32), true];
+        yield '32 random bytes' => [str_repeat("\x03", 32), false];
+        yield 'base64 of 32 bytes' => [base64_encode(str_repeat("\x03", 32)), false];
+        yield 'base64url of 32 bytes' => [rtrim(strtr(base64_encode(str_repeat("\xfb", 32)), '+/', '-_'), '='), false];
+    }
+
+    #[DataProvider('legacyKeys')]
+    public function test_a_legacy_key_that_is_not_32_random_bytes_is_deprecated(string $key, bool $deprecated): void
+    {
+        $notices = [];
+        set_error_handler(static function (int $level, string $message) use (&$notices): bool {
+            $notices[] = [$level, $message];
+
+            return true;
+        });
+
+        try {
+            new EncryptedCast($key);
+            new EncryptedCast($key, keyring: ConfigurableKeyring::class);
+        } finally {
+            restore_error_handler();
+        }
+
+        $this->assertCount($deprecated ? 2 : 0, $notices);
+
+        foreach ($notices as [$level, $message]) {
+            $this->assertSame(E_USER_DEPRECATED, $level);
+            $this->assertStringContainsString('will be rejected in 3.0', $message);
+            $this->assertStringNotContainsString($key, $message);
+        }
+    }
 }
