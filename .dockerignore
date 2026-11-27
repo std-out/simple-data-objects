@@ -6,3 +6,6 @@ README.md
 .gitignore
 .dockerignore
 coverage/
+vendor/
+node_modules/
+build/
