@@ -12,6 +12,7 @@ use StdOut\SimpleDataObjects\Casts\DateTimeCast;
 use StdOut\SimpleDataObjects\Casts\DateTimeImmutableCast;
 use StdOut\SimpleDataObjects\Casts\EncryptedCast;
 use StdOut\SimpleDataObjects\Casts\UuidCast;
+use StdOut\SimpleDataObjects\Exceptions\DataHydrationException;
 use StdOut\SimpleDataObjects\Laravel\DataCollectionCast;
 use StdOut\SimpleDataObjects\Laravel\DataObjectCast;
 use StdOut\SimpleDataObjects\Tests\Fixtures\CastableAddressData;
@@ -22,6 +23,7 @@ use StdOut\SimpleDataObjects\Tests\Fixtures\OrderWithMoneyData;
 use StdOut\SimpleDataObjects\Tests\Fixtures\OrderWithUuidData;
 use StdOut\SimpleDataObjects\Tests\Fixtures\SensitiveCardData;
 use StdOut\SimpleDataObjects\Tests\Fixtures\ThrowingPipeData;
+use StdOut\SimpleDataObjects\Tests\Fixtures\ThrowsTypeErrorData;
 use StdOut\SimpleDataObjects\Tests\Fixtures\ValidatedUserData;
 use StdOut\SimpleDataObjects\Tests\Fixtures\WireableEventData;
 use Throwable;
@@ -62,10 +64,11 @@ class StackTraceRedactionTest extends TestCase
         yield 'cast directly' => [static fn () => (new UuidCast)->get($pan)];
         yield 'date cast' => [static fn () => (new DateTimeCast)->get($pan)];
         yield 'immutable date cast' => [static fn () => (new DateTimeImmutableCast)->get($pan)];
-        yield 'encrypted cast' => [static fn () => (new EncryptedCast('k'))->get($pan.'!')];
+        yield 'encrypted cast' => [static fn () => (new EncryptedCast('XniGPtH/ufxmsdYWNLEmv46yAmfnmWKX7uubGcjA9zI='))->get($pan.'!')];
         yield 'data pipe' => [static fn () => ThrowingPipeData::from(['name' => $pan])];
         yield 'fromLivewire' => [static fn () => WireableEventData::fromLivewire(['name' => $pan])];
-        yield 'constructor type error' => [static fn () => ChargeData::from(['pan' => $pan, 'amount' => 'ten'])];
+        yield 'lossy scalar' => [static fn () => ChargeData::from(['pan' => $pan, 'amount' => 'ten'])];
+        yield 'type error after coercion' => [static fn () => ThrowsTypeErrorData::from(['count' => $pan])];
         yield 'constructor throws' => [static fn () => ChargeData::from(['pan' => $pan, 'amount' => -1, 'cvv' => '123'])];
         yield 'inherited constructor, extra properties' => [static fn () => HybridChargeData::from(['pan' => $pan, 'amount' => -1])];
         yield 'constructor throws in fromLazy' => [static fn () => ChargeData::fromLazy(['pan' => $pan, 'amount' => -1])->amount];
@@ -104,10 +107,10 @@ class StackTraceRedactionTest extends TestCase
         }
     }
 
-    public function test_constructor_type_error_stays_a_type_error(): void
+    public function test_lossy_scalar_is_a_hydration_exception_naming_the_field(): void
     {
-        $this->expectException(\TypeError::class);
-        $this->expectExceptionMessage('Argument #2 ($amount) must be of type int');
+        $this->expectException(DataHydrationException::class);
+        $this->expectExceptionMessage("Invalid value for field 'amount': Cannot convert string to int without loss.");
 
         ChargeData::from(['pan' => self::PAN, 'amount' => 'ten']);
     }

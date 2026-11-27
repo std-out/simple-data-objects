@@ -41,18 +41,18 @@ Use `EnumCast` explicitly when you need a fallback value.
 ## With a Fallback
 
 ```php
-#[Cast(new EnumCast(Status::class, fallback: Status::Inactive))]
+#[Cast(new EnumCast(Status::class, default: Status::Inactive))]
 public readonly Status $status,
 ```
 
-If the input value does not match any enum case, `Status::Inactive` is returned instead of throwing.
+If the input value does not match any enum case, `Status::Inactive` is returned instead of throwing. Without `default`, `null` and unknown values become `null`, so the property must be nullable.
 
 ## Constructor Parameters
 
 ```php
 new EnumCast(
     enumClass: Status::class,
-    fallback:  null,           // ?BackedEnum, default null = throw on unknown value
+    default:   null,           // ?UnitEnum returned for null and unknown values
 )
 ```
 

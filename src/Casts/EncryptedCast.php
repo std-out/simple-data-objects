@@ -76,7 +76,11 @@ final class EncryptedCast implements BindsToField, CastsValue, ProvidesJsonSchem
         }
 
         if ($legacyKey !== null && ! KeyMaterial::isRandom($legacyKey)) {
-            @trigger_error('Since std-out/simple-data-objects 2.9: an EncryptedCast key that is not 32 random bytes (raw or base64-encoded) is deprecated and will be rejected in 3.0. Generate one with base64_encode(random_bytes(32)).', E_USER_DEPRECATED);
+            if ($keyring === null) {
+                throw new InvalidArgumentException('An EncryptedCast key must be 32 random bytes (raw or base64-encoded). Generate one with base64_encode(random_bytes(32)), or keep this key next to $keyring to read values encrypted with it.');
+            }
+
+            @trigger_error('A weak EncryptedCast $key, $env or $provider key is accepted next to $keyring only to read values encrypted with it. Re-encrypt them (see needsReencryption()) and remove it.', E_USER_DEPRECATED);
         }
 
         $this->secretKey = $legacyKey === null

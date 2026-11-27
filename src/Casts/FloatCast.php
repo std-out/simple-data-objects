@@ -12,13 +12,13 @@ final class FloatCast implements CastsValue, ProvidesJsonSchema
 {
     public function __construct(
         private readonly int $decimals = -1,
-        private readonly bool $finite = false,
+        private readonly bool $finite = true,
     ) {}
 
     /** @param  array<string, mixed>  $state */
     public static function __set_state(array $state): self
     {
-        return new self($state['decimals'], $state['finite'] ?? false);
+        return new self($state['decimals'], $state['finite'] ?? true);
     }
 
     public function get(#[\SensitiveParameter] mixed $value): ?float
@@ -27,10 +27,14 @@ final class FloatCast implements CastsValue, ProvidesJsonSchema
             return null;
         }
 
+        if (\is_array($value) || \is_object($value)) {
+            throw new InvalidArgumentException('FloatCast expects a scalar, got '.get_debug_type($value).'.');
+        }
+
         $float = (float) $value;
 
         if ($this->finite && ! is_finite($float)) {
-            throw new InvalidArgumentException('FloatCast(finite: true) rejects INF and NAN.');
+            throw new InvalidArgumentException('FloatCast rejects INF and NAN; pass finite: false to accept them.');
         }
 
         return $this->decimals >= 0 ? round($float, $this->decimals) : $float;

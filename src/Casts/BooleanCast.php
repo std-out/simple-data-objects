@@ -6,6 +6,7 @@ namespace StdOut\SimpleDataObjects\Casts;
 
 use StdOut\SimpleDataObjects\Contracts\CastsValue;
 use StdOut\SimpleDataObjects\Contracts\ProvidesJsonSchema;
+use StdOut\SimpleDataObjects\Support\ScalarString;
 
 final class BooleanCast implements CastsValue, ProvidesJsonSchema
 {
@@ -27,7 +28,7 @@ final class BooleanCast implements CastsValue, ProvidesJsonSchema
             return $value;
         }
 
-        return in_array(strtolower((string) $value), self::TRUTHY, true);
+        return in_array(strtolower(\is_string($value) ? $value : ScalarString::of($value, 'BooleanCast')), self::TRUTHY, true);
     }
 
     public function set(#[\SensitiveParameter] mixed $value): ?bool

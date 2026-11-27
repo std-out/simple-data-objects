@@ -143,7 +143,7 @@ class EqualsDiffTest extends TestCase
 
     public function test_plaintext_comparison_mode_is_scoped_and_restored(): void
     {
-        $cast = new EncryptedCast('test-encryption-key');
+        $cast = new EncryptedCast('TU/pBcXXXWPceeZh0Zt76EgWHOl78yIlUaMoRPQZeME=');
 
         $inner = EncryptedCast::comparingPlaintext(static function () use ($cast): array {
             $nested = EncryptedCast::comparingPlaintext(static fn (): ?string => $cast->set('x'));

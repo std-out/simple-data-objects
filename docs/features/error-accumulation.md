@@ -55,7 +55,7 @@ $result->errors();
 
 ## fromValidatedResult() — merge in Rules validation too
 
-Runs `fromResult()` and, if the class declares `#[Rules]` (or [`#[InferRules]`](../attributes/infer-rules.md)), also validates the raw input and merges in the first message per failing rule. A validation message wins over a hydration message on the same key.
+Runs `fromResult()` and, if the class declares `#[Rules]` (or [`#[InferRules]`](../attributes/infer-rules.md)), also validates the input and merges in the first message per failing rule. A class with [pipes](./pipes.md#pipes-and-validation) is piped once, then validated and hydrated from the piped values. A validation message wins over a hydration message on the same key.
 
 ```php
 $result = OrderData::fromValidatedResult($request->all());

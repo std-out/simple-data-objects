@@ -76,9 +76,11 @@ public readonly TypedDataCollection $items;
 // 'items.*.price' => ['required', 'numeric']
 ```
 
-The cascade only happens if the **nested** class itself has rules to contribute — a nested class without `#[InferRules]` and without any `#[Rules]` attributes contributes nothing beyond the parent's own `'field' => ['required'|'nullable', 'array']` entry. Nesting depth is unbounded (a nested class's own cascade recurses into its own nested classes), and self-referential or mutually cyclic `BaseData` graphs are detected and stop cascading at the cycle instead of recursing forever.
+The cascade itself does not depend on `#[InferRules]`: a nested class's rules apply in every parent (see [Validation — Nested Data Classes](../features/validation.md#nested-data-classes)). What `#[InferRules]` on the nested class adds is its inferred rules; a nested class without `#[InferRules]` and without any `#[Rules]` contributes nothing beyond the parent's own `'field' => ['required'|'nullable', 'array']` entry.
 
-A required [`#[Flatten]`](./flatten.md) property reads its fields from the parent's own keys, so it gets no rule for itself and the nested class's rules apply to the parent's keys without a prefix (`'zip'`, not `'address.zip'`). A nullable or defaulted flattened property keeps the prefixed form.
+The keys above are static only for a required property. A nullable, defaulted or `Optional` nested property gets its nested rules at validation time, and only when its value is present as an array, so `validationRules` holds just `'field' => ['nullable', 'array']` for it. Nesting depth is unbounded, including self-referential classes.
+
+A required [`#[Flatten]`](./flatten.md) property reads its fields from the parent's own keys, so it gets no rule for itself and the nested class's rules apply to the parent's keys without a prefix (`'zip'`, not `'address.zip'`). A nullable or defaulted flattened property keeps the prefixed form, applied only when the prefixed key is present.
 
 ## Overriding or merging with #[Rules]
 

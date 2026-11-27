@@ -113,6 +113,29 @@ For each property:
     typed property value
 ```
 
+## Pipes and Validation
+
+`fromValidated()`, `validate()` and `fromValidatedResult()` run the class pipes and the property pipes **before** validation, check the `#[Rules]` against the piped values, and hydrate from those values without running the pipes again:
+
+```php
+class SignupData extends BaseData
+{
+    public function __construct(
+        #[Pipe(TrimValuePipe::class)]
+        #[Rules(['required', 'string', 'min:3'])]
+        public readonly string $name,
+    ) {}
+}
+
+SignupData::fromValidated(['name' => '  ab  ']); // ValidationException: 'ab' is shorter than 3
+```
+
+Write rules for the value a pipe produces, not the raw input. A pipe that turns `"a,b"` into `['a', 'b']` needs an `array` rule.
+
+Because pipes now see the input before any rule rejects it, a pipe should return values of an unexpected type unchanged (`is_string($value) ? trim($value) : $value`) instead of failing on them. A pipe that throws is reported as a validation error: a class pipe under `'$pipeline'`, a property pipe under the property's input key, with the message `Input could not be processed.` (`fromValidatedResult()` reports the pipe's own message, like `fromResult()`).
+
+`#[RejectUnknownKeys]` is still checked against the keys of the raw input. Pipes on a [`#[Flatten]`](../attributes/flatten.md) property and pipes of nested data classes run when that object is hydrated, after validation. `from()` is unchanged: it runs the pipes and never validates.
+
 ## Built-in Pipes
 
 | Class | Type | Effect |

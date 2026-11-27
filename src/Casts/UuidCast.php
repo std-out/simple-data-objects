@@ -8,6 +8,7 @@ use InvalidArgumentException;
 use StdOut\SimpleDataObjects\Contracts\CastsValue;
 use StdOut\SimpleDataObjects\Contracts\ProvidesJsonSchema;
 use StdOut\SimpleDataObjects\Support\Redactor;
+use StdOut\SimpleDataObjects\Support\ScalarString;
 
 final class UuidCast implements CastsValue, ProvidesJsonSchema
 {
@@ -25,7 +26,7 @@ final class UuidCast implements CastsValue, ProvidesJsonSchema
             return null;
         }
 
-        $uuid = (string) $value;
+        $uuid = \is_string($value) ? $value : ScalarString::of($value, 'UuidCast');
 
         if (! preg_match(self::PATTERN, $uuid)) {
             throw new InvalidArgumentException('"'.Redactor::forMessage($uuid).'" is not a valid RFC 4122 UUID.');

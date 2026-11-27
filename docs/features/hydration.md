@@ -138,14 +138,14 @@ Already-instantiated enum values pass through unchanged.
 
 ### Invalid Enum Values
 
-A value that matches no case throws a `DataHydrationException` with the field name for a **required** parameter, and resolves to `null` for a **nullable** one:
+A non-null value that matches no case throws a `DataHydrationException` with the field name, whether the parameter is required or nullable. `null` on a nullable parameter stays `null`:
 
 ```php
 OrderData::from(['status' => 'bogus', 'priority' => 'High']);
 // throws DataHydrationException: Invalid value 'bogus' for field 'status'; expected a case of Status.
 ```
 
-For a fallback value instead of an exception, use [`EnumCast`](../casts/enum.md).
+For a fallback value instead of an exception, use [`EnumCast`](../casts/enum.md). `#[Cast(new EnumCast(Status::class))]` on a `?Status` property turns unknown values into `null`, as 2.x did without a cast.
 
 ## Lazy Hydration
 
@@ -182,6 +182,26 @@ UserData::from(['name' => 'Alice', 'email' => 'alice@example.com']);
 // phone = null, age = 0
 ```
 
+## Scalar Types
+
+A property typed `int`, `float`, `string` or `bool` (nullable or not) without a cast takes a value of another scalar type only when it converts without loss:
+
+```php
+ProductData::from(['quantity' => '3']);   // 3
+ProductData::from(['quantity' => 3.0]);   // 3
+ProductData::from(['quantity' => '3.5']); // DataHydrationException:
+// Invalid value for field 'quantity': Cannot convert string to int without loss.
+```
+
+| Type | Accepted | Rejected |
+|---|---|---|
+| `int` | int, a float with no fraction, a string of digits with an optional `-` within range | `"1.9"`, `1.9`, `true`, `"abc"` |
+| `float` | int, float, a finite numeric string | `true`, `"abc"` |
+| `string` | string, int, float, `Stringable` | `true`, arrays, other objects |
+| `bool` | bool, and `"1"`, `"0"`, `"true"`, `"false"`, `"on"`, `"off"`, `"yes"`, `"no"`, `""`, `1`, `0` | `"maybe"`, `2` |
+
+Values of the declared type pass straight to the constructor; conversion runs only when PHP rejects one. Union types (`int|string`) are checked by PHP in strict mode and not converted. For any other conversion, use a [cast](../attributes/cast.md) such as `IntegerCast` or `BooleanCast`.
+
 ## Missing Required Fields
 
 If a required field (non-nullable, no default) is missing, `DataHydrationException` is thrown:
@@ -189,6 +209,17 @@ If a required field (non-nullable, no default) is missing, `DataHydrationExcepti
 ```php
 UserData::from(['name' => 'Alice']); // throws — 'email' is required
 ```
+
+## Values a Cast Cannot Handle
+
+When a [cast](../attributes/cast.md), a property pipe, a nested data class or a `#[DataCollection]` fails on a field's value, `from()` throws `DataHydrationException` naming the field, with the original exception as `getPrevious()`. Built-in casts check the input type first, so a value of the wrong type never raises a PHP warning:
+
+```php
+OrderData::from(['id' => ['x']]);
+// DataHydrationException: Invalid value for field 'id': UuidCast expects a string, got array.
+```
+
+Errors that are already a `DataHydrationException` (from a nested data class, for example) are thrown unchanged. `tryFrom()` returns `null` and `fromResult()` reports the same message under the field's key.
 
 ## Constructor-less DTOs
 

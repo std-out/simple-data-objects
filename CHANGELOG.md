@@ -7,6 +7,60 @@ and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## [3.0.0] — 2026-11-27
+
+Every change rejects input that 2.x accepted silently or turned into
+something else; see [UPGRADE-3.0.md](UPGRADE-3.0.md).
+
+### Changed (breaking)
+- The `#[Rules]` of a nested data class, and of the item class of a
+  `#[DataCollection]`, apply when the parent is validated by
+  `fromValidated()`, `validate()` or `fromValidatedResult()`, whether or not
+  the parent has `#[InferRules]`. In 2.x they were ignored without it (#22).
+
+- `fromValidated()`, `validate()` and `fromValidatedResult()` run the class
+  and property pipes before validation, validate the piped values and
+  hydrate from them without running the pipes again. In 2.x the rules saw
+  the raw input and the pipes ran afterwards. A pipe that throws is a
+  validation error under `'$pipeline'` (class pipe) or the property's key.
+  `#[RejectUnknownKeys]` still checks the raw input; `from()` is unchanged
+  (#23).
+- A property typed `int`, `float`, `string` or `bool` without a cast takes
+  only values that convert without loss (`"3"` and `3.0` into `int`,
+  `"false"` into `bool` as `false`); anything else throws
+  `DataHydrationException` naming the field. Union types are checked in
+  strict mode. In 2.x PHP's weak coercion applied (`"1.9"` became `1`,
+  `"false"` became `true`) (#24).
+- A non-null value that matches no case of a nullable enum property throws
+  `DataHydrationException` (`tryFrom()` returns `null`, `fromResult()`
+  reports the field) instead of becoming `null`. `#[Cast(new EnumCast(...))]`
+  keeps the old behaviour (#25).
+- An exception from a cast, a property pipe or `#[DataCollection]` during
+  hydration is rethrown as `DataHydrationException` ("Invalid value for
+  field 'x': ...") with the original as `getPrevious()`. `fromResult()`
+  reports that message. Built-in casts reject input of the wrong type with
+  `InvalidArgumentException` instead of PHP warnings or errors; `IntegerCast`
+  and `FloatCast` reject arrays and objects (#26).
+- A legacy `EncryptedCast` key (`$key`, `$env`, `$provider`) that is not 32
+  random bytes throws `InvalidArgumentException` when it is the only key.
+  Next to `keyring:` it is accepted to read values written with it and
+  raises `E_USER_DEPRECATED` (#28).
+- `FloatCast` rejects `INF` and `NAN` by default (`finite: true`); pass
+  `finite: false` to accept them (#27).
+
+### Fixed
+- The `EnumCast` docs named its second argument `fallback`; it is
+  `default`.
+- A nullable, defaulted or `Optional` nested property that is absent or
+  `null` no longer makes the nested class's `required` rules fail. Its
+  nested rules apply only when the value is present as an array, at every
+  depth, including self-referential classes, which 2.x validated only one
+  level deep.
+
+### Internal
+- The metadata cache format is `sdo-cache-5`; files written by 2.x are
+  rebuilt on first use. `ClassMeta` no longer takes `inferRules`.
+
 ## [2.9.0] — 2026-11-27
 
 ### Fixed
@@ -709,7 +763,8 @@ Initial release.
   `toResponse()`).
 - CI pipeline: tests across Laravel 10–13 and a scheduled `composer audit`.
 
-[Unreleased]: https://github.com/std-out/simple-data-objects/compare/v2.9.0...HEAD
+[Unreleased]: https://github.com/std-out/simple-data-objects/compare/v3.0.0...HEAD
+[3.0.0]: https://github.com/std-out/simple-data-objects/compare/v2.9.0...v3.0.0
 [2.9.0]: https://github.com/std-out/simple-data-objects/compare/v2.8.1...v2.9.0
 [2.8.1]: https://github.com/std-out/simple-data-objects/compare/v2.8.0...v2.8.1
 [2.8.0]: https://github.com/std-out/simple-data-objects/compare/v2.7.0...v2.8.0

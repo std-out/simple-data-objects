@@ -138,6 +138,11 @@ class CastsTest extends TestCase
         $this->assertSame(Status::Inactive, $cast->get(null));
     }
 
+    public function test_enum_cast_without_default_turns_unknown_values_into_null(): void
+    {
+        $this->assertNull(new EnumCast(Status::class)->get('bogus'));
+    }
+
     public function test_enum_cast_passes_through_existing_enum(): void
     {
         $cast = new EnumCast(Status::class, Status::Inactive);

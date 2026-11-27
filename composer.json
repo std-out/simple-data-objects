@@ -64,6 +64,11 @@
         "test:coverage": "vendor/bin/phpunit --coverage-text --coverage-clover=build/coverage.xml",
         "coverage:check": "php bin/check-coverage.php build/coverage.xml 100"
     },
+    "extra": {
+        "branch-alias": {
+            "dev-main": "3.x-dev"
+        }
+    },
     "minimum-stability": "stable",
     "prefer-stable": true
 }

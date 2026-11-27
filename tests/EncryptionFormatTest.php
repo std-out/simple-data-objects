@@ -81,12 +81,12 @@ class EncryptionFormatTest extends TestCase
 
     public function test_legacy_format_matches_the_documented_construction(): void
     {
-        $key = sodium_crypto_generichash('old-key', '', 32);
+        $key = sodium_crypto_generichash('diwI/BehzF8A0kj4tQ8vL00X/yk0rDHmTerLP1uz8uw=', '', 32);
         $nonce = random_bytes(24);
         $legacy = sodium_bin2base64($nonce.sodium_crypto_secretbox('secret', $nonce, $key), self::BASE64);
-        $written = sodium_base642bin((new EncryptedCast('old-key'))->set('secret'), self::BASE64);
+        $written = sodium_base642bin((new EncryptedCast('diwI/BehzF8A0kj4tQ8vL00X/yk0rDHmTerLP1uz8uw='))->set('secret'), self::BASE64);
 
-        $this->assertSame('secret', (new EncryptedCast('old-key'))->get($legacy));
+        $this->assertSame('secret', (new EncryptedCast('diwI/BehzF8A0kj4tQ8vL00X/yk0rDHmTerLP1uz8uw='))->get($legacy));
         $this->assertSame('secret', sodium_crypto_secretbox_open(substr($written, 24), substr($written, 0, 24), $key));
     }
 
@@ -95,7 +95,7 @@ class EncryptionFormatTest extends TestCase
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage('Encrypted value is too short.');
 
-        (new EncryptedCast('old-key'))->get(sodium_bin2base64(str_repeat('x', 24), self::BASE64));
+        (new EncryptedCast('diwI/BehzF8A0kj4tQ8vL00X/yk0rDHmTerLP1uz8uw='))->get(sodium_bin2base64(str_repeat('x', 24), self::BASE64));
     }
 
     public function test_payload_containing_a_colon_is_not_valid_base64(): void
@@ -135,7 +135,7 @@ class EncryptionFormatTest extends TestCase
         foreach ([
             static fn () => new EncryptedCast(keyring: \stdClass::class),
             static fn () => new EncryptedCast(provider: \stdClass::class),
-            static fn () => (new EncryptedCast('k'))->set([]),
+            static fn () => (new EncryptedCast('XniGPtH/ufxmsdYWNLEmv46yAmfnmWKX7uubGcjA9zI='))->set([]),
         ] as $call) {
             try {
                 $call();

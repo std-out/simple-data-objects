@@ -71,6 +71,10 @@ $invoice->total->getAmount(); // '1999'
 $invoice->toArray()['total']; // 1999
 ```
 
+## Errors
+
+Throw any exception from `get()` when the value cannot be cast. Hydration wraps it in `DataHydrationException` naming the field (the original stays available as `getPrevious()`), so callers catch one exception type for every field.
+
 ## File Cache Compatibility
 
 To participate in the file-based metadata cache, the cast must implement `__set_state()`:

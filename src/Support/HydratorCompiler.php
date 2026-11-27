@@ -61,6 +61,20 @@ final class HydratorCompiler
      */
     public static array $collectingHydrators = [];
 
+    /**
+     * @internal Read directly by BaseData's validating factories — do not mutate.
+     *
+     * @var array<class-string, Closure(array<mixed>): object>
+     */
+    public static array $pipelessHydrators = [];
+
+    /**
+     * @internal Read directly by BaseData::fromValidatedResult() — do not mutate.
+     *
+     * @var array<class-string, Closure(array<mixed>): HydrationResult<BaseData>>
+     */
+    public static array $pipelessCollectingHydrators = [];
+
     /** @param class-string $class */
     public static function compile(string $class): Closure
     {
@@ -82,7 +96,7 @@ final class HydratorCompiler
         $p = $meta->parameters;
         $pipes = $meta->pipes;
 
-        $fn = eval('return '.self::generate($class, $meta).';');
+        $fn = eval('declare(strict_types=1); return '.self::generate($class, $meta).';');
 
         // Any direct property assignment (constructor-less, or a hybrid
         // class's extra properties) may target a readonly property, which
@@ -145,12 +159,52 @@ final class HydratorCompiler
         return self::$collectingHydrators[$class] = $needsBinding ? Closure::bind($fn, null, $class) : $fn;
     }
 
+    /**
+     * Hydrates input the validating factories already piped, so pipes do not
+     * run twice. Compiled on first use, only for classes with pipes.
+     *
+     * @param  class-string  $class
+     * @return Closure(array<mixed>): object
+     */
+    public static function compilePipeless(string $class): Closure
+    {
+        $meta = MetadataRegistry::get($class)->withoutPipes();
+        $p = $meta->parameters;
+        $pipes = $meta->pipes;
+
+        $fn = eval('declare(strict_types=1); return '.self::generate($class, $meta).';');
+
+        return self::$pipelessHydrators[$class] = self::bindForAssignments($fn, $meta, $class);
+    }
+
+    /**
+     * @param  class-string  $class
+     * @return Closure(array<mixed>): HydrationResult<BaseData>
+     */
+    public static function compilePipelessCollecting(string $class): Closure
+    {
+        $meta = MetadataRegistry::get($class)->withoutPipes();
+        $p = $meta->parameters;
+        $pipes = $meta->pipes;
+
+        $fn = eval('return '.self::generateCollecting($class, $meta).';');
+
+        return self::$pipelessCollectingHydrators[$class] = self::bindForAssignments($fn, $meta, $class);
+    }
+
     public static function flush(): void
     {
         self::$hydrators = [];
         self::$argResolvers = [];
         self::$populators = [];
         self::$collectingHydrators = [];
+        self::$pipelessHydrators = [];
+        self::$pipelessCollectingHydrators = [];
+    }
+
+    private static function bindForAssignments(Closure $fn, ClassMeta $meta, string $class): Closure
+    {
+        return ! $meta->hasConstructor || $meta->hasExtraProperties ? Closure::bind($fn, null, $class) : $fn;
     }
 
     /**
@@ -189,28 +243,41 @@ final class HydratorCompiler
         }
 
         $unknownCheck = self::buildUnknownKeysCheck($class, $meta);
-        [$body, $argList] = self::buildParts($class, $meta);
-        $scrub = "    } catch (\\Throwable \$e) {\n"
-            ."        throw \\StdOut\\SimpleDataObjects\\Support\\Redactor::scrubConstructorArguments(\$e, \\{$class}::class);\n"
+        [$body, $argList] = self::buildParts($class, $meta, coerceInline: false);
+        $construct = "new \\{$class}({$argList})";
+        $rethrow = "throw \\StdOut\\SimpleDataObjects\\Support\\Redactor::scrubConstructorArguments(\$e, \\{$class}::class);";
+        $catch = static fn (string $retry): string => "    } catch (\\Throwable \$e) {\n"
+            ."        if (! \$e instanceof \\TypeError || (\$c = \\StdOut\\SimpleDataObjects\\Support\\ScalarCoercion::input(\$d, \$p)) === null) {\n"
+            ."            {$rethrow}\n"
+            ."        }\n"
+            ."        \$d = \$c;\n"
+            ."        try {\n"
+            ."            {$retry}\n"
+            ."        } catch (\\Throwable \$e) {\n"
+            ."            {$rethrow}\n"
+            ."        }\n"
             ."    }\n";
 
         if ($meta->hasExtraProperties) {
             $extraBody = self::buildPropertyAssignments($class, $meta, includePipesPrelude: false);
+            $retry = $catch("\$o = {$construct};");
 
             return <<<PHP
             static function (#[\\SensitiveParameter] array \$d) use (\$p, \$pipes): \\{$class} {
             {$unknownCheck}{$body}    try {
-                    \$o = new \\{$class}({$argList});
-            {$scrub}{$extraBody}    return \$o;
+                    \$o = {$construct};
+            {$retry}{$extraBody}    return \$o;
             }
             PHP;
         }
 
+        $retry = $catch("return {$construct};");
+
         return <<<PHP
         static function (#[\\SensitiveParameter] array \$d) use (\$p, \$pipes): \\{$class} {
         {$unknownCheck}{$body}    try {
-                return new \\{$class}({$argList});
-        {$scrub}}
+                return {$construct};
+        {$retry}}
         PHP;
     }
 
@@ -259,29 +326,11 @@ final class HydratorCompiler
         }
 
         $classExport = var_export($class, true);
-        $knownKeys = self::knownKeysExport($meta);
+        $knownKeys = var_export($meta->knownKeys(), true);
 
         return "    if (\$u = \\array_diff_key(\$d, {$knownKeys})) {\n"
             ."        throw \\StdOut\\SimpleDataObjects\\Exceptions\\DataHydrationException::unknownKeys({$classExport}, \\array_keys(\$u));\n"
             ."    }\n";
-    }
-
-    /** Every accepted input alias and every #[Computed] output key, as a var_export'd set. */
-    private static function knownKeysExport(ClassMeta $meta): string
-    {
-        $known = [];
-
-        foreach ($meta->parameters as $param) {
-            foreach ($param->inputNames as $name) {
-                $known[$name] = true;
-            }
-        }
-
-        foreach ($meta->computed as $key) {
-            $known[$key] = true;
-        }
-
-        return var_export($known, true);
     }
 
     /**
@@ -290,7 +339,7 @@ final class HydratorCompiler
      *
      * @return array{0: string, 1: string} pipeline body and argument list
      */
-    private static function buildParts(string $class, ClassMeta $meta): array
+    private static function buildParts(string $class, ClassMeta $meta, bool $coerceInline = true): array
     {
         $classExport = var_export($class, true);
         $body = '';
@@ -315,12 +364,12 @@ final class HydratorCompiler
                 continue;
             }
 
-            $f = self::fieldAccessExpr($i, $param, $classExport, $body);
+            $f = self::fieldAccessExpr($i, $param, $classExport, $body, $coerceInline);
 
             // Missing key and explicit null both resolve to null — ?? is exact here,
             // but only for a single name: with aliases, $d[null] would read the "" key.
             if (count($param->inputNames) === 1 && $param->isPlain && $param->allowsNull && ! $param->isOptional && (! $param->hasDefault || $param->defaultValue === null)) {
-                $args[] = "\$d[{$f['key']}] ?? null";
+                $args[] = $coerceInline ? self::plainRead($i, $param, "\$d[{$f['key']}] ?? null") : "\$d[{$f['key']}] ?? null";
 
                 continue;
             }
@@ -362,17 +411,37 @@ final class HydratorCompiler
         return [$var, "{$var} !== null"];
     }
 
+    private static function plainRead(int $i, ParameterMeta $param, string $read): string
+    {
+        if ($param->scalarType === null) {
+            return $read;
+        }
+
+        $v = "\$s{$i}";
+        $check = match ($param->scalarType) {
+            'int' => "\\is_int({$v} = {$read})",
+            'float' => "\\is_float({$v} = {$read}) || \\is_int({$v})",
+            'string' => "\\is_string({$v} = {$read})",
+            default => "\\is_bool({$v} = {$read})",
+        };
+        $nullable = $param->allowsNull ? " || {$v} === null" : '';
+        $field = var_export((string) $param->inputNames[0], true);
+
+        return "({$check}{$nullable} ? {$v} : \\StdOut\\SimpleDataObjects\\Support\\ScalarCoercion::coerce({$v}, '{$param->scalarType}', {$field}))";
+    }
+
     /**
      * Shared per-parameter pieces: the hot path inlines them into a ternary,
      * the collecting path wraps them in try/catch.
      *
      * @return array{key: string, presence: string, present: string, absent: string, missingKey: string}
      */
-    private static function fieldAccessExpr(int $i, ParameterMeta $param, string $classExport, string &$body): array
+    private static function fieldAccessExpr(int $i, ParameterMeta $param, string $classExport, string &$body, bool $coerceInline = true): array
     {
         [$key, $presence] = self::resolveKeyExpr($i, $param->inputNames, $body);
 
         $present = match (true) {
+            $param->isPlain && $coerceInline => self::plainRead($i, $param, "\$d[{$key}]"),
             $param->isPlain => "\$d[{$key}]",
             $param->isSensitive => "\\StdOut\\SimpleDataObjects\\Support\\ValueCaster::castSensitive(\$p[{$i}], \$d[{$key}], {$classExport})",
             default => "\\StdOut\\SimpleDataObjects\\Support\\ValueCaster::cast(\$p[{$i}], \$d[{$key}])",
@@ -432,7 +501,7 @@ final class HydratorCompiler
             // Missing key and explicit null both resolve to null — ?? is exact here.
             // Only safe for a single accepted name; see resolveKeyExpr().
             if (count($param->inputNames) === 1 && $param->isPlain && $param->allowsNull && ! $param->isOptional && (! $param->hasDefault || $param->defaultValue === null)) {
-                $body .= "    {$target} = \$d[{$f['key']}] ?? null;\n";
+                $body .= "    {$target} = ".self::plainRead($i, $param, "\$d[{$f['key']}] ?? null").";\n";
 
                 continue;
             }
@@ -529,7 +598,7 @@ final class HydratorCompiler
         }
 
         $classExport = var_export($class, true);
-        $knownKeys = self::knownKeysExport($meta);
+        $knownKeys = var_export($meta->knownKeys(), true);
 
         return "    if (\$u = \\array_diff_key(\$d, {$knownKeys})) {\n"
             ."        \$errors['\$unknown'] = \\StdOut\\SimpleDataObjects\\Exceptions\\DataHydrationException::unknownKeys({$classExport}, \\array_keys(\$u))->getMessage();\n"

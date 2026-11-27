@@ -33,6 +33,8 @@ final class ClassMeta
 
     public readonly bool $cascadesNestedRules;
 
+    public readonly bool $pipesBeforeValidation;
+
     /** @var array<string, true> */
     public readonly array $sensitiveFields;
 
@@ -53,7 +55,6 @@ final class ClassMeta
         public readonly bool $rejectUnknownKeys = false,
         public readonly ?string $wrapIn = null,
         public readonly array $computed = [],
-        public readonly bool $inferRules = false,
     ) {
         $validationRules = [];
         $validationAliases = [];
@@ -75,11 +76,15 @@ final class ClassMeta
                 $validationAliases[$inputName] = array_slice($meta->inputNames, 1);
             }
 
-            if ($inferRules && ($meta->nestedDataClass !== null || $meta->dataCollectionClass !== null)) {
+            if ($meta->nestedDataClass !== null || $meta->dataCollectionClass !== null) {
                 $cascadesNestedRules = true;
             }
 
-            $nestedPrefix = $meta->flatten && ! $meta->allowsNull && ! $meta->hasDefault ? '' : "{$inputName}.";
+            if ($meta->allowsNull || $meta->hasDefault || $meta->isOptional) {
+                continue;
+            }
+
+            $nestedPrefix = $meta->flatten ? '' : "{$inputName}.";
 
             foreach ($meta->nestedRules as $suffix => $rules) {
                 $validationRules[$nestedPrefix.$suffix] = $rules;
@@ -92,8 +97,90 @@ final class ClassMeta
         $this->cascadesNestedRules = $cascadesNestedRules;
         $this->sensitiveFields = $sensitiveFields;
         $this->pipes = $pipes;
+        $this->pipesBeforeValidation = $pipes !== [] || array_any($parameters, static fn (ParameterMeta $p): bool => $p->pipes !== [] && ! $p->flatten);
         $this->hasConstructor = $hasConstructor;
         $this->hasExtraProperties = $hasConstructor && array_any($parameters, static fn (ParameterMeta $p): bool => ! $p->viaConstructor);
+    }
+
+    /** @return array<string|int, true> */
+    public function knownKeys(): array
+    {
+        $known = [];
+
+        foreach ($this->parameters as $param) {
+            foreach ($param->inputNames as $name) {
+                $known[$name] = true;
+            }
+        }
+
+        foreach ($this->computed as $key) {
+            $known[$key] = true;
+        }
+
+        return $known;
+    }
+
+    /**
+     * @param  array<mixed>  $data
+     * @return list<string>
+     */
+    public function unknownKeys(#[\SensitiveParameter] array $data): array
+    {
+        return array_map(strval(...), array_keys(array_diff_key($data, $this->knownKeys())));
+    }
+
+    /**
+     * Runs the class pipes, then each property's pipes on the first input
+     * key present for it. #[Flatten] properties keep their pipes for
+     * hydration, since they read the whole input.
+     *
+     * @param  class-string  $class
+     * @param  array<mixed>  $data
+     * @return array{0: array<mixed>, 1: array<string|int, string>} piped input and errors by key
+     */
+    public function runPipes(#[\SensitiveParameter] array $data, string $class): array
+    {
+        try {
+            $data = PipelineRunner::run($data, $class, $this->pipes);
+        } catch (\Throwable $e) {
+            return [$data, ['$pipeline' => $e->getMessage()]];
+        }
+
+        $errors = [];
+
+        foreach ($this->parameters as $param) {
+            if ($param->pipes === [] || $param->flatten) {
+                continue;
+            }
+
+            foreach ($param->inputNames as $name) {
+                if (! array_key_exists($name, $data)) {
+                    continue;
+                }
+
+                try {
+                    $data[$name] = PipelineRunner::runOnValue($data[$name], $param->phpName, $param->pipes);
+                } catch (\Throwable $e) {
+                    $errors[$param->inputNames[0]] = $e->getMessage();
+                }
+
+                break;
+            }
+        }
+
+        return [$data, $errors];
+    }
+
+    public function withoutPipes(): self
+    {
+        return self::__set_state([
+            'parameters' => array_map(
+                static fn (ParameterMeta $p): ParameterMeta => $p->flatten ? $p : ParameterMeta::__set_state(['pipes' => []] + get_object_vars($p)),
+                $this->parameters,
+            ),
+            'pipes' => [],
+            'rejectUnknownKeys' => false,
+        ] + get_object_vars($this));
     }
 
     /**
@@ -205,9 +292,23 @@ final class ClassMeta
                 continue;
             }
 
+            $presenceDependent = $param->allowsNull || $param->hasDefault || $param->isOptional;
+
             if ($param->nestedDataClass !== null) {
+                if ($presenceDependent) {
+                    foreach (MetadataRegistry::get($param->nestedDataClass)->validationRules as $suffix => $keyRules) {
+                        $rules["{$prefix}{$name}.{$suffix}"] = $keyRules;
+                    }
+                }
+
                 $data[$name] = self::prepareNestedValidation($param->nestedDataClass, $data[$name], "{$prefix}{$name}.", $rules);
             } elseif ($param->dataCollectionClass !== null) {
+                if ($presenceDependent) {
+                    foreach (MetadataRegistry::get($param->dataCollectionClass)->validationRules as $suffix => $keyRules) {
+                        $rules["{$prefix}{$name}.*.{$suffix}"] = $keyRules;
+                    }
+                }
+
                 foreach ($data[$name] as $key => $item) {
                     if (is_array($item)) {
                         $data[$name][$key] = self::prepareNestedValidation($param->dataCollectionClass, $item, "{$prefix}{$name}.{$key}.", $rules);
@@ -258,7 +359,6 @@ final class ClassMeta
             $state['rejectUnknownKeys'] ?? false,
             $state['wrapIn'] ?? null,
             $state['computed'] ?? [],
-            $state['inferRules'] ?? false,
         );
     }
 }

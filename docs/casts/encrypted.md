@@ -28,7 +28,7 @@ class UserData extends BaseData
 }
 ```
 
-A literal key is also accepted (`new EncryptedCast(key: '...')`) — useful in tests, but **avoid it in application code**: the key would live in your source tree. Exactly one of `key` / `env` / `provider` must be provided; a missing or empty environment variable throws a `RuntimeException` immediately rather than silently encrypting with an empty key.
+A literal key is also accepted (`new EncryptedCast(key: '...')`) — useful in tests, but **avoid it in application code**: the key would live in your source tree. Exactly one of `key` / `env` / `provider` must be provided, and its key must be 32 random bytes (raw or base64); a missing or empty environment variable throws a `RuntimeException` immediately rather than silently encrypting with an empty key.
 
 ### Key provider (KMS, Vault, HSM)
 
@@ -117,7 +117,7 @@ Every `set()` call produces a **different ciphertext** because a random 24-byte 
 |---|---|---|
 | Algorithm | XChaCha20-Poly1305-IETF (`sodium_crypto_aead_xchacha20poly1305_ietf_*`) | XSalsa20-Poly1305 (`sodium_crypto_secretbox`) |
 | Authentication | Poly1305 tag over the ciphertext, the key ID and the class + field binding | Poly1305 tag over the ciphertext only: a valid ciphertext copied to another field or record still decrypts |
-| Key | 32 random bytes per key ID; subkey via `sodium_crypto_kdf_derive_from_key` | Any string, hashed with BLAKE2b — a fast hash, not a password KDF |
+| Key | 32 random bytes per key ID; subkey via `sodium_crypto_kdf_derive_from_key` | 32 random bytes, hashed with BLAKE2b (a weaker key is accepted only next to `keyring:`, for reading) |
 | Length | Padded to 32-byte blocks (`sodium_pad`) | Ciphertext length reveals plaintext length |
 | Nonce | 24 random bytes | 24 random bytes |
 | Format | `v2:<key id>:base64url(nonce ‖ ciphertext)` | `base64url(nonce ‖ ciphertext)` |
@@ -126,7 +126,7 @@ Both formats are told apart by the `v2:` prefix, which cannot occur in base64url
 
 ## Key Handling
 
-Use a key of **32 random bytes** (for example `base64_encode(random_bytes(32))`). The keyring format enforces this. The legacy format hashes any string with a fast function, so a short or guessable key such as a password can be brute-forced from any stored ciphertext. Since 2.9 a legacy key (`$key`, `$env` or `$provider`) that is not 32 random bytes raises an `E_USER_DEPRECATED` notice when the cast is built; 3.0 will reject it. The notice is silenced with `@`, Symfony-style: Laravel still writes it to the `deprecations` log channel, and PHPUnit ignores it unless `ignoreSuppressionOfDeprecations` is set. It never includes the key.
+Use a key of **32 random bytes** (for example `base64_encode(random_bytes(32))`). The legacy format hashes its key with a fast function, so a short or guessable key such as a password could be brute-forced from any stored ciphertext. A legacy key (`$key`, `$env` or `$provider`) that is not 32 random bytes therefore throws `InvalidArgumentException` when it is the only key. Next to `keyring:` it is still accepted, only to read values written with it (new values use the keyring), and raises an `E_USER_DEPRECATED` notice until you remove it. The notice is silenced with `@`, Symfony-style: Laravel still writes it to the `deprecations` log channel, and PHPUnit ignores it unless `ignoreSuppressionOfDeprecations` is set. Neither message includes the key. In 2.x a weak legacy key was accepted on its own; see [`UPGRADE-3.0.md`](https://github.com/std-out/simple-data-objects/blob/main/UPGRADE-3.0.md) for moving off one.
 
 The cast keeps key material out of the places the library controls:
 

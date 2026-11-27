@@ -50,7 +50,7 @@ final class MoneyCast implements CastsValue, ProvidesJsonSchema
             $currency = $value['currency'] ?? $this->currency;
             $this->assertCurrency($currency);
 
-            return new Money($this->resolveAmount($value['amount']), $currency);
+            return new Money($this->resolveAmount($value['amount'] ?? null), $currency);
         }
 
         return new Money($this->resolveAmount($value), $this->currency);

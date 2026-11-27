@@ -206,7 +206,7 @@ class MetadataCacheTest extends TestCase
     {
         MetadataRegistry::setStoragePath($this->cacheDir);
 
-        $cast = new EncryptedCast('test-encryption-key');
+        $cast = new EncryptedCast('TU/pBcXXXWPceeZh0Zt76EgWHOl78yIlUaMoRPQZeME=');
         $encrypted = $cast->set('secret');
 
         SecretData::from(['token' => $encrypted]);
@@ -601,17 +601,17 @@ class MetadataCacheTest extends TestCase
     {
         $this->expectException(\LogicException::class);
 
-        serialize(new EncryptedCast('direct-test-key'));
+        serialize(new EncryptedCast('Zwhr+hBsO4FcILE2ijKHQRWYnlFTzjcIkUHnZGuLvVE='));
     }
 
     public function test_encrypted_cast_redacts_debug_output(): void
     {
         ob_start();
-        var_dump(new EncryptedCast('direct-test-key'));
+        var_dump(new EncryptedCast('Zwhr+hBsO4FcILE2ijKHQRWYnlFTzjcIkUHnZGuLvVE='));
         $dump = (string) ob_get_clean();
 
         $this->assertStringContainsString('[redacted]', $dump);
-        $this->assertStringNotContainsString('direct-test-key', $dump);
+        $this->assertStringNotContainsString('Zwhr+hBsO4FcILE2ijKHQRWYnlFTzjcIkUHnZGuLvVE=', $dump);
     }
 
     public function test_corrupt_cache_files_are_discarded_and_rebuilt(): void

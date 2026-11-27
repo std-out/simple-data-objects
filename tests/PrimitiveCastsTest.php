@@ -198,7 +198,7 @@ class PrimitiveCastsTest extends TestCase
 
     public function test_encrypted_cast_round_trip(): void
     {
-        $cast = new EncryptedCast('my-key');
+        $cast = new EncryptedCast('XniGPtH/ufxmsdYWNLEmv46yAmfnmWKX7uubGcjA9zI=');
         $encrypted = $cast->set('secret-token');
 
         $this->assertNotNull($encrypted);
@@ -208,14 +208,14 @@ class PrimitiveCastsTest extends TestCase
 
     public function test_encrypted_cast_produces_different_output_each_time(): void
     {
-        $cast = new EncryptedCast('my-key');
+        $cast = new EncryptedCast('XniGPtH/ufxmsdYWNLEmv46yAmfnmWKX7uubGcjA9zI=');
 
         $this->assertNotSame($cast->set('value'), $cast->set('value'));
     }
 
     public function test_encrypted_cast_null_returns_null(): void
     {
-        $cast = new EncryptedCast('my-key');
+        $cast = new EncryptedCast('XniGPtH/ufxmsdYWNLEmv46yAmfnmWKX7uubGcjA9zI=');
 
         $this->assertNull($cast->get(null));
         $this->assertNull($cast->set(null));
@@ -225,7 +225,7 @@ class PrimitiveCastsTest extends TestCase
     {
         $this->expectException(InvalidArgumentException::class);
 
-        (new EncryptedCast('my-key'))->get('not!!valid!!base64!!####');
+        (new EncryptedCast('XniGPtH/ufxmsdYWNLEmv46yAmfnmWKX7uubGcjA9zI='))->get('not!!valid!!base64!!####');
     }
 
     public function test_encrypted_cast_too_short_value_throws(): void
@@ -235,12 +235,12 @@ class PrimitiveCastsTest extends TestCase
 
         // 10 bytes < SODIUM_CRYPTO_SECRETBOX_NONCEBYTES (24)
         $short = sodium_bin2base64(str_repeat('x', 10), SODIUM_BASE64_VARIANT_URLSAFE_NO_PADDING);
-        (new EncryptedCast('my-key'))->get($short);
+        (new EncryptedCast('XniGPtH/ufxmsdYWNLEmv46yAmfnmWKX7uubGcjA9zI='))->get($short);
     }
 
     public function test_encrypted_cast_tampered_ciphertext_throws(): void
     {
-        $cast = new EncryptedCast('my-key');
+        $cast = new EncryptedCast('XniGPtH/ufxmsdYWNLEmv46yAmfnmWKX7uubGcjA9zI=');
         $encrypted = $cast->set('secret');
 
         $decoded = sodium_base642bin($encrypted, SODIUM_BASE64_VARIANT_URLSAFE_NO_PADDING);
@@ -253,22 +253,22 @@ class PrimitiveCastsTest extends TestCase
 
     public function test_encrypted_cast_different_keys_cannot_decrypt(): void
     {
-        $encrypted = (new EncryptedCast('key-A'))->set('secret');
+        $encrypted = (new EncryptedCast('t5ML2Usu0021nOgH3jcP+ouX/XNgMKXCj+2fb83M0nE='))->set('secret');
 
         $this->expectException(\RuntimeException::class);
-        (new EncryptedCast('key-B'))->get($encrypted);
+        (new EncryptedCast('gmK4pRlco+xTd/fXU7T42nSxTsVYVebTpo4zmOF8zXw='))->get($encrypted);
     }
 
     public function test_encrypted_cast_output_is_url_safe_base64(): void
     {
-        $encrypted = (new EncryptedCast('my-key'))->set('hello');
+        $encrypted = (new EncryptedCast('XniGPtH/ufxmsdYWNLEmv46yAmfnmWKX7uubGcjA9zI='))->set('hello');
 
         $this->assertMatchesRegularExpression('/^[A-Za-z0-9_-]+$/', $encrypted);
     }
 
     public function test_encrypted_cast_hydrates_and_decrypts_via_dto(): void
     {
-        $cast = new EncryptedCast('test-encryption-key');
+        $cast = new EncryptedCast('TU/pBcXXXWPceeZh0Zt76EgWHOl78yIlUaMoRPQZeME=');
         $encrypted = $cast->set('my-api-token');
 
         $secret = SecretData::from(['token' => $encrypted]);
@@ -278,22 +278,22 @@ class PrimitiveCastsTest extends TestCase
 
     public function test_encrypted_cast_serializes_on_to_array(): void
     {
-        $secret = SecretData::from(['token' => (new EncryptedCast('test-encryption-key'))->set('my-api-token')]);
+        $secret = SecretData::from(['token' => (new EncryptedCast('TU/pBcXXXWPceeZh0Zt76EgWHOl78yIlUaMoRPQZeME='))->set('my-api-token')]);
         $array = $secret->toArray();
 
         $this->assertNotSame('my-api-token', $array['token']);
-        $this->assertSame('my-api-token', (new EncryptedCast('test-encryption-key'))->get($array['token']));
+        $this->assertSame('my-api-token', (new EncryptedCast('TU/pBcXXXWPceeZh0Zt76EgWHOl78yIlUaMoRPQZeME='))->get($array['token']));
     }
 
     public function test_encrypted_cast_resolves_key_from_environment(): void
     {
-        $_ENV['SDO_TEST_ENC_KEY'] = 'env-key';
+        $_ENV['SDO_TEST_ENC_KEY'] = '6iygaMx2UEIC9V32O3i43921RDiiBnAsJiPRgossE1Y=';
 
         try {
             $encrypted = (new EncryptedCast(env: 'SDO_TEST_ENC_KEY'))->set('secret');
 
             // Same key material as passing the literal key directly
-            $this->assertSame('secret', (new EncryptedCast('env-key'))->get($encrypted));
+            $this->assertSame('secret', (new EncryptedCast('6iygaMx2UEIC9V32O3i43921RDiiBnAsJiPRgossE1Y='))->get($encrypted));
         } finally {
             unset($_ENV['SDO_TEST_ENC_KEY']);
         }
@@ -319,14 +319,14 @@ class PrimitiveCastsTest extends TestCase
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage('Provide exactly one of $key, $env or $provider.');
 
-        new EncryptedCast('my-key', provider: StaticKeyProvider::class);
+        new EncryptedCast('XniGPtH/ufxmsdYWNLEmv46yAmfnmWKX7uubGcjA9zI=', provider: StaticKeyProvider::class);
     }
 
     public function test_encrypted_cast_resolves_key_from_provider(): void
     {
         $encrypted = (new EncryptedCast(provider: StaticKeyProvider::class))->set('secret');
 
-        $this->assertSame('secret', (new EncryptedCast('provider-key'))->get($encrypted));
+        $this->assertSame('secret', (new EncryptedCast('s/rAunJu2UVFegODXBdxxfC+RlDT66KL7yeKID87Hrw='))->get($encrypted));
     }
 
     public function test_encrypted_cast_rejects_a_class_that_is_not_a_key_provider(): void
@@ -347,8 +347,8 @@ class PrimitiveCastsTest extends TestCase
 
     public function test_encrypted_cast_hides_the_derived_key_from_every_dump(): void
     {
-        $cast = new EncryptedCast('dump-test-key');
-        $key = sodium_crypto_generichash('dump-test-key', '', SODIUM_CRYPTO_SECRETBOX_KEYBYTES);
+        $cast = new EncryptedCast('adwDDehVBoyyh48+JHnjn6/uCnnVprN2E9+X0oaMrSw=');
+        $key = sodium_crypto_generichash('adwDDehVBoyyh48+JHnjn6/uCnnVprN2E9+X0oaMrSw=', '', SODIUM_CRYPTO_SECRETBOX_KEYBYTES);
         $dumps = [var_export($cast, true), print_r((array) $cast, true), (string) json_encode((array) $cast), print_r($cast, true)];
 
         foreach ($dumps as $dump) {
@@ -531,12 +531,12 @@ class PrimitiveCastsTest extends TestCase
         $this->expectException(InvalidArgumentException::class);
         $this->expectExceptionMessage('got array');
 
-        (new EncryptedCast(key: 'test-key'))->set(['pan' => '4111111111111111']);
+        (new EncryptedCast(key: 'Yq+HBHZPr46oL8Yc6cTDkItsuX1GOmNOnlh9fIhdsO8='))->set(['pan' => '4111111111111111']);
     }
 
     public function test_encrypted_cast_encrypts_stringable_values(): void
     {
-        $cast = new EncryptedCast(key: 'test-key');
+        $cast = new EncryptedCast(key: 'Yq+HBHZPr46oL8Yc6cTDkItsuX1GOmNOnlh9fIhdsO8=');
         $value = new class implements \Stringable
         {
             public function __toString(): string
@@ -582,15 +582,15 @@ class PrimitiveCastsTest extends TestCase
         new CommaSeparatedCast(maxItems: 0);
     }
 
-    public function test_float_cast_accepts_non_finite_values_by_default(): void
+    public function test_float_cast_accepts_non_finite_values_when_finite_is_false(): void
     {
-        $this->assertSame(INF, (new FloatCast)->get(INF));
-        $this->assertNan((new FloatCast)->get(NAN));
+        $this->assertSame(INF, (new FloatCast(finite: false))->get(INF));
+        $this->assertNan((new FloatCast(finite: false))->get(NAN));
     }
 
-    public function test_float_cast_finite_rejects_inf_and_nan(): void
+    public function test_float_cast_rejects_inf_and_nan_by_default(): void
     {
-        $cast = new FloatCast(finite: true);
+        $cast = new FloatCast;
 
         $this->assertSame(1.5, $cast->get('1.5'));
         $this->assertNull($cast->get(null));
@@ -600,14 +600,14 @@ class PrimitiveCastsTest extends TestCase
                 $cast->get($value);
                 $this->fail('Expected InvalidArgumentException');
             } catch (InvalidArgumentException $e) {
-                $this->assertSame('FloatCast(finite: true) rejects INF and NAN.', $e->getMessage());
+                $this->assertSame('FloatCast rejects INF and NAN; pass finite: false to accept them.', $e->getMessage());
             }
         }
     }
 
     public function test_float_cast_set_state_keeps_finite_and_defaults_it_for_old_caches(): void
     {
-        $this->assertEquals(new FloatCast(2, true), FloatCast::__set_state(['decimals' => 2, 'finite' => true]));
+        $this->assertEquals(new FloatCast(2, false), FloatCast::__set_state(['decimals' => 2, 'finite' => false]));
         $this->assertEquals(new FloatCast(2), FloatCast::__set_state(['decimals' => 2]));
     }
 }
