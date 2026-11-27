@@ -50,6 +50,7 @@ final class ParameterMeta
         /** `@name` for an attribute, `#text` for the element's text, otherwise a child element name. */
         public readonly ?string $xmlSource = null,
         public readonly bool $isSensitive = false,
+        public readonly ?string $scalarType = null,
     ) {
         $this->isPlain = $caster === null
             && $nestedDataClass === null
@@ -89,6 +90,7 @@ final class ParameterMeta
             phpType: $state['phpType'] ?? null,
             xmlSource: $state['xmlSource'] ?? null,
             isSensitive: $state['isSensitive'] ?? false,
+            scalarType: $state['scalarType'] ?? null,
         );
     }
 }

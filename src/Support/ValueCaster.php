@@ -40,7 +40,9 @@ final class ValueCaster
                 return self::castEnum($meta, $value);
             }
 
-            return $value;
+            return $meta->scalarType === null || ($value === null && $meta->allowsNull)
+                ? $value
+                : ScalarCoercion::coerce($value, $meta->scalarType, (string) $meta->inputNames[0]);
         } catch (DataHydrationException $e) {
             throw $e;
         } catch (\Throwable $e) {

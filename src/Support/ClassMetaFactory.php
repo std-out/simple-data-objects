@@ -386,7 +386,17 @@ final class ClassMetaFactory
             phpType: RuleInferrer::phpTypeName($parameter),
             xmlSource: self::xmlSource($parameter, $phpName, (string) $inputNames[0]),
             isSensitive: $parameter->getAttributes(Sensitive::class) !== [],
+            scalarType: self::scalarType($parameter),
         );
+    }
+
+    private static function scalarType(ReflectionParameter|ReflectionProperty $parameter): ?string
+    {
+        $type = $parameter->getType();
+
+        return $type instanceof \ReflectionNamedType && in_array($type->getName(), ['int', 'float', 'string', 'bool'], true)
+            ? $type->getName()
+            : null;
     }
 
     private static function bindCaster(CastsValue $caster, ReflectionParameter|ReflectionProperty $parameter): CastsValue

@@ -335,12 +335,12 @@ class FromResultTest extends TestCase
     }
 
     #[DataProvider('chargeClasses')]
-    public function test_constructor_type_error_is_collected_without_the_internal_call_site(string $class): void
+    public function test_lossy_scalar_is_collected_under_its_field(string $class): void
     {
         $result = $class::fromResult(['pan' => '4111111111111111', 'amount' => 'ten']);
 
         $this->assertSame(
-            ['$construct' => ChargeData::class.'::__construct(): Argument #2 ($amount) must be of type int, string given'],
+            ['amount' => "Invalid value for field 'amount': Cannot convert string to int without loss."],
             $result->errors(),
         );
     }

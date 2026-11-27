@@ -12,7 +12,7 @@ final class MetadataRegistry
      */
     private const string FILE_SUFFIX = '.meta.php';
 
-    private const string FORMAT = 'sdo-cache-4';
+    private const string FORMAT = 'sdo-cache-5';
 
     /** @var array<string, ClassMeta> */
     private static array $cache = [];
@@ -140,7 +140,7 @@ final class MetadataRegistry
         $hydrator = HydratorCompiler::generate($class, $meta);
         $serializer = SerializerCompiler::generate($class, $meta);
 
-        $code = "<?php\n\n"
+        $code = "<?php\n\ndeclare(strict_types=1);\n\n"
             ."\$meta = {$export};\n"
             ."\$p = \$meta->parameters;\n"
             ."\$pipes = \$meta->pipes;\n\n"

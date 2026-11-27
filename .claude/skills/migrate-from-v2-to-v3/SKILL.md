@@ -92,6 +92,8 @@ the table in `UPGRADE-3.0.md`. Look at where the data comes from:
   second becomes `false` (it was `true`).
 - **JSON APIs:** `1.0` into `int` still works; `1.5` throws.
 - **Database rows / internal arrays:** usually already typed.
+- **Union types** (`int|string`, `float|int`): no longer coerced at all;
+  `true` or `1.5` into `int|string` now throws a `TypeError`.
 
 If a property legitimately receives lossy input, **STOP AND ASK** before
 choosing between retyping it (`float`), adding a cast (`IntegerCast`,
