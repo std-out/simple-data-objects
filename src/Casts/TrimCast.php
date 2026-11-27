@@ -6,6 +6,7 @@ namespace StdOut\SimpleDataObjects\Casts;
 
 use StdOut\SimpleDataObjects\Contracts\CastsValue;
 use StdOut\SimpleDataObjects\Contracts\ProvidesJsonSchema;
+use StdOut\SimpleDataObjects\Support\ScalarString;
 
 final class TrimCast implements CastsValue, ProvidesJsonSchema
 {
@@ -29,7 +30,7 @@ final class TrimCast implements CastsValue, ProvidesJsonSchema
             return null;
         }
 
-        $str = trim((string) $value);
+        $str = trim(\is_string($value) ? $value : ScalarString::of($value, 'TrimCast'));
 
         return match ($this->transform) {
             self::LOWERCASE => strtolower($str),

@@ -13,6 +13,7 @@ use InvalidArgumentException;
 use StdOut\SimpleDataObjects\Contracts\CastsValue;
 use StdOut\SimpleDataObjects\Contracts\ProvidesJsonSchema;
 use StdOut\SimpleDataObjects\Support\Redactor;
+use StdOut\SimpleDataObjects\Support\ScalarString;
 
 final class DateTimeCast implements CastsValue, ProvidesJsonSchema
 {
@@ -46,14 +47,15 @@ final class DateTimeCast implements CastsValue, ProvidesJsonSchema
             return DateTime::createFromImmutable($value);
         }
 
+        $value = \is_string($value) ? $value : ScalarString::of($value, 'DateTimeCast');
         $tz = $this->resolveTimezone();
 
         if ($this->inputFormat !== null) {
-            $dt = DateTime::createFromFormat($this->inputFormat, (string) $value, $tz);
+            $dt = DateTime::createFromFormat($this->inputFormat, $value, $tz);
 
             if ($dt === false) {
                 throw new InvalidArgumentException(
-                    'Cannot parse "'.Redactor::forMessage((string) $value)."\" using format \"{$this->inputFormat}\".",
+                    'Cannot parse "'.Redactor::forMessage($value)."\" using format \"{$this->inputFormat}\".",
                 );
             }
 
@@ -61,7 +63,7 @@ final class DateTimeCast implements CastsValue, ProvidesJsonSchema
         }
 
         try {
-            return new DateTime((string) $value, $tz);
+            return new DateTime($value, $tz);
         } catch (DateMalformedStringException $e) {
             throw new DateMalformedStringException(Redactor::forMessage($e->getMessage()));
         }

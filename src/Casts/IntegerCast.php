@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace StdOut\SimpleDataObjects\Casts;
 
+use InvalidArgumentException;
 use StdOut\SimpleDataObjects\Contracts\CastsValue;
 use StdOut\SimpleDataObjects\Contracts\ProvidesJsonSchema;
 
@@ -17,7 +18,15 @@ final class IntegerCast implements CastsValue, ProvidesJsonSchema
 
     public function get(#[\SensitiveParameter] mixed $value): ?int
     {
-        return $value === null ? null : (int) $value;
+        if ($value === null) {
+            return null;
+        }
+
+        if (\is_array($value) || \is_object($value)) {
+            throw new InvalidArgumentException('IntegerCast expects a scalar, got '.get_debug_type($value).'.');
+        }
+
+        return (int) $value;
     }
 
     public function set(#[\SensitiveParameter] mixed $value): ?int

@@ -13,31 +13,39 @@ final class ValueCaster
 {
     public static function cast(ParameterMeta $meta, #[\SensitiveParameter] mixed $value): mixed
     {
-        if ($meta->pipes !== []) {
-            $value = PipelineRunner::runOnValue($value, $meta->phpName, $meta->pipes);
-        }
-
-        if ($meta->caster !== null) {
-            return $meta->caster->get($value);
-        }
-
-        if ($meta->dataCollectionClass !== null) {
-            if ($value === null) {
-                return $meta->allowsNull ? null : new TypedDataCollection;
+        try {
+            if ($meta->pipes !== []) {
+                $value = PipelineRunner::runOnValue($value, $meta->phpName, $meta->pipes);
             }
 
-            return $meta->dataCollectionClass::collection($value);
-        }
+            if ($meta->caster !== null) {
+                return $meta->caster->get($value);
+            }
 
-        if ($meta->nestedDataClass !== null && $value !== null) {
-            return $value instanceof $meta->nestedDataClass ? $value : $meta->nestedDataClass::from($value);
-        }
+            if ($meta->dataCollectionClass !== null) {
+                if ($value === null) {
+                    return $meta->allowsNull ? null : new TypedDataCollection;
+                }
 
-        if ($meta->enumClass !== null && $value !== null && ! ($value instanceof UnitEnum)) {
-            return self::castEnum($meta, $value);
-        }
+                return is_iterable($value)
+                    ? $meta->dataCollectionClass::collection($value)
+                    : throw new \InvalidArgumentException('A data collection expects an array, got '.get_debug_type($value).'.');
+            }
 
-        return $value;
+            if ($meta->nestedDataClass !== null && $value !== null) {
+                return $value instanceof $meta->nestedDataClass ? $value : $meta->nestedDataClass::from($value);
+            }
+
+            if ($meta->enumClass !== null && $value !== null && ! ($value instanceof UnitEnum)) {
+                return self::castEnum($meta, $value);
+            }
+
+            return $value;
+        } catch (DataHydrationException $e) {
+            throw $e;
+        } catch (\Throwable $e) {
+            throw DataHydrationException::invalidValue((string) $meta->inputNames[0], $e);
+        }
     }
 
     public static function castSensitive(ParameterMeta $meta, #[\SensitiveParameter] mixed $value, string $class): mixed

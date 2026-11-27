@@ -121,9 +121,16 @@ before its own exception; `TrimCast`, `BooleanCast`, `DateTimeCast`,
 `CommaSeparatedCast`, `MoneyCast` and `#[DataCollection]` raised `Error` or
 `TypeError`.
 
-**3.0:** a cast that cannot handle its input throws
-`DataHydrationException` naming the field, with the cast's own exception as
-`getPrevious()`. No warnings are emitted.
+**3.0:** built-in casts check the input type first (`TrimCast` given an
+array throws `InvalidArgumentException: TrimCast expects a string, got
+array.`), so no warnings are emitted. Any exception from a cast, a property
+pipe or `#[DataCollection]` reaches the caller as `DataHydrationException`
+naming the field, with the original as `getPrevious()`:
+`Invalid value for field 'id': UuidCast expects a string, got array.`
+`fromResult()` reports that message under the field's key. Exceptions that
+already are `DataHydrationException` (nested data classes) are unchanged.
+`IntegerCast` and `FloatCast` reject arrays and objects, which 2.x turned
+into `1`.
 
 **What to do:** catch `DataHydrationException` (or use `tryFrom()` /
 `fromResult()`) where you caught `TypeError`, `Error` or
