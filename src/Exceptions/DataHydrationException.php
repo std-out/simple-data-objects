@@ -10,9 +10,9 @@ use StdOut\SimpleDataObjects\Support\Redactor;
 final class DataHydrationException extends RuntimeException
 {
     /** @param list<string> $unknownKeys */
-    public function __construct(string $message, public readonly array $unknownKeys = [])
+    public function __construct(string $message, public readonly array $unknownKeys = [], ?\Throwable $previous = null)
     {
-        parent::__construct($message);
+        parent::__construct($message, 0, $previous);
     }
 
     public static function missingField(string $class, string $field): self
@@ -56,6 +56,11 @@ final class DataHydrationException extends RuntimeException
         $given = is_scalar($value) ? "'".Redactor::forMessage((string) $value)."'" : get_debug_type($value);
 
         return new self("Unknown discriminator value {$given} in field '{$field}' for {$class}.");
+    }
+
+    public static function invalidValue(string $field, \Throwable $previous): self
+    {
+        return new self("Invalid value for field '{$field}': ".Redactor::forConstructorError($previous), [], $previous);
     }
 
     public static function invalidSensitiveValue(string $class, string $field): self

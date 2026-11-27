@@ -190,6 +190,17 @@ If a required field (non-nullable, no default) is missing, `DataHydrationExcepti
 UserData::from(['name' => 'Alice']); // throws — 'email' is required
 ```
 
+## Values a Cast Cannot Handle
+
+When a [cast](../attributes/cast.md), a property pipe, a nested data class or a `#[DataCollection]` fails on a field's value, `from()` throws `DataHydrationException` naming the field, with the original exception as `getPrevious()`. Built-in casts check the input type first, so a value of the wrong type never raises a PHP warning:
+
+```php
+OrderData::from(['id' => ['x']]);
+// DataHydrationException: Invalid value for field 'id': UuidCast expects a string, got array.
+```
+
+Errors that are already a `DataHydrationException` (from a nested data class, for example) are thrown unchanged. `tryFrom()` returns `null` and `fromResult()` reports the same message under the field's key.
+
 ## Constructor-less DTOs
 
 A constructor isn't required. Plain typed property declarations work the same way — hydrated via direct assignment instead of constructor injection:

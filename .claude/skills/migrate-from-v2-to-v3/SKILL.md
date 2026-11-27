@@ -118,7 +118,8 @@ Where the `try` block calls `from(`, `fromJson(`, `collection(`, `with(` or
 `fromModel(`, catch `StdOut\SimpleDataObjects\Exceptions\DataHydrationException`
 instead (cast failures now arrive as that type, with the original as
 `getPrevious()`), or switch to `tryFrom()` / `fromResult()`. Leave unrelated
-catches alone.
+catches alone. Tests that assert a cast's exact message from `fromResult()`
+now see it prefixed with `Invalid value for field '<key>': `.
 
 `FloatCast`: find `new FloatCast` without `finite:`. 3.0 rejects `INF`/`NAN`.
 Only if a field must store them, add `finite: false` — **STOP AND ASK** first.

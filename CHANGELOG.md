@@ -24,6 +24,12 @@ and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.
   `DataHydrationException` (`tryFrom()` returns `null`, `fromResult()`
   reports the field) instead of becoming `null`. `#[Cast(new EnumCast(...))]`
   keeps the old behaviour (#25).
+- An exception from a cast, a property pipe or `#[DataCollection]` during
+  hydration is rethrown as `DataHydrationException` ("Invalid value for
+  field 'x': ...") with the original as `getPrevious()`. `fromResult()`
+  reports that message. Built-in casts reject input of the wrong type with
+  `InvalidArgumentException` instead of PHP warnings or errors; `IntegerCast`
+  and `FloatCast` reject arrays and objects (#26).
 - `FloatCast` rejects `INF` and `NAN` by default (`finite: true`); pass
   `finite: false` to accept them (#27).
 

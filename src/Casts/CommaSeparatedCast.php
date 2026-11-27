@@ -7,6 +7,7 @@ namespace StdOut\SimpleDataObjects\Casts;
 use InvalidArgumentException;
 use StdOut\SimpleDataObjects\Contracts\CastsValue;
 use StdOut\SimpleDataObjects\Contracts\ProvidesJsonSchema;
+use StdOut\SimpleDataObjects\Support\ScalarString;
 
 final class CommaSeparatedCast implements CastsValue, ProvidesJsonSchema
 {
@@ -37,7 +38,7 @@ final class CommaSeparatedCast implements CastsValue, ProvidesJsonSchema
             return $this->maxItems === null || count($value) <= $this->maxItems ? $value : $this->tooMany();
         }
 
-        $str = (string) $value;
+        $str = \is_string($value) ? $value : ScalarString::of($value, 'CommaSeparatedCast');
 
         if ($str === '') {
             return [];

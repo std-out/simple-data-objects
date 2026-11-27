@@ -27,6 +27,10 @@ final class FloatCast implements CastsValue, ProvidesJsonSchema
             return null;
         }
 
+        if (\is_array($value) || \is_object($value)) {
+            throw new InvalidArgumentException('FloatCast expects a scalar, got '.get_debug_type($value).'.');
+        }
+
         $float = (float) $value;
 
         if ($this->finite && ! is_finite($float)) {
