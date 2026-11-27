@@ -159,10 +159,10 @@ const frameworks = [
 export default defineConfig({
   title: 'Simple Data Objects',
   description: 'Lightweight, attribute-driven Data Transfer Objects for PHP 8.4+',
-  base: '/simple-data-objects/',
+  base: '/simple-data-objects/v2/',
 
   head: [
-    ['link', { rel: 'icon', type: 'image/png', href: '/simple-data-objects/favicon.png' }],
+    ['link', { rel: 'icon', type: 'image/png', href: '/simple-data-objects/v2/favicon.png' }],
   ],
 
   markdown: {
@@ -196,9 +196,10 @@ export default defineConfig({
       {
         text: 'v2',
         items: [
-          { text: 'v2 (current)', link: '/' },
+          { text: 'v3 (current)', link: 'https://std-out.github.io/simple-data-objects/' },
+          { text: 'v2 (maintenance)', link: '/' },
           { text: 'v1 (stable)', link: 'https://std-out.github.io/simple-data-objects/v1/' },
-          { text: 'Changelog', link: 'https://github.com/std-out/simple-data-objects/blob/main/CHANGELOG.md' },
+          { text: 'Changelog', link: 'https://github.com/std-out/simple-data-objects/blob/v2/CHANGELOG.md' },
         ],
       },
     ],
