@@ -73,7 +73,10 @@ Find classes with both `#[Pipe]` (class or property) and rules. For each pipe:
 - **The pipe now sees unvalidated input.** Read its `handle()`; if it assumes
   a type (calls `trim()`, `explode()`, indexes an array), make it pass other
   types through unchanged (`is_string($value) ? trim($value) : $value`).
-  A pipe that throws becomes a validation error under `'$pipeline'`.
+  A pipe that throws becomes a validation error under `'$pipeline'` (class
+  pipe) or the property's key (property pipe).
+- Pipes on `#[Flatten]` properties and inside nested data classes still run
+  after validation; nothing to change for them.
 
 Add a test with input that only passes after the pipe (e.g. `'  abc '` for
 `min:3` + trim) and one that the pipe cannot handle (e.g. an array).

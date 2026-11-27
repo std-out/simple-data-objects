@@ -61,6 +61,20 @@ final class HydratorCompiler
      */
     public static array $collectingHydrators = [];
 
+    /**
+     * @internal Read directly by BaseData's validating factories — do not mutate.
+     *
+     * @var array<class-string, Closure(array<mixed>): object>
+     */
+    public static array $pipelessHydrators = [];
+
+    /**
+     * @internal Read directly by BaseData::fromValidatedResult() — do not mutate.
+     *
+     * @var array<class-string, Closure(array<mixed>): HydrationResult<BaseData>>
+     */
+    public static array $pipelessCollectingHydrators = [];
+
     /** @param class-string $class */
     public static function compile(string $class): Closure
     {
@@ -145,12 +159,52 @@ final class HydratorCompiler
         return self::$collectingHydrators[$class] = $needsBinding ? Closure::bind($fn, null, $class) : $fn;
     }
 
+    /**
+     * Hydrates input the validating factories already piped, so pipes do not
+     * run twice. Compiled on first use, only for classes with pipes.
+     *
+     * @param  class-string  $class
+     * @return Closure(array<mixed>): object
+     */
+    public static function compilePipeless(string $class): Closure
+    {
+        $meta = MetadataRegistry::get($class)->withoutPipes();
+        $p = $meta->parameters;
+        $pipes = $meta->pipes;
+
+        $fn = eval('return '.self::generate($class, $meta).';');
+
+        return self::$pipelessHydrators[$class] = self::bindForAssignments($fn, $meta, $class);
+    }
+
+    /**
+     * @param  class-string  $class
+     * @return Closure(array<mixed>): HydrationResult<BaseData>
+     */
+    public static function compilePipelessCollecting(string $class): Closure
+    {
+        $meta = MetadataRegistry::get($class)->withoutPipes();
+        $p = $meta->parameters;
+        $pipes = $meta->pipes;
+
+        $fn = eval('return '.self::generateCollecting($class, $meta).';');
+
+        return self::$pipelessCollectingHydrators[$class] = self::bindForAssignments($fn, $meta, $class);
+    }
+
     public static function flush(): void
     {
         self::$hydrators = [];
         self::$argResolvers = [];
         self::$populators = [];
         self::$collectingHydrators = [];
+        self::$pipelessHydrators = [];
+        self::$pipelessCollectingHydrators = [];
+    }
+
+    private static function bindForAssignments(Closure $fn, ClassMeta $meta, string $class): Closure
+    {
+        return ! $meta->hasConstructor || $meta->hasExtraProperties ? Closure::bind($fn, null, $class) : $fn;
     }
 
     /**
@@ -259,29 +313,11 @@ final class HydratorCompiler
         }
 
         $classExport = var_export($class, true);
-        $knownKeys = self::knownKeysExport($meta);
+        $knownKeys = var_export($meta->knownKeys(), true);
 
         return "    if (\$u = \\array_diff_key(\$d, {$knownKeys})) {\n"
             ."        throw \\StdOut\\SimpleDataObjects\\Exceptions\\DataHydrationException::unknownKeys({$classExport}, \\array_keys(\$u));\n"
             ."    }\n";
-    }
-
-    /** Every accepted input alias and every #[Computed] output key, as a var_export'd set. */
-    private static function knownKeysExport(ClassMeta $meta): string
-    {
-        $known = [];
-
-        foreach ($meta->parameters as $param) {
-            foreach ($param->inputNames as $name) {
-                $known[$name] = true;
-            }
-        }
-
-        foreach ($meta->computed as $key) {
-            $known[$key] = true;
-        }
-
-        return var_export($known, true);
     }
 
     /**
@@ -529,7 +565,7 @@ final class HydratorCompiler
         }
 
         $classExport = var_export($class, true);
-        $knownKeys = self::knownKeysExport($meta);
+        $knownKeys = var_export($meta->knownKeys(), true);
 
         return "    if (\$u = \\array_diff_key(\$d, {$knownKeys})) {\n"
             ."        \$errors['\$unknown'] = \\StdOut\\SimpleDataObjects\\Exceptions\\DataHydrationException::unknownKeys({$classExport}, \\array_keys(\$u))->getMessage();\n"
