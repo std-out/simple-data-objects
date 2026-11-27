@@ -86,6 +86,15 @@ Found a vulnerability? **Please don't open a public issue.** Email
 [yuriyzee@gmail.com](mailto:yuriyzee@gmail.com) and we'll coordinate a fix
 and disclosure.
 
+## Branches
+
+- `main` — the current release line (2.x until 3.0.0 is out). Fixes and
+  backward-compatible features go here.
+- `3.x` — 3.0 in progress. Changes that alter existing behaviour go here
+  (milestone [3.0.0](https://github.com/std-out/simple-data-objects/milestone/1));
+  update `UPGRADE-3.0.md` in the same pull request.
+- `v2`, `v1` — maintenance of older major versions.
+
 ## Pull request checklist
 
 - [ ] One logical change per PR — small PRs get reviewed fast.
