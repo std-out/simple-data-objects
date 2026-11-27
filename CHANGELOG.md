@@ -20,8 +20,14 @@ and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.
   validation error under `'$pipeline'` (class pipe) or the property's key.
   `#[RejectUnknownKeys]` still checks the raw input; `from()` is unchanged
   (#23).
+- A non-null value that matches no case of a nullable enum property throws
+  `DataHydrationException` (`tryFrom()` returns `null`, `fromResult()`
+  reports the field) instead of becoming `null`. `#[Cast(new EnumCast(...))]`
+  keeps the old behaviour (#25).
 
 ### Fixed
+- The `EnumCast` docs named its second argument `fallback`; it is
+  `default`.
 - A nullable, defaulted or `Optional` nested property that is absent or
   `null` no longer makes the nested class's `required` rules fail. Its
   nested rules apply only when the value is present as an array, at every

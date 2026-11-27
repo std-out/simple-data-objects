@@ -109,7 +109,9 @@ property; a non-nullable property already threw.
 `DataHydrationException`. `null` stays `null`.
 
 **What to do:** send `null` (or omit the key with a default) instead of an
-unknown value, or validate the value with a rule first.
+unknown value, or validate the value with a rule first. To keep the 2.x
+behaviour for a property, add `#[Cast(new EnumCast(Status::class))]`: it
+turns unknown values into `null`.
 
 ## Casts throw `DataHydrationException`
 

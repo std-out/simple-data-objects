@@ -138,14 +138,14 @@ Already-instantiated enum values pass through unchanged.
 
 ### Invalid Enum Values
 
-A value that matches no case throws a `DataHydrationException` with the field name for a **required** parameter, and resolves to `null` for a **nullable** one:
+A non-null value that matches no case throws a `DataHydrationException` with the field name, whether the parameter is required or nullable. `null` on a nullable parameter stays `null`:
 
 ```php
 OrderData::from(['status' => 'bogus', 'priority' => 'High']);
 // throws DataHydrationException: Invalid value 'bogus' for field 'status'; expected a case of Status.
 ```
 
-For a fallback value instead of an exception, use [`EnumCast`](../casts/enum.md).
+For a fallback value instead of an exception, use [`EnumCast`](../casts/enum.md). `#[Cast(new EnumCast(Status::class))]` on a `?Status` property turns unknown values into `null`, as 2.x did without a cast.
 
 ## Lazy Hydration
 

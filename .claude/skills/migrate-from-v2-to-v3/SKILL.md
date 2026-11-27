@@ -103,8 +103,8 @@ pass without asking.
 Find nullable enum properties (`?Status`, `Status|null`). An unknown value
 now throws instead of becoming `null`. If clients send unknown values on
 purpose (e.g. forward compatibility), **STOP AND ASK** — the options are a
-rule (`Rule::enum`) that rejects them with a message, or a pipe that maps
-them to `null` explicitly.
+rule (`Rule::enum`) that rejects them with a message, or
+`#[Cast(new EnumCast(Status::class))]`, which maps them to `null` as 2.x did.
 
 ## Step 6 — exceptions from hydration
 

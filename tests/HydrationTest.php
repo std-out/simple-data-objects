@@ -282,11 +282,14 @@ class HydrationTest extends TestCase
         OrderData::from(['id' => 1, 'status' => ['nested']]);
     }
 
-    public function test_invalid_enum_value_for_nullable_field_resolves_to_null(): void
+    public function test_invalid_enum_value_for_nullable_field_throws(): void
     {
-        $order = OrderData::from(['id' => 1, 'status' => 'active', 'previousStatus' => 'bogus']);
+        $this->assertNull(OrderData::from(['id' => 1, 'status' => 'active', 'previousStatus' => null])->previousStatus);
+        $this->assertSame(['previousStatus'], array_keys(OrderData::fromResult(['id' => 1, 'status' => 'active', 'previousStatus' => 'bogus'])->errors()));
 
-        $this->assertNull($order->previousStatus);
+        $this->expectException(DataHydrationException::class);
+
+        OrderData::from(['id' => 1, 'status' => 'active', 'previousStatus' => 'bogus']);
     }
 
     public function test_pure_enum_hydrated_from_case_name(): void
@@ -304,10 +307,10 @@ class HydrationTest extends TestCase
         TicketData::from(['title' => 'Bug', 'priority' => 'Urgent']);
     }
 
-    public function test_pure_enum_invalid_value_for_nullable_field_resolves_to_null(): void
+    public function test_pure_enum_invalid_value_for_nullable_field_throws(): void
     {
-        $ticket = TicketData::from(['title' => 'Bug', 'priority' => 'Low', 'fallbackPriority' => 'Nope']);
+        $this->expectException(DataHydrationException::class);
 
-        $this->assertNull($ticket->fallbackPriority);
+        TicketData::from(['title' => 'Bug', 'priority' => 'Low', 'fallbackPriority' => 'Nope']);
     }
 }
