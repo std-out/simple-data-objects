@@ -7,6 +7,8 @@ and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## [2.8.1] — 2026-11-27
+
 ### Security
 - An exception thrown by a data class constructor during `from()`, `fromLazy()`
   or `with()` (a `TypeError` for a wrong input type, or the constructor's own
@@ -682,7 +684,8 @@ Initial release.
   `toResponse()`).
 - CI pipeline: tests across Laravel 10–13 and a scheduled `composer audit`.
 
-[Unreleased]: https://github.com/std-out/simple-data-objects/compare/v2.8.0...HEAD
+[Unreleased]: https://github.com/std-out/simple-data-objects/compare/v2.8.1...HEAD
+[2.8.1]: https://github.com/std-out/simple-data-objects/compare/v2.8.0...v2.8.1
 [2.8.0]: https://github.com/std-out/simple-data-objects/compare/v2.7.0...v2.8.0
 [2.7.0]: https://github.com/std-out/simple-data-objects/compare/v2.6.0...v2.7.0
 [2.6.0]: https://github.com/std-out/simple-data-objects/compare/v2.5.0...v2.6.0
