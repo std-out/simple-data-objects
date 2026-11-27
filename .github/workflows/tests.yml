@@ -120,27 +120,3 @@ jobs:
 
       - name: Enforce 100% coverage
         run: composer coverage:check
-
-      - name: Extract coverage percentage
-        run: |
-          PCT=$(php -r "
-            \$xml = simplexml_load_file('build/coverage.xml');
-            \$m = \$xml->project->metrics;
-            \$t = (int)\$m['statements'];
-            \$c = (int)\$m['coveredstatements'];
-            echo \$t > 0 ? round(\$c / \$t * 100) : 0;
-          ")
-          echo "COVERAGE_PCT=$PCT" >> $GITHUB_ENV
-
-      - name: Update coverage badge
-        if: github.ref == 'refs/heads/main'
-        env:
-          GIST_SECRET: ${{ secrets.GIST_SECRET }}
-        run: |
-          CONTENT=$(printf '{"schemaVersion":1,"label":"coverage","message":"%s%%","color":"brightgreen"}' "$COVERAGE_PCT")
-          curl -sf -X PATCH \
-            -H "Authorization: token $GIST_SECRET" \
-            -H "Content-Type: application/json" \
-            -H "User-Agent: GitHub-Actions" \
-            -d "{\"files\":{\"coverage.json\":{\"content\":$(echo "$CONTENT" | jq -Rs .)}}}" \
-            "https://api.github.com/gists/1a6bdbea77d160eeaf4524b8e165d3ac"
