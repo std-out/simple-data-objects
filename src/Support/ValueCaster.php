@@ -49,7 +49,7 @@ final class ValueCaster
         }
     }
 
-    private static function castEnum(ParameterMeta $meta, #[\SensitiveParameter] mixed $value): ?UnitEnum
+    private static function castEnum(ParameterMeta $meta, #[\SensitiveParameter] mixed $value): UnitEnum
     {
         $enum = null;
 
@@ -67,10 +67,6 @@ final class ValueCaster
             }
         }
 
-        if ($enum === null && ! $meta->allowsNull) {
-            throw DataHydrationException::invalidEnumValue($meta->enumClass, (string) $meta->inputNames[0], $value);
-        }
-
-        return $enum;
+        return $enum ?? throw DataHydrationException::invalidEnumValue($meta->enumClass, (string) $meta->inputNames[0], $value);
     }
 }

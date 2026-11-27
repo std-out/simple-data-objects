@@ -6,6 +6,7 @@ namespace StdOut\SimpleDataObjects\Tests;
 
 use Illuminate\Support\Facades\Artisan;
 use StdOut\SimpleDataObjects\Laravel\SimpleDataObjectsServiceProvider;
+use StdOut\SimpleDataObjects\Support\MetadataRegistry;
 use StdOut\SimpleDataObjects\Tests\Fixtures\UserData;
 use StdOut\SimpleDataObjects\Tests\Laravel\TestCase;
 
@@ -18,6 +19,7 @@ class ServiceProviderTest extends TestCase
         parent::setUp();
 
         $this->cacheDir = sys_get_temp_dir().'/sdo_provider_test_'.uniqid();
+        MetadataRegistry::flush();
     }
 
     protected function tearDown(): void
