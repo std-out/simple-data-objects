@@ -7,6 +7,18 @@ and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+### Security
+- An exception thrown by a data class constructor during `from()`, `fromLazy()`
+  or `with()` (a `TypeError` for a wrong input type, or the constructor's own
+  validation) no longer carries the raw arguments in the constructor's stack
+  frame: they are wrapped in `SensitiveParameterValue`, as PHP does for
+  `#[\SensitiveParameter]`. The exception's type, message, line and previous
+  chain are unchanged.
+- File-cached hydrators now carry a cache format marker: a `.meta.php` file
+  written by an older version is rebuilt on first use instead of serving the
+  old compiled code, so security fixes in generated hydrators take effect
+  without `sdo:clear`.
+
 ## [2.8.0] — 2026-10-16
 
 ### Added

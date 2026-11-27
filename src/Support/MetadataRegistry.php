@@ -12,6 +12,8 @@ final class MetadataRegistry
      */
     private const string FILE_SUFFIX = '.meta.php';
 
+    private const string FORMAT = 'sdo-cache-3';
+
     /** @var array<string, ClassMeta> */
     private static array $cache = [];
 
@@ -87,11 +89,10 @@ final class MetadataRegistry
                 $cached = null;
             }
 
-            // v2 format: [meta, hydrator, serializer] — restore the compiled
-            // closures too, so warmed processes skip eval entirely (opcache
-            // serves the whole file precompiled).
-            if (is_array($cached)) {
-                [$meta, $hydrator, $serializer] = $cached;
+            // Restore the compiled closures too, so warmed processes skip eval
+            // entirely (opcache serves the whole file precompiled).
+            if (is_array($cached) && $cached[0] === self::FORMAT) {
+                [, $meta, $hydrator, $serializer] = $cached;
                 // Constructor-less hydrators, and hybrid classes' extra
                 // properties, assign properties directly (possibly readonly
                 // ones), so they must be bound to the class scope — the same
@@ -144,6 +145,7 @@ final class MetadataRegistry
             ."\$p = \$meta->parameters;\n"
             ."\$pipes = \$meta->pipes;\n\n"
             ."return [\n"
+            ."    '".self::FORMAT."',\n"
             ."    \$meta,\n"
             ."    {$hydrator},\n"
             ."    {$serializer},\n"

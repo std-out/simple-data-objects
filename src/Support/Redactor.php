@@ -24,6 +24,31 @@ final class Redactor
         return addcslashes(self::maskPan($value), "\0..\37\177");
     }
 
+    /** @param  class-string  $class */
+    public static function scrubConstructorArguments(\Throwable $e, string $class): \Throwable
+    {
+        for ($current = $e; $current !== null; $current = $current->getPrevious()) {
+            $property = new \ReflectionProperty($current instanceof \Exception ? \Exception::class : \Error::class, 'trace');
+            /** @var list<array<string, mixed>> $trace */
+            $trace = $property->getValue($current);
+
+            foreach ($trace as $i => $frame) {
+                if (($frame['function'] ?? null) === '__construct'
+                    && isset($frame['class'], $frame['args'])
+                    && is_a($class, (string) $frame['class'], true)) {
+                    $trace[$i]['args'] = array_map(
+                        static fn (mixed $arg): \SensitiveParameterValue => $arg instanceof \SensitiveParameterValue ? $arg : new \SensitiveParameterValue($arg),
+                        (array) $frame['args'],
+                    );
+                }
+            }
+
+            $property->setValue($current, $trace);
+        }
+
+        return $e;
+    }
+
     /** @param array{0: string} $match */
     private static function maskDigits(array $match): string
     {
