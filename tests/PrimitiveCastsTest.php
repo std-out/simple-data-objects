@@ -582,15 +582,15 @@ class PrimitiveCastsTest extends TestCase
         new CommaSeparatedCast(maxItems: 0);
     }
 
-    public function test_float_cast_accepts_non_finite_values_by_default(): void
+    public function test_float_cast_accepts_non_finite_values_when_finite_is_false(): void
     {
-        $this->assertSame(INF, (new FloatCast)->get(INF));
-        $this->assertNan((new FloatCast)->get(NAN));
+        $this->assertSame(INF, (new FloatCast(finite: false))->get(INF));
+        $this->assertNan((new FloatCast(finite: false))->get(NAN));
     }
 
-    public function test_float_cast_finite_rejects_inf_and_nan(): void
+    public function test_float_cast_rejects_inf_and_nan_by_default(): void
     {
-        $cast = new FloatCast(finite: true);
+        $cast = new FloatCast;
 
         $this->assertSame(1.5, $cast->get('1.5'));
         $this->assertNull($cast->get(null));
@@ -600,14 +600,14 @@ class PrimitiveCastsTest extends TestCase
                 $cast->get($value);
                 $this->fail('Expected InvalidArgumentException');
             } catch (InvalidArgumentException $e) {
-                $this->assertSame('FloatCast(finite: true) rejects INF and NAN.', $e->getMessage());
+                $this->assertSame('FloatCast rejects INF and NAN; pass finite: false to accept them.', $e->getMessage());
             }
         }
     }
 
     public function test_float_cast_set_state_keeps_finite_and_defaults_it_for_old_caches(): void
     {
-        $this->assertEquals(new FloatCast(2, true), FloatCast::__set_state(['decimals' => 2, 'finite' => true]));
+        $this->assertEquals(new FloatCast(2, false), FloatCast::__set_state(['decimals' => 2, 'finite' => false]));
         $this->assertEquals(new FloatCast(2), FloatCast::__set_state(['decimals' => 2]));
     }
 }

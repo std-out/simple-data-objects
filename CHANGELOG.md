@@ -24,6 +24,8 @@ and the project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.
   `DataHydrationException` (`tryFrom()` returns `null`, `fromResult()`
   reports the field) instead of becoming `null`. `#[Cast(new EnumCast(...))]`
   keeps the old behaviour (#25).
+- `FloatCast` rejects `INF` and `NAN` by default (`finite: true`); pass
+  `finite: false` to accept them (#27).
 
 ### Fixed
 - The `EnumCast` docs named its second argument `fallback`; it is
